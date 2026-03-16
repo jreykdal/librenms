@@ -1,0 +1,1198 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **
+-- **  COPYRIGHT      (c) 2006 Rohde & Schwarz GmbH & Co. KG
+-- **                          Muehldorfstrasse 15
+-- **    R & S                 D-81671 Muenchen
+-- **
+-- *****************************************************************************
+-- **
+-- **  MODULE         RS-XX8000-CCUNTX-MIB
+-- **  
+-- **  DESCRIPTION    Rohde & Schwarz SNMP
+-- **
+-- **  HISTORY        
+-- **
+-- **  2008-08-28 ks - initial version
+-- **  2009-05-06 ks - device info for TC boards
+-- **  2009-05-28 ks - information for additional (external) power supply added
+-- **  2009-07-02 ks - measured values for power supply added
+-- **  2009-10-09 ks - selectedInputTxB is read-only for DAB systems
+-- **  2010-01-28 ks - boardTemperatureFaultEvent deprecated and
+-- **                  boardTemperatureWarningEvent added
+-- **  2010-05-11 ks - evtProgramRfOn added
+-- **
+-- *****************************************************************************
+-- *****************************************************************************
+
+  RS-XX8000-CCUNTX-MIB DEFINITIONS ::= BEGIN
+ 
+    IMPORTS
+      rsXx8000, eventAlarmPriority, eventAlarmClass, eventEvent, indexProgram, 
+      rsXx8000MibModule, EventPriority, EventClass, EventState, Trigger, 
+      FloatingPoint, SwitchOnOff, IndexTransmitter, IndexProgram, LogbookMaxEntryNumber, 
+      LogbookEntrySlope, LogbookEntryMessagesNSU, ProdInfoModuleNameNsu, ReadableString, EventMaxEntryNumber, 
+      EventMask      
+        FROM RS-XX8000-COMMON-MIB      
+      OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP      
+        FROM SNMPv2-CONF      
+      Integer32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, NOTIFICATION-TYPE      
+        FROM SNMPv2-SMI      
+      TruthValue, DateAndTime      
+        FROM SNMPv2-TC;
+  
+  
+    rsXx8000CcuNtxMibModule MODULE-IDENTITY 
+      LAST-UPDATED "201005110900Z"		-- May 11, 2010 at 09:00 GMT
+      ORGANIZATION 
+        "Rohde&Schwarz GmbH & Co. KG"
+      CONTACT-INFO 
+        "Torsten Huebscher
+        Department 7TS2
+        Broadcasting Division
+        Muehldorfstrasse 15
+        81671 Munich, Germany
+        torsten.huebscher@rohde-schwarz.com"
+      DESCRIPTION 
+        "This MIB defines transmitter control devices from Rohde & Schwarz.
+        
+        Use this MIB if your transmitter control device meets the following requirements:
+        - series XX8000 (NetCCU800),
+        - Control for N or N+1 transmitters.
+          In the latter case the device is used as a switchover unit.
+        
+        The following MIBs are related to this:
+        - RS-COMMON-MIB         - mandatory for this MIB
+        - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+      REVISION "201005110900Z"		-- May 11, 2010 at 09:00 GMT
+      DESCRIPTION 
+        "evtProgramRfOn added"
+      REVISION "201001280900Z"		-- January 28, 2010 at 09:00 GMT
+      DESCRIPTION 
+        "boardTemperatureFaultEvent deprecated and
+        boardTemperatureWarningEvent added"
+      REVISION "200910090900Z"		-- October 09, 2009 at 09:00 GMT
+      DESCRIPTION 
+        "selectedInputTxB is read-only for DAB systems"
+      REVISION "200907020900Z"		-- July 02, 2009 at 09:00 GMT
+      DESCRIPTION 
+        "measured values for power supply added"
+      REVISION "200905280900Z"		-- May 28, 2009 at 09:00 GMT
+      DESCRIPTION 
+        "information for additional (external) power supply added"
+      REVISION "200905060900Z"		-- May 06, 2009 at 09:00 GMT
+      DESCRIPTION 
+        "device info for TC boards"
+      REVISION "200811281000Z"		-- November 28, 2008 at 10:00 GMT
+      DESCRIPTION 
+        "initial revision"
+      ::= { rsXx8000MibModule 200 }
+
+    
+  
+  
+--
+-- Node definitions
+--
+  
+    rsXx8000CcuNtx OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Xx8000 NTx or N+1 control unit."
+      ::= { rsXx8000 200 }
+
+    
+    rsXx8000CcuNtxObjs OBJECT IDENTIFIER ::= { rsXx8000CcuNtx 1 }
+
+    
+    resetAllFaults OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Reset all faults (in all modules).
+        
+        Practically you reset the whole system (NetCCU, and of all transmitters all NetCCUs, Exciters, Outputstages).
+        An equivalent would be pressing RESET at the NetCCU frontpanel.
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+      ::= { rsXx8000CcuNtxObjs 1 }
+
+    
+    summaryFault OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This indicates a summary fault of the NetCCU.
+        true(1)  --> summary fault
+        false(2) --> no summary fault
+        
+        There is a fault of at least one module (e.g. Exciter A of tx A2) which causes this summary fault.
+        
+        An equivalent would be the LED Fault at the NetCCU frontpanel."
+      ::= { rsXx8000CcuNtxObjs 2 }
+
+    
+    summaryWarning OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This indicates a summary warning of the NetCCU.
+        true(1)  --> summary warning
+        false(2) --> no summary warning
+        
+        There is a warning of at least one module (e.g. Exciter A of tx A2) which causes this summary warning.
+        
+        An equivalent would be the LED Warning at the transmitter frontpanel."
+      ::= { rsXx8000CcuNtxObjs 3 }
+
+    
+    localMode OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This indicates the local/remote-mode of the NetCCU.
+        true(1)  --> local
+        false(2) --> remote
+        
+        The NetCCU is eigther in local-mode or in remote-mode. 
+        For security reasons it is not possible to set this value!
+        
+        An equivalent would the LED Local at the NetCCU frontpanel."
+      ::= { rsXx8000CcuNtxObjs 4 }
+
+    
+    powerSupply OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "volt"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Monitoring value of the output voltages of the power supply."
+      ::= { rsXx8000CcuNtxObjs 5 }
+
+    
+    deviceTemperature OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "degree Celsius"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Internal device temperature."
+      ::= { rsXx8000CcuNtxObjs 6 }
+
+    
+    additionalPowerSupply OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Shows whether the NetCCU has an additional (external) power supply."
+      ::= { rsXx8000CcuNtxObjs 7 }
+
+    
+    internalPowerSupply OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "volt"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Monitoring value of the output voltages of the internal power supply."
+      ::= { rsXx8000CcuNtxObjs 8 }
+
+    
+    externalPowerSupply OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "volt"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Monitoring value of the output voltages of the external power supply."
+      ::= { rsXx8000CcuNtxObjs 9 }
+
+    
+-- *****************************************************************************
+-- **          NetCCU switchoverunit
+-- *****************************************************************************
+    switchoverUnit OBJECT IDENTIFIER ::= { rsXx8000CcuNtxObjs 20 }
+
+    
+    operationModeAutomatic OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "This switches the automatic switching-over of transmitters on or off.
+        An equivalent would be pressing ON or OFF at the NSU frontpanel."
+      ::= { switchoverUnit 1 }
+
+    
+    operationModePriority OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "This switches the usage of priorities on or off.
+        
+        With priorities, you can set for each program a priority. 
+        If a fault occurs on a transmitter sending out a program with higher priority, 
+        a transmitter sending out a program with a lower priority will be switched to the more important program."
+      ::= { switchoverUnit 2 }
+
+    
+    delayTime OBJECT-TYPE
+      SYNTAX Integer32 (3..120)
+      UNITS "second"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Sets the delay time interval of automatic."
+      ::= { switchoverUnit 3 }
+
+    
+    selectedTxToDummyLoad OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The preselected transmitter to dummy load."
+      ::= { switchoverUnit 4 }
+
+    
+    selectedInputTxB OBJECT-TYPE
+      SYNTAX Integer32 (1..9)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The preselected input of the reserve transmitter."
+      ::= { switchoverUnit 5 }
+
+    
+    selectedParametersetTxB OBJECT-TYPE
+      SYNTAX Integer32 (1..8)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The preselected parameterset of the reserve transmitter.
+        
+        This is helpful when configuring the system and if doing tests with switching-over."
+      ::= { switchoverUnit 6 }
+
+    
+    selectedChannelTxB OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        undefined(1),
+        channel1(2),
+        channel2(3),
+        channel3(4),
+        channel4(5),
+        channel5(6),
+        channel6(7),
+        channel7(8),
+        channel8(9)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Both the input and the parameterset of the reserve transmitter.
+        This OID is a combination of OIDs selectedInputTxB and selectedParametersetTxB.
+        If you want to set this value, TxB (Reserve Transmitter) must be to dummy load.
+        The value undefined(1) is only readable - it is not possible to set it (even TxB is to dummyload)."
+      ::= { switchoverUnit 7 }
+
+    
+    resetOnProgramOff OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "If on, a reset is performed if program switched off."
+      ::= { switchoverUnit 8 }
+
+    
+    readyAfterChangeover OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "If on, automatic is switched to ready after changeover."
+      ::= { switchoverUnit 9 }
+
+    
+    automaticReady OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This indicates the state of the automatic.
+        true(1)  --> ready
+        false(2) --> not ready
+        
+        If it's ready, a switching-over (because of preselection or faults in a transmitter sending out a program) is possible."
+      ::= { switchoverUnit 10 }
+
+    
+    automaticChanged OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This indicates whether the automatic has switched over automatically.
+        true(1)  --> switched over
+        false(2) --> not switched over"
+      ::= { switchoverUnit 11 }
+
+    
+    automaticFault OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This indicates whether the automatic has a fault.
+        true(1)  --> fault
+        false(2) --> no fault"
+      ::= { switchoverUnit 12 }
+
+    
+    loadedTx OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        undefined(0),
+        transmitterB(1),
+        transmitterA1(2),
+        transmitterA2(3),
+        transmitterA3(4),
+        transmitterA4(5),
+        transmitterA5(6),
+        transmitterA6(7),
+        transmitterA7(8),
+        transmitterA8(9)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The actual loaded Tx."
+      ::= { switchoverUnit 13 }
+
+    
+    currentInputTxB OBJECT-TYPE
+      SYNTAX Integer32 (0..9)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Shows the actual reserve transmitter input.
+        0 means 'undefined'."
+      ::= { switchoverUnit 14 }
+
+    
+    currentParametersetTxB OBJECT-TYPE
+      SYNTAX Integer32 (0..8)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Shows the actual parameter set of the reserve transmitter.
+        0 means 'undefined'."
+      ::= { switchoverUnit 15 }
+
+    
+-- *****************************************************************************
+-- **          program (logical) view
+-- *****************************************************************************
+    program OBJECT IDENTIFIER ::= { rsXx8000CcuNtxObjs 30 }
+
+    
+    programTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ProgramEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contents important values for programs
+        (independent of which physical tx is sending out the program)."
+      ::= { program 1 }
+
+    
+    programEntry OBJECT-TYPE
+      SYNTAX ProgramEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for a designated program."
+      INDEX { programIdx }
+      ::= { programTable 1 }
+
+    
+    ProgramEntry ::=
+      SEQUENCE { 
+        programIdx
+          IndexProgram,
+        programPriority
+          Integer32,
+        programOperationMode
+          SwitchOnOff,
+        programRfOn
+          TruthValue
+       }
+
+    programIdx OBJECT-TYPE
+      SYNTAX IndexProgram
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The program index. There are max. 8 main programs, if you have 8 main transmitters.
+        Additionally, there is a reserve program programRes(1)."
+      ::= { programEntry 1 }
+
+    
+    programPriority OBJECT-TYPE
+      SYNTAX Integer32 (0..8)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The priority for the program. 
+        The value 0 means no priority given. The value 1 means highest priority.
+        You must switch on OID operationModePriority for using priorities.
+        The reserve program has no priority (agent return not-accessible)."
+      ::= { programEntry 2 }
+
+    
+    programOperationMode OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "This switches the program on or off."
+      ::= { programEntry 3 }
+
+    
+    programRfOn OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The RF is present for the corresponding program 
+        (independent of which physical tx is sending out the program)."
+      ::= { programEntry 4 }
+
+    
+    logbook OBJECT IDENTIFIER ::= { rsXx8000CcuNtxObjs 90 }
+
+    
+    numberOfEntries OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in the NetCCU logbook."
+      ::= { logbook 1 }
+
+    
+    logbookClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear logbook of the NetCCU."
+      ::= { logbook 2 }
+
+    
+    logbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF LogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "NetCCU Logbook"
+      ::= { logbook 3 }
+
+    
+    logbookEntry OBJECT-TYPE
+      SYNTAX LogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "A row (an entry) of a logbook."
+      INDEX { logbookEntryIdx }
+      ::= { logbookTable 1 }
+
+    
+    LogbookEntry ::=
+      SEQUENCE { 
+        logbookEntryIdx
+          LogbookMaxEntryNumber,
+        logbookEntryNbr
+          LogbookMaxEntryNumber,
+        logbookType
+          EventClass,
+        logbookSlope
+          LogbookEntrySlope,
+        logbookMessage
+          LogbookEntryMessagesNSU,
+        logbookDateTime
+          DateAndTime
+       }
+
+    logbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to 128. It is used as an index column for SNMP."
+      ::= { logbookEntry 1 }
+
+    
+    logbookEntryNbr OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from max 128 down to 1."
+      ::= { logbookEntry 2 }
+
+    
+    logbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { logbookEntry 3 }
+
+    
+    logbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Either set (event raises) or reset (event disappears)"
+      ::= { logbookEntry 4 }
+
+    
+    logbookMessage OBJECT-TYPE
+      SYNTAX LogbookEntryMessagesNSU
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "See RS-XX8000-COMMON-MIB - TextualConvention - LogbookEntryMessagesNSU for details."
+      ::= { logbookEntry 5 }
+
+    
+    logbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The time of the logbook entry."
+      ::= { logbookEntry 6 }
+
+    
+    productInfoTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ProductInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The table for product typeplates."
+      ::= { rsXx8000CcuNtxObjs 100 }
+
+    
+    productInfoEntry OBJECT-TYPE
+      SYNTAX ProductInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "A row (an entry) for one typeplate."
+      INDEX { prodInfoModuleIdx, prodInfoTxIdx }
+      ::= { productInfoTable 1 }
+
+    
+    ProductInfoEntry ::=
+      SEQUENCE { 
+        prodInfoModuleIdx
+          ProdInfoModuleNameNsu,
+        prodInfoTxIdx
+          IndexTransmitter,
+        prodInfoModuleName
+          ProdInfoModuleNameNsu,
+        prodInfoSerialNumber
+          ReadableString,
+        prodInfoIdentNumberSW
+          ReadableString,
+        prodInfoVersionNumberSW
+          ReadableString,
+        prodInfoIdentNumberHW
+          ReadableString,
+        prodInfoVersionNumberHW
+          ReadableString,
+        productInfoProductDateHW
+          DateAndTime
+       }
+
+    prodInfoModuleIdx OBJECT-TYPE
+      SYNTAX ProdInfoModuleNameNsu
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The module index."
+      ::= { productInfoEntry 1 }
+
+    
+    prodInfoTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index."
+      ::= { productInfoEntry 2 }
+
+    
+    prodInfoModuleName OBJECT-TYPE
+      SYNTAX ProdInfoModuleNameNsu
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The name of the module as a text."
+      ::= { productInfoEntry 6 }
+
+    
+    prodInfoSerialNumber OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The serial number of the subdevice."
+      ::= { productInfoEntry 7 }
+
+    
+    prodInfoIdentNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the software, for example 2094.2090.02."
+      ::= { productInfoEntry 8 }
+
+    
+    prodInfoVersionNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number of the software, for example 1.2.1."
+      ::= { productInfoEntry 9 }
+
+    
+    prodInfoIdentNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the hardware, for example 2095.8007.02 (NetCCU)."
+      ::= { productInfoEntry 10 }
+
+    
+    prodInfoVersionNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number (product index) of the hardware, for example 03.03."
+      ::= { productInfoEntry 11 }
+
+    
+    productInfoProductDateHW OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz production date of the hardware,"
+      ::= { productInfoEntry 12 }
+
+    
+    rsXx8000CcuNtxEvents OBJECT IDENTIFIER ::= { rsXx8000CcuNtx 3 }
+
+    
+    eventsV2 OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Compatibility to SMIv1."
+      ::= { rsXx8000CcuNtxEvents 0 }
+
+    
+    summaryFaultEvent NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "NetCCU Summary Fault"
+      ::= { eventsV2 1 }
+
+    
+    summaryWarningEvent NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "NetCCU Summary Warning"
+      ::= { eventsV2 2 }
+
+    
+    localEvent NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "NetCCU Local/Remote"
+      ::= { eventsV2 3 }
+
+    
+    automaticReadyEvent NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "NetCCUSwitchoverUnit Automatic Ready"
+      ::= { eventsV2 4 }
+
+    
+    automaticChangedEvent NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, loadedTx }
+      STATUS current
+      DESCRIPTION 
+        "NetCCUSwitchoverUnit Automatic Changed"
+      ::= { eventsV2 5 }
+
+    
+    fanWarningEvent NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "NetCCU Fan Warning"
+      ::= { eventsV2 6 }
+
+    
+    boardTemperatureFaultEvent NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS deprecated
+      DESCRIPTION 
+        "NetCCU Mainboard Temperature Fault
+        
+        deprecated: this information is now handled as a warning
+        (boardTemperatureWarningEvent)"
+      ::= { eventsV2 7 }
+
+    
+    powerSupplyEvent NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "NetCCU Power Supply"
+      ::= { eventsV2 8 }
+
+    
+    automaticFaultEvent NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "NetCCUSwitchoverUnit Automatic Fault"
+      ::= { eventsV2 9 }
+
+    
+    inputSwitcherFaultEvent NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "NetCCUSwitchoverUnit Fault Of Input Switcher"
+      ::= { eventsV2 10 }
+
+    
+    internalPowerSupplyWarningEvent NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "NetCCU internal Power Supply warning"
+      ::= { eventsV2 11 }
+
+    
+    externalPowerSupplyWarningEvent NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "NetCCU external Power Supply warning"
+      ::= { eventsV2 12 }
+
+    
+    boardTemperatureWarningEvent NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "NetCCU Mainboard Temperature Warning"
+      ::= { eventsV2 13 }
+
+    
+    eventTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF EventEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains necessary information for handling alarms. 
+        For each alarm you have the following information: 
+        - name (get),
+        - mask to enable/disable sending out (set/get),
+        - priority (set/get) and 
+        - the current state (get only)."
+      ::= { rsXx8000CcuNtxEvents 1 }
+
+    
+    eventEntry OBJECT-TYPE
+      SYNTAX EventEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An event entry always consists of 4 values:
+        - name: an enumerated list of all possible notifications
+        - mask: the corresponding mask (enable/disable)
+        - priority: the corresponding priority (value in range 0..255)
+        - event: the event itself (active/inactive)"
+      INDEX { evtIdx }
+      ::= { eventTable 1 }
+
+    
+    EventEntry ::=
+      SEQUENCE { 
+        evtIdx
+          EventMaxEntryNumber,
+        evtName
+          INTEGER,
+        evtMask
+          EventMask,
+        evtPriority
+          EventPriority,
+        evtState
+          EventState
+       }
+
+    evtIdx OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The event number as integer."
+      ::= { eventEntry 1 }
+
+    
+    evtName OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        summaryFault(1),
+        summaryWarning(2),
+        local(3),
+        automaticReady(4),
+        automaticChanged(5),
+        fanWarning(6),
+        boardTemperatureFault(7),
+        powerSupply(8),
+        automaticFault(9),
+        inputSwitcherFault(10),
+        internalPowerSupplyWarning(11),
+        externalPowerSupplyWarning(12),
+        boardTemperatureWarning(13)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The event number as integer and the value as readable text."
+      ::= { eventEntry 2 }
+
+    
+    evtMask OBJECT-TYPE
+      SYNTAX EventMask
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventEntry 3 }
+
+    
+    evtPriority OBJECT-TYPE
+      SYNTAX EventPriority
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventEntry 4 }
+
+    
+    evtState OBJECT-TYPE
+      SYNTAX EventState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventEntry 5 }
+
+    
+-- *****************************************************************************
+-- **          events program
+-- *****************************************************************************
+    eventProgram OBJECT IDENTIFIER ::= { rsXx8000CcuNtxEvents 3 }
+
+    
+    eventsProgramV2 OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Compatibility to SMIv1."
+      ::= { eventProgram 0 }
+
+    
+    evtProgramRfOn NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "The RF is present for the corresponding program 
+        (independent of which physical tx is sending out the program)."
+      ::= { eventsProgramV2 1 }
+
+    
+    eventsProgramTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF EventsProgramEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains necessary information for handling alarms. 
+        For each alarm you have the following information: 
+        - name (get),
+        - mask to enable/disable sending out (set/get),
+        - priority (set/get) and 
+        - the current state (get only)."
+      ::= { eventProgram 1 }
+
+    
+    eventsProgramEntry OBJECT-TYPE
+      SYNTAX EventsProgramEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An event entry always consists of 4 values:
+        - name: an enumerated list of all possible notifications
+        - mask: the corresponding mask (enable/disable)
+        - priority: the corresponding priority (value in range 0..255)
+        - event: the event itself (active/inactive)"
+      INDEX { eventProgramIdx, eventProgramNameIdx }
+      ::= { eventsProgramTable 1 }
+
+    
+    EventsProgramEntry ::=
+      SEQUENCE { 
+        eventProgramIdx
+          EventMaxEntryNumber,
+        eventProgramNameIdx
+          EventMaxEntryNumber,
+        eventProgramName
+          INTEGER,
+        eventProgramMask
+          EventMask,
+        eventProgramPriority
+          EventPriority,
+        eventProgramEvent
+          EventState
+       }
+
+    eventProgramIdx OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The event number as integer."
+      ::= { eventsProgramEntry 1 }
+
+    
+    eventProgramNameIdx OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The event number as integer.
+        This is a helper column and therefore not-accessible."
+      ::= { eventsProgramEntry 2 }
+
+    
+    eventProgramName OBJECT-TYPE
+      SYNTAX INTEGER { programRfOn(1) }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The event number as integer and the value as readable text."
+      ::= { eventsProgramEntry 3 }
+
+    
+    eventProgramMask OBJECT-TYPE
+      SYNTAX EventMask
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsProgramEntry 4 }
+
+    
+    eventProgramPriority OBJECT-TYPE
+      SYNTAX EventPriority
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsProgramEntry 5 }
+
+    
+    eventProgramEvent OBJECT-TYPE
+      SYNTAX EventState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsProgramEntry 6 }
+
+    
+    rsXx8000CcuNtxConf OBJECT IDENTIFIER ::= { rsXx8000CcuNtx 5 }
+
+    
+    rsXx8000CcuNtxGroups OBJECT IDENTIFIER ::= { rsXx8000CcuNtxConf 1 }
+
+    
+    groupNsuObjs OBJECT-GROUP
+      OBJECTS { operationModeAutomatic, operationModePriority, selectedTxToDummyLoad, selectedInputTxB, selectedParametersetTxB, 
+        selectedChannelTxB, resetAllFaults, automaticReady, automaticChanged, automaticFault, 
+        readyAfterChangeover, resetOnProgramOff, delayTime, deviceTemperature, powerSupply, 
+        currentParametersetTxB, currentInputTxB, loadedTx, programPriority, programOperationMode, 
+        additionalPowerSupply, programRfOn, summaryFault, summaryWarning, localMode
+         }
+      STATUS current
+      DESCRIPTION 
+        "Group for all objects of the designated NSU (NetCCU Switchover Unit)."
+      ::= { rsXx8000CcuNtxGroups 1 }
+
+    
+    groupNTxObjs OBJECT-GROUP
+      OBJECTS { resetAllFaults, summaryFault, summaryWarning, localMode, powerSupply, 
+        deviceTemperature, additionalPowerSupply }
+      STATUS current
+      DESCRIPTION 
+        "Group for all objects for the NetCCU controlling N transmitters."
+      ::= { rsXx8000CcuNtxGroups 2 }
+
+    
+    groupLogbook OBJECT-GROUP
+      OBJECTS { numberOfEntries, logbookClear, logbookEntryNbr, logbookType, logbookSlope, 
+        logbookMessage, logbookDateTime }
+      STATUS current
+      DESCRIPTION 
+        "Group for all objects of the logbook of the NetCCU."
+      ::= { rsXx8000CcuNtxGroups 3 }
+
+    
+    groupNsuEvents NOTIFICATION-GROUP
+      NOTIFICATIONS { summaryFaultEvent, summaryWarningEvent, localEvent, automaticReadyEvent, automaticChangedEvent, 
+        fanWarningEvent, powerSupplyEvent, automaticFaultEvent, inputSwitcherFaultEvent, boardTemperatureWarningEvent
+         }
+      STATUS current
+      DESCRIPTION 
+        "Group for all events of the NSU (NetCCU Switchover Unit)."
+      ::= { rsXx8000CcuNtxGroups 4 }
+
+    
+    groupNTxEvents NOTIFICATION-GROUP
+      NOTIFICATIONS { summaryFaultEvent, summaryWarningEvent, localEvent, fanWarningEvent, powerSupplyEvent, 
+        boardTemperatureWarningEvent }
+      STATUS current
+      DESCRIPTION 
+        "Group for all events for the NetCCU controlling N transmitters."
+      ::= { rsXx8000CcuNtxGroups 5 }
+
+    
+    groupEventsAdditionalPowerSupply NOTIFICATION-GROUP
+      NOTIFICATIONS { internalPowerSupplyWarningEvent, externalPowerSupplyWarningEvent }
+      STATUS current
+      DESCRIPTION 
+        "Events that are available only when additionalPowerSupply is true."
+      ::= { rsXx8000CcuNtxGroups 6 }
+
+    
+    groupObjsAdditionalPowerSupply OBJECT-GROUP
+      OBJECTS { internalPowerSupply, externalPowerSupply }
+      STATUS current
+      DESCRIPTION 
+        "Objects that are available only when additionalPowerSupply is true."
+      ::= { rsXx8000CcuNtxGroups 7 }
+
+    
+    groupTxObjsProductInfo OBJECT-GROUP
+      OBJECTS { prodInfoModuleName, prodInfoSerialNumber, prodInfoIdentNumberSW, prodInfoVersionNumberSW, prodInfoIdentNumberHW, 
+        prodInfoVersionNumberHW, productInfoProductDateHW }
+      STATUS current
+      DESCRIPTION 
+        "Group for ProductInfoTable of transmitters."
+      ::= { rsXx8000CcuNtxGroups 50 }
+
+    
+    groupEventTable OBJECT-GROUP
+      OBJECTS { evtName, evtMask, evtPriority, evtState, eventProgramName, 
+        eventProgramMask, eventProgramPriority, eventProgramEvent }
+      STATUS current
+      DESCRIPTION 
+        "Group for all objects of the event table."
+      ::= { rsXx8000CcuNtxGroups 90 }
+
+    
+    groupEventsObsoleted NOTIFICATION-GROUP
+      NOTIFICATIONS { boardTemperatureFaultEvent }
+      STATUS obsolete
+      DESCRIPTION 
+        "Obsoleted or deprecated events."
+      ::= { rsXx8000CcuNtxGroups 91 }
+
+    
+    groupProgramEvents NOTIFICATION-GROUP
+      NOTIFICATIONS { evtProgramRfOn }
+      STATUS current
+      DESCRIPTION 
+        "Group for all events of the program information."
+      ::= { rsXx8000CcuNtxGroups 92 }
+
+    
+    rsXx8000CcuNtxCompls OBJECT IDENTIFIER ::= { rsXx8000CcuNtxConf 2 }
+
+    
+    rsXx8000Nsu MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "The NetCCU is used as a switchover unit for a N+1 system."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupNsuObjs, groupNsuEvents, groupTxObjsProductInfo, groupProgramEvents, groupEventTable, 
+          groupLogbook }
+        GROUP groupEventsAdditionalPowerSupply
+          DESCRIPTION 
+            "only when additionalPowerSupply is true"
+        GROUP groupObjsAdditionalPowerSupply
+          DESCRIPTION 
+            "only when additionalPowerSupply is true"
+        OBJECT selectedInputTxB
+          MIN-ACCESS read-only
+          DESCRIPTION 
+            "For DAB systems the access is read-only."
+      ::= { rsXx8000CcuNtxCompls 1 }
+
+    
+    rsXx8000NTx MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "The NetCCU is used to control N transmitters."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupNTxEvents, groupEventTable, groupNTxObjs, groupLogbook }
+        GROUP groupEventsAdditionalPowerSupply
+          DESCRIPTION 
+            "only when additionalPowerSupply is true"
+        GROUP groupObjsAdditionalPowerSupply
+          DESCRIPTION 
+            "only when additionalPowerSupply is true"
+      ::= { rsXx8000CcuNtxCompls 2 }
+
+    
+  
+  END

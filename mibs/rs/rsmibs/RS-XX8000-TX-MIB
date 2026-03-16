@@ -1,0 +1,3833 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **
+-- **  COPYRIGHT      (c) 2006 Rohde & Schwarz GmbH & Co. KG
+-- **                          Muehldorfstrasse 15
+-- **    R & S                 D-81671 Muenchen
+-- **
+-- *****************************************************************************
+-- **
+-- **  MODULE         RS-XX8000-TX-MIB
+-- **
+-- **  DESCRIPTION    Rohde & Schwarz SNMP
+-- **
+-- **  HISTORY
+-- **
+-- **  2008-12-12 ks - initial version
+-- **  2009-03-30 ks - txRackProbeNotCalibrated added
+-- **                - txParamSetSubDeviceDiffers obsoleted
+-- **  2009-05-28 ks - information for additional (external) power supply added
+-- **                - txRackRfOn, txRackRfOk, txRackTemperatureWarning added
+-- **  2009-06-26 ks - consideration of face-lift configuration in module compliances
+-- **                - measured values for power supply added
+-- **                - conditional groupDummyLoadRF added
+-- **  2009-10-08 ks - txRackOvervoltProtectWarning added
+-- **  2009-11-13 ks - ampDeltaPhase, ampCmdDeltaPhase added
+-- **  2010-01-29 ks - txNetCCUBoardTemperatureFault deprecated,
+-- **                  txNetCCUBoardTemperatureWarning added
+-- **  2010-05-21 ks - cmdTxRfSwitch added
+-- **  2010-10-11 ks - statusTxExcSwitch, statusTxOstSwitch added
+-- **  2011-02-25 ks - Amplifier status for Sx801/SA801 added.
+-- **  2011-03-04 ks - statusTxNoConnectionApaIf, statusTxAbsorberFault,
+-- **                  txNoConnectionApaIf, txAbsorberFault added
+-- **  2012-08-31 ks - sx801AmplifierTable measured values added
+-- **
+-- *****************************************************************************
+-- *****************************************************************************
+
+    RS-XX8000-TX-MIB DEFINITIONS ::= BEGIN
+ 
+        IMPORTS
+            rsXx8000, eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, 
+            indexAB, indexRack, indexAmplifier, rsXx8000MibModule, EventPriority, 
+            EventClass, EventState, IndexTransmitter, IndexAB, IndexRack, 
+            IndexAmplifier, Trigger, SwitchOnOff, FloatingPoint, LogbookMaxEntryNumber, 
+            LogbookEntrySlope, LogbookEntryMessagesNetCCU, LogbookEntryMessagesOST, ProdInfoModuleNameTv, ReadableString, 
+            EventMaxEntryNumber, EventMask, Sx801AmplifierState            
+                FROM RS-XX8000-COMMON-MIB            
+            OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP            
+                FROM SNMPv2-CONF            
+            Integer32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, NOTIFICATION-TYPE            
+                FROM SNMPv2-SMI            
+            TruthValue, DateAndTime            
+                FROM SNMPv2-TC;
+    
+    
+        rsXx8000TxMibModule MODULE-IDENTITY 
+            LAST-UPDATED "201208310800Z"		-- August 31, 2012 at 08:00 GMT
+            ORGANIZATION 
+                "Rohde&Schwarz GmbH & Co. KG"
+            CONTACT-INFO 
+                "Torsten Huebscher
+                Department 7TS2
+                Broadcasting Division
+                Muehldorfstrasse 15
+                81671 Munich, Germany
+                torsten.huebscher@rohde-schwarz.com"
+            DESCRIPTION 
+                "This MIB defines transmitting systems from Rohde & Schwarz.
+                
+                Use this MIB if your system meets the following requirements:
+                - series XX8000 (NetCCU800),
+                
+                The following MIBs are related to this:
+                - RS-COMMON-MIB         - mandatory for this MIB
+                - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+            REVISION "201208310800Z"		-- August 31, 2012 at 08:00 GMT
+            DESCRIPTION 
+                "sx801AmplifierTable measured values added"
+            REVISION "201103040800Z"		-- March 04, 2011 at 08:00 GMT
+            DESCRIPTION 
+                "statusTxNoConnectionApaIf, statusTxAbsorberFault,
+                txNoConnectionApaIf, txAbsorberFault added"
+            REVISION "201102250800Z"		-- February 25, 2011 at 08:00 GMT
+            DESCRIPTION 
+                "Amplifier status for Sx801/SA801 added."
+            REVISION "201010110800Z"		-- October 11, 2010 at 08:00 GMT
+            DESCRIPTION 
+                "statusTxExcSwitch, statusTxOstSwitch added"
+            REVISION "201005210800Z"		-- May 21, 2010 at 08:00 GMT
+            DESCRIPTION 
+                "cmdTxRfSwitch added"
+            REVISION "201001290800Z"		-- January 29, 2010 at 08:00 GMT
+            DESCRIPTION 
+                "txNetCCUBoardTemperatureFault deprecated,
+                txNetCCUBoardTemperatureWarning added"
+            REVISION "200911130800Z"		-- November 13, 2009 at 08:00 GMT
+            DESCRIPTION 
+                "ampDeltaPhase, ampCmdDeltaPhase added"
+            REVISION "200910080800Z"		-- October 08, 2009 at 08:00 GMT
+            DESCRIPTION 
+                "txRackOvervoltProtectWarning added"
+            REVISION "200906260800Z"		-- June 26, 2009 at 08:00 GMT
+            DESCRIPTION 
+                "consideration of face-lift configuration in module compliances,
+                measured values for power supply added,
+                conditional groupDummyLoadRF added"
+            REVISION "200905280900Z"		-- May 28, 2009 at 09:00 GMT
+            DESCRIPTION 
+                "information for additional (external) power supply added
+                txRackRfOn, txRackRfOk, txRackTemperatureWarning added"
+            REVISION "200903300900Z"		-- March 30, 2009 at 09:00 GMT
+            DESCRIPTION 
+                "txRackProbeNotCalibrated added
+                txParamSetSubDeviceDiffers obsoleted"
+            REVISION "200812121430Z"		-- December 12, 2008 at 14:30 GMT
+            DESCRIPTION 
+                "initial revision"
+            ::= { rsXx8000MibModule 201 }
+
+        
+    
+    
+--
+-- Node definitions
+--
+    
+        rsXx8000Tx OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION 
+                "Xx8000 transmitter.
+                Several transmitters can be addressed via the cmdTxIdx."
+            ::= { rsXx8000 201 }
+
+        
+-- *****************************************************************************
+-- **          object definitions
+-- *****************************************************************************
+        rsXx8000TxObjs OBJECT IDENTIFIER ::= { rsXx8000Tx 1 }
+
+        
+        commandsTxTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF CommandsTxEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This table contains important commands for the transmitter."
+            ::= { rsXx8000TxObjs 1 }
+
+        
+        commandsTxEntry OBJECT-TYPE
+            SYNTAX CommandsTxEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the commandsTxTable."
+            INDEX { cmdTxIdx }
+            ::= { commandsTxTable 1 }
+
+        
+        CommandsTxEntry ::=
+            SEQUENCE { 
+                cmdTxIdx
+                    IndexTransmitter,
+                cmdTxName
+                    IndexTransmitter,
+                cmdTxResetSumFault
+                    Trigger,
+                cmdTxParametersetLoad
+                    Integer32,
+                cmdTxParametersetSave
+                    Integer32,
+                cmdTxOperationModeProgram
+                    SwitchOnOff,
+                cmdTxOperationModeReserve
+                    SwitchOnOff,
+                cmdTxOpModeExcAutomatic
+                    SwitchOnOff,
+                cmdTxOpModeOstAutomatic
+                    SwitchOnOff,
+                cmdTxPreselectExciter
+                    IndexAB,
+                cmdTxPreselectOutputstage
+                    INTEGER,
+                cmdTxDelayTimeExcAutomatic
+                    Integer32,
+                cmdTxDelayTimeOstAutomatic
+                    Integer32,
+                cmdTxRfSwitch
+                    INTEGER
+             }
+
+        cmdTxIdx OBJECT-TYPE
+            SYNTAX IndexTransmitter
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The transmitter index. "
+            ::= { commandsTxEntry 1 }
+
+        
+        cmdTxName OBJECT-TYPE
+            SYNTAX IndexTransmitter
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This is the logical name for the transmitter."
+            ::= { commandsTxEntry 2 }
+
+        
+        cmdTxResetSumFault OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Reset all faults (in all modules) of the transmitter.
+                
+                You reset a designated transmitter (NetCCU, Exciters, Outputstages).
+                An equivalent would be pressing RESET at this transmitters frontpanel.
+                
+                A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+            ::= { commandsTxEntry 3 }
+
+        
+        cmdTxParametersetLoad OBJECT-TYPE
+            SYNTAX Integer32 (1..8)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This loads the desired parameter set."
+            ::= { commandsTxEntry 4 }
+
+        
+        cmdTxParametersetSave OBJECT-TYPE
+            SYNTAX Integer32 (1..8)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This saves the current settings to a designated parameter set."
+            ::= { commandsTxEntry 5 }
+
+        
+        cmdTxOperationModeProgram OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This switches the program path of the transmitter on/off."
+            ::= { commandsTxEntry 7 }
+
+        
+        cmdTxOperationModeReserve OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This switches the reserve path of the transmitter on/off."
+            ::= { commandsTxEntry 8 }
+
+        
+        cmdTxOpModeExcAutomatic OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This switches the exciter automatic on/off."
+            ::= { commandsTxEntry 9 }
+
+        
+        cmdTxOpModeOstAutomatic OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This switches the outputstage automatic on/off.
+                
+                This paramter is only available for systems with an automatic output switch."
+            ::= { commandsTxEntry 10 }
+
+        
+        cmdTxPreselectExciter OBJECT-TYPE
+            SYNTAX IndexAB
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets exciterA or exciterB to program path (antenna) of the transmitter."
+            ::= { commandsTxEntry 11 }
+
+        
+        cmdTxPreselectOutputstage OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                outputstageA(1),
+                outputstageB(2),
+                bothToAntenna(3),
+                bothToDummyLoad(4)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets
+                - outputstageA or
+                - outputstageB or
+                - both
+                to program path (antenna) of the transmitter,
+                or it sets both to dummyload.
+                
+                The settings bothToAntenna(3) and bothToDummyLoad(4) are only settable
+                for ActiveReserve systems.
+                
+                This paramter is only available for systems with an automatic output switch."
+            ::= { commandsTxEntry 12 }
+
+        
+        cmdTxDelayTimeExcAutomatic OBJECT-TYPE
+            SYNTAX Integer32 (1..60)
+            UNITS "seconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the exciter automatic delay time."
+            ::= { commandsTxEntry 13 }
+
+        
+        cmdTxDelayTimeOstAutomatic OBJECT-TYPE
+            SYNTAX Integer32 (1..60)
+            UNITS "seconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the outputstage automatic delay time.
+                
+                This paramter is only available for systems with an automatic output switch."
+            ::= { commandsTxEntry 14 }
+
+        
+        cmdTxRfSwitch OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                antenna(1),
+                dummyLoad(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "RF switch for single-ended systems."
+            ::= { commandsTxEntry 15 }
+
+        
+        statusTxTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF StatusTxEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This table shows overall information for all transmitters."
+            ::= { rsXx8000TxObjs 2 }
+
+        
+        statusTxEntry OBJECT-TYPE
+            SYNTAX StatusTxEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated transmitter."
+            AUGMENTS { commandsTxEntry }
+            ::= { statusTxTable 1 }
+
+        
+        StatusTxEntry ::=
+            SEQUENCE { 
+                statusTxName
+                    IndexTransmitter,
+                statusTxNoConnection
+                    TruthValue,
+                statusTxSummaryFault
+                    TruthValue,
+                statusTxSummaryWarning
+                    TruthValue,
+                statusTxLocalMode
+                    TruthValue,
+                statusTxRfOn
+                    TruthValue,
+                statusTxToBeChanged
+                    TruthValue,
+                statusTxChangeable
+                    TruthValue,
+                statusTxForwardPower
+                    FloatingPoint,
+                statusTxReflectedPower
+                    FloatingPoint,
+                statusTxSummaryFaultExcA
+                    TruthValue,
+                statusTxSummaryFaultOstA
+                    TruthValue,
+                statusTxSummaryFaultExcB
+                    TruthValue,
+                statusTxSummaryFaultOstB
+                    TruthValue,
+                statusTxExciterAutomaticReady
+                    TruthValue,
+                statusTxExciterAutomaticChanged
+                    TruthValue,
+                statusTxExciterAutomaticFault
+                    TruthValue,
+                statusTxOstAutomaticReady
+                    TruthValue,
+                statusTxOstAutomaticChanged
+                    TruthValue,
+                statusTxOstAutomaticFault
+                    TruthValue,
+                statusTxNoConnectionExcA
+                    TruthValue,
+                statusTxNoConnectionOstA
+                    TruthValue,
+                statusTxNoConnectionExcB
+                    TruthValue,
+                statusTxNoConnectionOstB
+                    TruthValue,
+                statusTxActiveExcA
+                    TruthValue,
+                statusTxActiveOstA
+                    TruthValue,
+                statusTxActiveExcB
+                    TruthValue,
+                statusTxActiveOstB
+                    TruthValue,
+                statusTxExcSwitch
+                    INTEGER,
+                statusTxOstSwitch
+                    INTEGER,
+                statusTxNoConnectionApaIf
+                    TruthValue,
+                statusTxAbsorberFault
+                    TruthValue,
+                statusTxPowerSupply
+                    FloatingPoint,
+                statusTxAdditionalPowerSupply
+                    TruthValue,
+                statusTxInternalPowerSupply
+                    FloatingPoint,
+                statusTxExternalPowerSupply
+                    FloatingPoint
+             }
+
+        statusTxName OBJECT-TYPE
+            SYNTAX IndexTransmitter
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This is the logical name for the transmitters.
+                The reserve transmitter (TxB) always is shown as the first line of a table.
+                The other (main, program) transmitters (TxA1, TxA2...) are following."
+            ::= { statusTxEntry 2 }
+
+        
+        statusTxNoConnection OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "No connection between NSU and transmitter."
+            ::= { statusTxEntry 3 }
+
+        
+        statusTxSummaryFault OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This indicates a summary fault of the transmitter.
+                true(1)  --> summary fault
+                false(2) --> no summary fault
+                
+                There is a fault of at least one module (e.g. Exciter) which causes this summary fault.
+                
+                An equivalent would be the LED Fault at the transmitters frontpanel."
+            ::= { statusTxEntry 4 }
+
+        
+        statusTxSummaryWarning OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This indicates a summary warning of the transmitter.
+                true(1)  --> summary warning
+                false(2) --> no summary warning
+                
+                There is a fault of at least one module (e.g. Exciter) which causes this summary warning.
+                
+                An equivalent would be the LED Warning at the transmitters frontpanel."
+            ::= { statusTxEntry 5 }
+
+        
+        statusTxLocalMode OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This indicates the local/remote-mode of the transmitter.
+                true(1)  --> local
+                false(2) --> remote
+                
+                The transmitter is eigther in local-mode or in remote-mode.
+                For security reasons it is not possible to set this value!
+                
+                An equivalent would the LED Local at the transmitters frontpanel."
+            ::= { statusTxEntry 6 }
+
+        
+        statusTxRfOn OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows whether RF is present for the corresponding transmitter."
+            ::= { statusTxEntry 7 }
+
+        
+        statusTxToBeChanged OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Tx is to be changed."
+            ::= { statusTxEntry 8 }
+
+        
+        statusTxChangeable OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Tx is changeable."
+            ::= { statusTxEntry 9 }
+
+        
+        statusTxForwardPower OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Watt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The measured forwarded power [W]."
+            ::= { statusTxEntry 13 }
+
+        
+        statusTxReflectedPower OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Watt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The measured reflected power [W] (not available for lowpower)."
+            ::= { statusTxEntry 14 }
+
+        
+        statusTxSummaryFaultExcA OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This indicates a summary fault of exciter."
+            ::= { statusTxEntry 15 }
+
+        
+        statusTxSummaryFaultOstA OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This indicates a summary fault of outputstage."
+            ::= { statusTxEntry 16 }
+
+        
+        statusTxSummaryFaultExcB OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This indicates a summary fault of exciter."
+            ::= { statusTxEntry 17 }
+
+        
+        statusTxSummaryFaultOstB OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This indicates a summary fault of outputstage."
+            ::= { statusTxEntry 18 }
+
+        
+        statusTxExciterAutomaticReady OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Exciter Automatic is Ready.
+                In case of any fault on one exciter, there will be a switchover to the other exciter."
+            ::= { statusTxEntry 19 }
+
+        
+        statusTxExciterAutomaticChanged OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Exciter Automatic has changed.
+                There was a fault on one exciter which lead to this changeover."
+            ::= { statusTxEntry 20 }
+
+        
+        statusTxExciterAutomaticFault OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Exciter Automatic is faulty.
+                In case of any fault on one exciter, there will be no switchover to the other exciter,
+                because of this fault."
+            ::= { statusTxEntry 21 }
+
+        
+        statusTxOstAutomaticReady OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Outputstage Automatic is Ready.
+                In case of any fault on one outputstage, there will be a switchover to the other outputstage.
+                
+                This paramter is only available for systems with an automatic output switch."
+            ::= { statusTxEntry 22 }
+
+        
+        statusTxOstAutomaticChanged OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Outputstage Automatic has changed.
+                There was a fault on one outputstage which lead to this changeover.
+                
+                This paramter is only available for systems with an automatic output switch."
+            ::= { statusTxEntry 23 }
+
+        
+        statusTxOstAutomaticFault OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Outputstage Automatic is faulty.
+                In case of any fault on one outputstage, there will be no switchover to the other outputstage,
+                because of this fault.
+                
+                This paramter is only available for systems with an automatic output switch."
+            ::= { statusTxEntry 24 }
+
+        
+        statusTxNoConnectionExcA OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "No Connection between NetCCU and Exciter."
+            ::= { statusTxEntry 25 }
+
+        
+        statusTxNoConnectionOstA OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "No Connection between NetCCU and Outputstage."
+            ::= { statusTxEntry 26 }
+
+        
+        statusTxNoConnectionExcB OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "No Connection between NetCCU and Exciter."
+            ::= { statusTxEntry 27 }
+
+        
+        statusTxNoConnectionOstB OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "No Connection between NetCCU and Outputstage."
+            ::= { statusTxEntry 28 }
+
+        
+        statusTxActiveExcA OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "ExciterA is currently active."
+            ::= { statusTxEntry 29 }
+
+        
+        statusTxActiveOstA OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "OutputstageA is currently active."
+            ::= { statusTxEntry 30 }
+
+        
+        statusTxActiveExcB OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "ExciterB is currently active."
+            ::= { statusTxEntry 31 }
+
+        
+        statusTxActiveOstB OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "OutputstageB is currently active."
+            ::= { statusTxEntry 32 }
+
+        
+        statusTxExcSwitch OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                fault(1),
+                excAToOstA(2),
+                excBToOstA(3),
+                excAToBothOst(4),
+                excBToBothOst(5)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Current state of the exciter RF switch.
+                
+                In a PassivePa or ActivePa system
+                value excAToOstA(2) implies that exciter B is connected to output stage B;
+                and
+                value excBToOstA(3) implies that exciter A is connected to output stage B.
+                
+                When the system is not SingleTx there is a corresponding preselection object:
+                cmdTxPreselectExciter."
+            ::= { statusTxEntry 33 }
+
+        
+        statusTxOstSwitch OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                fault(1),
+                ostAToAntenna(2),
+                ostBToAntenna(3),
+                bothToAntenna(4),
+                bothToDummyLoad(5),
+                undefined(6)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Current state of the output stage RF switch.
+                
+                In a PassivePa or ActivePa system
+                value ostAToAntenna(2) implies that output stage B is connected to dummy load;
+                and
+                value ostBToAntenna(3) implies that output stage A is connected to dummy load.
+                
+                When the system is PassivePa or ActivePa with an automatic power switch
+                there is a corresponding preselection object: cmdTxPreselectExciter."
+            ::= { statusTxEntry 34 }
+
+        
+        statusTxNoConnectionApaIf OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "NetCCU can not communicate to the APA-Interface."
+            ::= { statusTxEntry 35 }
+
+        
+        statusTxAbsorberFault OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Absorber fault occurred.
+                "
+            ::= { statusTxEntry 36 }
+
+        
+        statusTxPowerSupply OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Monitoring value of the output voltages of the power supply."
+            ::= { statusTxEntry 37 }
+
+        
+        statusTxAdditionalPowerSupply OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows whether the NetCCU has an additional (external) power supply."
+            ::= { statusTxEntry 38 }
+
+        
+        statusTxInternalPowerSupply OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Monitoring value of the output voltages of the internal power supply."
+            ::= { statusTxEntry 39 }
+
+        
+        statusTxExternalPowerSupply OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Monitoring value of the output voltages of the external power supply."
+            ::= { statusTxEntry 40 }
+
+        
+        commandsOstTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF CommandsOstEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This table contains important commands for the output stage."
+            ::= { rsXx8000TxObjs 3 }
+
+        
+        commandsOstEntry OBJECT-TYPE
+            SYNTAX CommandsOstEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the commandsOstTable."
+            INDEX { cmdTxIdx, cmdDeviceIdx }
+            ::= { commandsOstTable 1 }
+
+        
+        CommandsOstEntry ::=
+            SEQUENCE { 
+                cmdDeviceIdx
+                    IndexAB,
+                cmdOstRefVoltageVision
+                    FloatingPoint,
+                cmdOstMaxOutletTempThreshold
+                    Integer32
+             }
+
+        cmdDeviceIdx OBJECT-TYPE
+            SYNTAX IndexAB
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This column is used to show parameters for both output stages,
+                if you have transmitters with power reserve."
+            ::= { commandsOstEntry 1 }
+
+        
+        cmdOstRefVoltageVision OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Percent"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This adjusts the output power of the amplifier.
+                This value is settable witch maximal 1 position after point (example 11.2)."
+            ::= { commandsOstEntry 2 }
+
+        
+        cmdOstMaxOutletTempThreshold OBJECT-TYPE
+            SYNTAX Integer32 (45..65)
+            UNITS "Degree Celsius"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the threshold for the outlet temperature."
+            ::= { commandsOstEntry 3 }
+
+        
+        statusOstTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF StatusOstEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This table shows overall information for all output stages."
+            ::= { rsXx8000TxObjs 4 }
+
+        
+        statusOstEntry OBJECT-TYPE
+            SYNTAX StatusOstEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the statusOstTable."
+            AUGMENTS { commandsOstEntry }
+            ::= { statusOstTable 1 }
+
+        
+        StatusOstEntry ::=
+            SEQUENCE { 
+                statusOstForwardPower
+                    FloatingPoint,
+                statusOstReflectedPower
+                    FloatingPoint
+             }
+
+        statusOstForwardPower OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Watt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The measured forwarded power [W] of the Outputstage."
+            ::= { statusOstEntry 1 }
+
+        
+        statusOstReflectedPower OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Watt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The measured reflected power [W] of the Outputstage.
+                
+                Not available for lowpower systems."
+            ::= { statusOstEntry 2 }
+
+        
+        rfProbesTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF RfProbesEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This table contains all commands for the RF probes."
+            ::= { rsXx8000TxObjs 5 }
+
+        
+        rfProbesEntry OBJECT-TYPE
+            SYNTAX RfProbesEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated transmitter and device."
+            AUGMENTS { commandsOstEntry }
+            ::= { rfProbesTable 1 }
+
+        
+        RfProbesEntry ::=
+            SEQUENCE { 
+                rfProbesNetCCURfProbe1
+                    FloatingPoint,
+                rfProbesNetCCURfProbe2
+                    FloatingPoint,
+                rfProbesAntFwdNominal
+                    FloatingPoint,
+                rfProbesAntFwdWarningLimit
+                    FloatingPoint,
+                rfProbesAntFwdFailLimit
+                    FloatingPoint,
+                rfProbesAntFwdDelayTimeRfFail
+                    Integer32,
+                rfProbesAntFwdSetOffset
+                    Trigger,
+                rfProbesAntFwdSetGain
+                    Trigger,
+                rfProbesAntReflWarningLimit
+                    FloatingPoint,
+                rfProbesAntReflSetOffset
+                    Trigger,
+                rfProbesAntReflSetGain
+                    Trigger,
+                rfProbesDLFwdNominal
+                    FloatingPoint,
+                rfProbesDLFwdWarningLimit
+                    FloatingPoint,
+                rfProbesDLFwdFailLimit
+                    FloatingPoint,
+                rfProbesDLFwdDelayTimeRfFail
+                    Integer32,
+                rfProbesDLFwdSetOffset
+                    Trigger,
+                rfProbesDLFwdSetGain
+                    Trigger,
+                rfProbesDLReflWarningLimit
+                    FloatingPoint,
+                rfProbesDLReflSetOffset
+                    Trigger,
+                rfProbesDLReflSetGain
+                    Trigger,
+                rfProbesOstFwdNominal
+                    FloatingPoint,
+                rfProbesOstFwdWarningLimit
+                    FloatingPoint,
+                rfProbesOstFwdFailLimit
+                    FloatingPoint,
+                rfProbesOstFwdDelayTimeRfFail
+                    Integer32,
+                rfProbesOstFwdSetOffset
+                    Trigger,
+                rfProbesOstFwdSetGain
+                    Trigger,
+                rfProbesOstReflWarningLimit
+                    FloatingPoint,
+                rfProbesOstReflSetOffset
+                    Trigger,
+                rfProbesOstReflSetGain
+                    Trigger
+             }
+
+        rfProbesNetCCURfProbe1 OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Current voltage on RF Probe 1."
+            ::= { rfProbesEntry 1 }
+
+        
+        rfProbesNetCCURfProbe2 OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Current voltage on RF Probe 2."
+            ::= { rfProbesEntry 2 }
+
+        
+        rfProbesAntFwdNominal OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Watt"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the nominal value [W] of the transmitter (to antenna)."
+            ::= { rfProbesEntry 3 }
+
+        
+        rfProbesAntFwdWarningLimit OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the warning limit for the transmitters RF control (to antenna)."
+            ::= { rfProbesEntry 4 }
+
+        
+        rfProbesAntFwdFailLimit OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the fault limit for the transmitters RF control (to antenna)."
+            ::= { rfProbesEntry 5 }
+
+        
+        rfProbesAntFwdDelayTimeRfFail OBJECT-TYPE
+            SYNTAX Integer32 (1..20)
+            UNITS "seconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the delay time for the RF Fail control (to antenna)."
+            ::= { rfProbesEntry 6 }
+
+        
+        rfProbesAntFwdSetOffset OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This triggers Set Offset."
+            ::= { rfProbesEntry 7 }
+
+        
+        rfProbesAntFwdSetGain OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This triggers Set Gain."
+            ::= { rfProbesEntry 8 }
+
+        
+        rfProbesAntReflWarningLimit OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the warning limit for the transmitters reflection control (to antenna)."
+            ::= { rfProbesEntry 9 }
+
+        
+        rfProbesAntReflSetOffset OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This triggers Set Offset."
+            ::= { rfProbesEntry 10 }
+
+        
+        rfProbesAntReflSetGain OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This triggers Set Gain."
+            ::= { rfProbesEntry 11 }
+
+        
+        rfProbesDLFwdNominal OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Watt"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the nominal value [W] of the transmitter (to dummyload)."
+            ::= { rfProbesEntry 12 }
+
+        
+        rfProbesDLFwdWarningLimit OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the warning limit for the transmitters RF control (to dummyload)."
+            ::= { rfProbesEntry 13 }
+
+        
+        rfProbesDLFwdFailLimit OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the fault limit for the transmitters RF control (to dummyload)."
+            ::= { rfProbesEntry 14 }
+
+        
+        rfProbesDLFwdDelayTimeRfFail OBJECT-TYPE
+            SYNTAX Integer32 (1..20)
+            UNITS "seconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the delay time for the RF Fail control (to dummyload)."
+            ::= { rfProbesEntry 15 }
+
+        
+        rfProbesDLFwdSetOffset OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This triggers Set Offset."
+            ::= { rfProbesEntry 16 }
+
+        
+        rfProbesDLFwdSetGain OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This triggers Set Gain."
+            ::= { rfProbesEntry 17 }
+
+        
+        rfProbesDLReflWarningLimit OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the warning limit for the transmitters reflection control (to dummyload)."
+            ::= { rfProbesEntry 18 }
+
+        
+        rfProbesDLReflSetOffset OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This triggers Set Offset."
+            ::= { rfProbesEntry 19 }
+
+        
+        rfProbesDLReflSetGain OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This triggers Set Gain."
+            ::= { rfProbesEntry 20 }
+
+        
+        rfProbesOstFwdNominal OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Watt"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the nominal value [W] of the outputstage."
+            ::= { rfProbesEntry 22 }
+
+        
+        rfProbesOstFwdWarningLimit OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the warning limit for the outputstage RF control."
+            ::= { rfProbesEntry 23 }
+
+        
+        rfProbesOstFwdFailLimit OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the fault limit for the outputstage RF control."
+            ::= { rfProbesEntry 24 }
+
+        
+        rfProbesOstFwdDelayTimeRfFail OBJECT-TYPE
+            SYNTAX Integer32 (1..20)
+            UNITS "seconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the delay time for the outputstage RF Fail control."
+            ::= { rfProbesEntry 25 }
+
+        
+        rfProbesOstFwdSetOffset OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This triggers Set Offset."
+            ::= { rfProbesEntry 26 }
+
+        
+        rfProbesOstFwdSetGain OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This triggers Set Gain."
+            ::= { rfProbesEntry 27 }
+
+        
+        rfProbesOstReflWarningLimit OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the warning limit for the outputstage reflection control."
+            ::= { rfProbesEntry 28 }
+
+        
+        rfProbesOstReflSetOffset OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This triggers Set Offset."
+            ::= { rfProbesEntry 29 }
+
+        
+        rfProbesOstReflSetGain OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This triggers Set Gain."
+            ::= { rfProbesEntry 30 }
+
+        
+        rackTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF RackEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The table of racks."
+            ::= { rsXx8000TxObjs 6 }
+
+        
+        rackEntry OBJECT-TYPE
+            SYNTAX RackEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A row (an entry) for one rack."
+            INDEX { cmdTxIdx, cmdDeviceIdx, rackIdx }
+            ::= { rackTable 1 }
+
+        
+        RackEntry ::=
+            SEQUENCE { 
+                rackIdx
+                    IndexRack,
+                rackInletTemperature
+                    FloatingPoint,
+                rackOutletTemperature
+                    FloatingPoint,
+                rackAuxPowerSupply
+                    FloatingPoint
+             }
+
+        rackIdx OBJECT-TYPE
+            SYNTAX IndexRack
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The rack number (1..10)."
+            ::= { rackEntry 1 }
+
+        
+        rackInletTemperature OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Degree Celsius"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The inlet temperature."
+            ::= { rackEntry 3 }
+
+        
+        rackOutletTemperature OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Degree Celsius"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The outlet temperature."
+            ::= { rackEntry 4 }
+
+        
+        rackAuxPowerSupply OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Control voltage of auxiliary power supply of the designated rack.
+                The value should be between 11.1 to 13.2 V."
+            ::= { rackEntry 5 }
+
+        
+        amplifierTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF AmplifierEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The table of amplifiers."
+            ::= { rsXx8000TxObjs 7 }
+
+        
+        amplifierEntry OBJECT-TYPE
+            SYNTAX AmplifierEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A row (an entry) for one rack."
+            INDEX { cmdTxIdx, cmdDeviceIdx, rackIdx, ampIdx }
+            ::= { amplifierTable 1 }
+
+        
+        AmplifierEntry ::=
+            SEQUENCE { 
+                ampIdx
+                    IndexAmplifier,
+                ampI1A
+                    FloatingPoint,
+                ampI2A
+                    FloatingPoint,
+                ampI3A
+                    FloatingPoint,
+                ampI4A
+                    FloatingPoint,
+                ampI1B
+                    FloatingPoint,
+                ampI2B
+                    FloatingPoint,
+                ampI3B
+                    FloatingPoint,
+                ampI4B
+                    FloatingPoint,
+                ampIDrv
+                    FloatingPoint,
+                ampUDc
+                    FloatingPoint,
+                ampIDc
+                    FloatingPoint,
+                ampUDcControl
+                    FloatingPoint,
+                ampUReg
+                    FloatingPoint,
+                ampPowerA
+                    FloatingPoint,
+                ampPowerB
+                    FloatingPoint,
+                ampPowerOut
+                    FloatingPoint,
+                ampPowerReflection
+                    FloatingPoint,
+                ampPowerReference
+                    FloatingPoint,
+                ampDeltaPhase
+                    FloatingPoint,
+                ampCmdDeltaPhase
+                    FloatingPoint
+             }
+
+        ampIdx OBJECT-TYPE
+            SYNTAX IndexAmplifier
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Amplifier Index"
+            ::= { amplifierEntry 1 }
+
+        
+        ampI1A OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The power amplifier module current (I_1A)."
+            ::= { amplifierEntry 401 }
+
+        
+        ampI2A OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The power amplifier module current (I_2A)."
+            ::= { amplifierEntry 402 }
+
+        
+        ampI3A OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The power amplifier module current (I_3A)."
+            ::= { amplifierEntry 403 }
+
+        
+        ampI4A OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The power amplifier module current (I_4A)."
+            ::= { amplifierEntry 404 }
+
+        
+        ampI1B OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The power amplifier module current (I_1B)."
+            ::= { amplifierEntry 405 }
+
+        
+        ampI2B OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The power amplifier module current (I_2B)."
+            ::= { amplifierEntry 406 }
+
+        
+        ampI3B OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The power amplifier module current (I_3B)."
+            ::= { amplifierEntry 407 }
+
+        
+        ampI4B OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The power amplifier module current (I_4B)."
+            ::= { amplifierEntry 408 }
+
+        
+        ampIDrv OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The driver module current (I_DRV)."
+            ::= { amplifierEntry 409 }
+
+        
+        ampUDc OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The power amplifier supply voltage."
+            ::= { amplifierEntry 410 }
+
+        
+        ampIDc OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The power amplifier supply current."
+            ::= { amplifierEntry 411 }
+
+        
+        ampUDcControl OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The power supply control voltage."
+            ::= { amplifierEntry 412 }
+
+        
+        ampUReg OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The power amplifier AGC voltage."
+            ::= { amplifierEntry 413 }
+
+        
+        ampPowerA OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The voltage power detector A."
+            ::= { amplifierEntry 414 }
+
+        
+        ampPowerB OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The voltage power detector B."
+            ::= { amplifierEntry 415 }
+
+        
+        ampPowerOut OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The voltage forward power detector."
+            ::= { amplifierEntry 416 }
+
+        
+        ampPowerReflection OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The voltage reflected power detector."
+            ::= { amplifierEntry 417 }
+
+        
+        ampPowerReference OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The reference voltage for output power."
+            ::= { amplifierEntry 418 }
+
+        
+        ampDeltaPhase OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Percent"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The measured phase delta for output power."
+            ::= { amplifierEntry 419 }
+
+        
+        ampCmdDeltaPhase OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Percent"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The phase delta setting for output power.
+                The range is -50.0% to 50.0%."
+            ::= { amplifierEntry 420 }
+
+        
+        sx801AmplifierTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF Sx801AmplifierEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Amplifier status values for SX801 amplifiers."
+            ::= { rsXx8000TxObjs 8 }
+
+        
+        sx801AmplifierEntry OBJECT-TYPE
+            SYNTAX Sx801AmplifierEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A row (an entry) for one amplifier."
+            INDEX { cmdTxIdx, sx801AmpIdx }
+            ::= { sx801AmplifierTable 1 }
+
+        
+        Sx801AmplifierEntry ::=
+            SEQUENCE { 
+                sx801AmpIdx
+                    IndexAmplifier,
+                sx801AmpRfOut
+                    Sx801AmplifierState,
+                sx801AmpRfIn
+                    Sx801AmplifierState,
+                sx801AmpReflection
+                    INTEGER,
+                sx801AmpOn
+                    INTEGER,
+                sx801AmpAC
+                    Sx801AmplifierState,
+                sx801AmpCommunication
+                    INTEGER,
+                sx801AmpTransistor
+                    Sx801AmplifierState,
+                sx801AmpDriver
+                    Sx801AmplifierState,
+                sx801AmpTemperature
+                    Sx801AmplifierState,
+                sx801AmpBlower
+                    Sx801AmplifierState,
+                sx801AmpRegulation
+                    Sx801AmplifierState,
+                sx801AmpUpdate
+                    TruthValue,
+                sx801Supply1Temperature
+                    Sx801AmplifierState,
+                sx801Supply2Temperature
+                    Sx801AmplifierState,
+                sx801SupplyRTemperature
+                    Sx801AmplifierState,
+                sx801Supply1DC
+                    Sx801AmplifierState,
+                sx801Supply2DC
+                    Sx801AmplifierState,
+                sx801SupplyRDC
+                    Sx801AmplifierState,
+                sx801AmpValueI1
+                    FloatingPoint,
+                sx801AmpValueI2
+                    FloatingPoint,
+                sx801AmpValueI3
+                    FloatingPoint,
+                sx801AmpValueI4
+                    FloatingPoint,
+                sx801AmpValueIPre
+                    FloatingPoint,
+                sx801AmpValueIDrv1
+                    FloatingPoint,
+                sx801AmpValueIDrv2
+                    FloatingPoint,
+                sx801AmpValuePowerOut
+                    FloatingPoint,
+                sx801AmpValueReflection
+                    FloatingPoint,
+                sx801AmpValueVRef
+                    FloatingPoint,
+                sx801AmpValueVReg
+                    FloatingPoint,
+                sx801AmpValueTemperature
+                    FloatingPoint,
+                sx801AmpValueMonAtt
+                    FloatingPoint,
+                sx801AmpValueVAux1
+                    FloatingPoint,
+                sx801AmpValueVAux2
+                    FloatingPoint,
+                sx801Supply1ValuePwr
+                    FloatingPoint,
+                sx801Supply2ValuePwr
+                    FloatingPoint,
+                sx801Supply1ValueDc
+                    FloatingPoint,
+                sx801Supply2ValueDc
+                    FloatingPoint
+             }
+
+        sx801AmpIdx OBJECT-TYPE
+            SYNTAX IndexAmplifier
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The amplifier index."
+            ::= { sx801AmplifierEntry 1 }
+
+        
+        sx801AmpRfOut OBJECT-TYPE
+            SYNTAX Sx801AmplifierState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows if the amplifier generates an RF or not.
+                off(1): The amplifier output is switched off
+                e.g. because the amplifier gets no input signal or the transmitter has been switched off
+                warning(2): There is an RF but its level is less than the RF warning limit.
+                ok(3): The RF level is greater than the RF warning limit."
+            ::= { sx801AmplifierEntry 2 }
+
+        
+        sx801AmpRfIn OBJECT-TYPE
+            SYNTAX Sx801AmplifierState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Displays the state of the amplifier input.
+                off(1): no input signal detected
+                warning(2): the level of the input signal is too low or too high.
+                ok(3): input signal is OK."
+            ::= { sx801AmplifierEntry 3 }
+
+        
+        sx801AmpReflection OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                warning(2),
+                unknown(3),
+                fault(4)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                " A reflection on RF output of this Amplifier module has been detected.
+                This leads to a reduction of output power of the amplifier.
+                
+                "
+            ::= { sx801AmplifierEntry 4 }
+
+        
+        sx801AmpOn OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                on(3),
+                unknown(4)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows if the amplifier has been switched on by the control unit."
+            ::= { sx801AmplifierEntry 5 }
+
+        
+        sx801AmpAC OBJECT-TYPE
+            SYNTAX Sx801AmplifierState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows the state of primary voltage of the power supply."
+            ::= { sx801AmplifierEntry 6 }
+
+        
+        sx801AmpCommunication OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                unknown(2),
+                ok(3),
+                fault(4)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Displays if the CAN communication between amplifier and Sx801 is working or not."
+            ::= { sx801AmplifierEntry 7 }
+
+        
+        sx801AmpTransistor OBJECT-TYPE
+            SYNTAX Sx801AmplifierState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "A transistor fail is displayed here.
+                For further information please see the amplifiers service menue."
+            ::= { sx801AmplifierEntry 8 }
+
+        
+        sx801AmpDriver OBJECT-TYPE
+            SYNTAX Sx801AmplifierState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows a failure if one of the internal driver transistors does not work properly.
+                For further information please see the amplifiers service menue."
+            ::= { sx801AmplifierEntry 9 }
+
+        
+        sx801AmpTemperature OBJECT-TYPE
+            SYNTAX Sx801AmplifierState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows a fault if the temperature of amplifier module is too high."
+            ::= { sx801AmplifierEntry 10 }
+
+        
+        sx801AmpBlower OBJECT-TYPE
+            SYNTAX Sx801AmplifierState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Displays the state of the internal blowers."
+            ::= { sx801AmplifierEntry 11 }
+
+        
+        sx801AmpRegulation OBJECT-TYPE
+            SYNTAX Sx801AmplifierState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows a fault if the amplifier is not able to control its output power."
+            ::= { sx801AmplifierEntry 12 }
+
+        
+        sx801AmpUpdate OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Firmware update is in progress.
+                This will be started automatically during a software update procedure of the transmitter."
+            ::= { sx801AmplifierEntry 13 }
+
+        
+        sx801Supply1Temperature OBJECT-TYPE
+            SYNTAX Sx801AmplifierState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows a fault if the temperature of power supply one is too high."
+            ::= { sx801AmplifierEntry 14 }
+
+        
+        sx801Supply2Temperature OBJECT-TYPE
+            SYNTAX Sx801AmplifierState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows a fault if the temperature of power supply two is too high."
+            ::= { sx801AmplifierEntry 15 }
+
+        
+        sx801SupplyRTemperature OBJECT-TYPE
+            SYNTAX Sx801AmplifierState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows a fault if the temperature of the reserve power supply is too high."
+            ::= { sx801AmplifierEntry 16 }
+
+        
+        sx801Supply1DC OBJECT-TYPE
+            SYNTAX Sx801AmplifierState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows a fault if the output voltage of power supply one is not ok."
+            ::= { sx801AmplifierEntry 17 }
+
+        
+        sx801Supply2DC OBJECT-TYPE
+            SYNTAX Sx801AmplifierState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows a fault if the output voltage of power supply two is not ok."
+            ::= { sx801AmplifierEntry 18 }
+
+        
+        sx801SupplyRDC OBJECT-TYPE
+            SYNTAX Sx801AmplifierState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows a fault if the output voltage of the reserve power supply is not ok."
+            ::= { sx801AmplifierEntry 19 }
+
+        
+        sx801AmpValueI1 OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The internal current from transistor pair 1."
+            ::= { sx801AmplifierEntry 50 }
+
+        
+        sx801AmpValueI2 OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The internal current from transistor pair 2."
+            ::= { sx801AmplifierEntry 51 }
+
+        
+        sx801AmpValueI3 OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The internal current from transistor pair 3."
+            ::= { sx801AmplifierEntry 52 }
+
+        
+        sx801AmpValueI4 OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The internal current from transistor pair 4."
+            ::= { sx801AmplifierEntry 53 }
+
+        
+        sx801AmpValueIPre OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The internal current from preamplifier."
+            ::= { sx801AmplifierEntry 54 }
+
+        
+        sx801AmpValueIDrv1 OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The internal current from driver transistor pair 1."
+            ::= { sx801AmplifierEntry 55 }
+
+        
+        sx801AmpValueIDrv2 OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Ampere"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The internal current from driver transistor pair 2."
+            ::= { sx801AmplifierEntry 56 }
+
+        
+        sx801AmpValuePowerOut OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Watt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The base value in Volt to calculate the output power
+                of this amplifier module."
+            ::= { sx801AmplifierEntry 57 }
+
+        
+        sx801AmpValueReflection OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Watt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The base value in Volt for detection of reflections."
+            ::= { sx801AmplifierEntry 58 }
+
+        
+        sx801AmpValueVRef OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The internal reference voltage to set the output power."
+            ::= { sx801AmplifierEntry 59 }
+
+        
+        sx801AmpValueVReg OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The internal value for output power regulation."
+            ::= { sx801AmplifierEntry 60 }
+
+        
+        sx801AmpValueTemperature OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "degree Celsius"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The internal temperature of Amplifier.
+                In case of L-band amplifier, the shown temperature is valid only,
+                if the amplifier is switched on."
+            ::= { sx801AmplifierEntry 61 }
+
+        
+        sx801AmpValueMonAtt OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The attenuation of monitoring output on the front of the
+                amplifier module (Amp RF Mon)."
+            ::= { sx801AmplifierEntry 62 }
+
+        
+        sx801AmpValueVAux1 OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The voltage power detector 1."
+            ::= { sx801AmplifierEntry 63 }
+
+        
+        sx801AmpValueVAux2 OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The voltage power detector 2."
+            ::= { sx801AmplifierEntry 64 }
+
+        
+        sx801Supply1ValuePwr OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The power supply one control voltage."
+            ::= { sx801AmplifierEntry 65 }
+
+        
+        sx801Supply2ValuePwr OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The power supply two control voltage."
+            ::= { sx801AmplifierEntry 66 }
+
+        
+        sx801Supply1ValueDc OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The internal supply voltage of transistor path two.
+                In systems with two power supplies this value is equal
+                to the output voltage of supply one."
+            ::= { sx801AmplifierEntry 67 }
+
+        
+        sx801Supply2ValueDc OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Volt"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The internal supply voltage of transistor path two.
+                In systems with two power supplies this value is equal
+                to the output voltage of supply two."
+            ::= { sx801AmplifierEntry 68 }
+
+        
+        logbookNetCCU OBJECT IDENTIFIER ::= { rsXx8000TxObjs 90 }
+
+        
+        netCCULogbookConfigTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF NetCCULogbookConfigEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Configuration for NetCCU logbook table."
+            ::= { logbookNetCCU 1 }
+
+        
+        netCCULogbookConfigEntry OBJECT-TYPE
+            SYNTAX NetCCULogbookConfigEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the netCCULogbookConfigTable."
+            AUGMENTS { commandsTxEntry }
+            ::= { netCCULogbookConfigTable 1 }
+
+        
+        NetCCULogbookConfigEntry ::=
+            SEQUENCE { 
+                netCCULbCfgNumberOfEntries
+                    LogbookMaxEntryNumber,
+                netCCULbCfgClear
+                    Trigger
+             }
+
+        netCCULbCfgNumberOfEntries OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The number of entries in logbook."
+            ::= { netCCULogbookConfigEntry 1 }
+
+        
+        netCCULbCfgClear OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Clear the logbook.
+                idle(1)    --> ready
+                clear(2)   --> do clear now
+                
+                A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+            ::= { netCCULogbookConfigEntry 2 }
+
+        
+        netCCULogbookTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF NetCCULogbookEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "NetCCU logbook table."
+            ::= { logbookNetCCU 2 }
+
+        
+        netCCULogbookEntry OBJECT-TYPE
+            SYNTAX NetCCULogbookEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This is a entry in the logbook."
+            INDEX { cmdTxIdx, netCCULogbookEntryIdx }
+            ::= { netCCULogbookTable 1 }
+
+        
+        NetCCULogbookEntry ::=
+            SEQUENCE { 
+                netCCULogbookEntryIdx
+                    LogbookMaxEntryNumber,
+                netCCULogbookEntryNbr
+                    LogbookMaxEntryNumber,
+                netCCULogbookType
+                    EventClass,
+                netCCULogbookSlope
+                    LogbookEntrySlope,
+                netCCULogbookMessage
+                    LogbookEntryMessagesNetCCU,
+                netCCULogbookDateTime
+                    DateAndTime
+             }
+
+        netCCULogbookEntryIdx OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This is an increasing number from 1 to 128. It is used as an index column for SNMP."
+            ::= { netCCULogbookEntry 1 }
+
+        
+        netCCULogbookEntryNbr OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This is the number of the logbook entry. It is an decreasing number from max 128 down to 1."
+            ::= { netCCULogbookEntry 2 }
+
+        
+        netCCULogbookType OBJECT-TYPE
+            SYNTAX EventClass
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Can either be Fault, Warning or State."
+            ::= { netCCULogbookEntry 3 }
+
+        
+        netCCULogbookSlope OBJECT-TYPE
+            SYNTAX LogbookEntrySlope
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Either set (event raises) or reset (event disappears)"
+            ::= { netCCULogbookEntry 4 }
+
+        
+        netCCULogbookMessage OBJECT-TYPE
+            SYNTAX LogbookEntryMessagesNetCCU
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "See RS-XX8000-COMMON-MIB - TextualConvention - LogbookEntryMessagesNetCCU for details."
+            ::= { netCCULogbookEntry 5 }
+
+        
+        netCCULogbookDateTime OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The time of the logbook entry."
+            ::= { netCCULogbookEntry 6 }
+
+        
+        logbookOst OBJECT IDENTIFIER ::= { rsXx8000TxObjs 91 }
+
+        
+        ostLogbookConfigTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF OstLogbookConfigEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Configuration for Outputstage logbook table."
+            ::= { logbookOst 1 }
+
+        
+        ostLogbookConfigEntry OBJECT-TYPE
+            SYNTAX OstLogbookConfigEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the ostLogbookConfigTable."
+            AUGMENTS { commandsOstEntry }
+            ::= { ostLogbookConfigTable 1 }
+
+        
+        OstLogbookConfigEntry ::=
+            SEQUENCE { 
+                ostLbCfgNumberOfEntries
+                    LogbookMaxEntryNumber,
+                ostLbCfgClear
+                    Trigger
+             }
+
+        ostLbCfgNumberOfEntries OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The number of entries in logbook."
+            ::= { ostLogbookConfigEntry 1 }
+
+        
+        ostLbCfgClear OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Clear the logbook.
+                idle(1)    --> ready
+                clear(2)   --> do clear now
+                
+                A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+            ::= { ostLogbookConfigEntry 2 }
+
+        
+        ostLogbookTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF OstLogbookEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Outputstage logbook table."
+            ::= { logbookOst 2 }
+
+        
+        ostLogbookEntry OBJECT-TYPE
+            SYNTAX OstLogbookEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This is a entry in the logbook."
+            INDEX { cmdTxIdx, cmdDeviceIdx, ostLogbookEntryIdx }
+            ::= { ostLogbookTable 1 }
+
+        
+        OstLogbookEntry ::=
+            SEQUENCE { 
+                ostLogbookEntryIdx
+                    LogbookMaxEntryNumber,
+                ostLogbookEntryNbr
+                    LogbookMaxEntryNumber,
+                ostLogbookType
+                    EventClass,
+                ostLogbookSlope
+                    LogbookEntrySlope,
+                ostLogbookMessage
+                    LogbookEntryMessagesOST,
+                ostLogbookDateTime
+                    DateAndTime
+             }
+
+        ostLogbookEntryIdx OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This is an increasing number from 1 to 128. It is used as an index column for SNMP."
+            ::= { ostLogbookEntry 1 }
+
+        
+        ostLogbookEntryNbr OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This is the number of the logbook entry. It is an decreasing number from max 128 down to 1."
+            ::= { ostLogbookEntry 2 }
+
+        
+        ostLogbookType OBJECT-TYPE
+            SYNTAX EventClass
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Can either be Fault, Warning or State."
+            ::= { ostLogbookEntry 3 }
+
+        
+        ostLogbookSlope OBJECT-TYPE
+            SYNTAX LogbookEntrySlope
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Either set (event raises) or reset (event disappears)"
+            ::= { ostLogbookEntry 4 }
+
+        
+        ostLogbookMessage OBJECT-TYPE
+            SYNTAX LogbookEntryMessagesOST
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "See RS-XX8000-COMMON-MIB - TextualConvention for details."
+            ::= { ostLogbookEntry 5 }
+
+        
+        ostLogbookDateTime OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The time of the logbook entry."
+            ::= { ostLogbookEntry 6 }
+
+        
+        productInfoTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF ProductInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The table for product typeplates."
+            ::= { rsXx8000TxObjs 100 }
+
+        
+        productInfoEntry OBJECT-TYPE
+            SYNTAX ProductInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the productInfoTable."
+            INDEX { prodInfoModuleIdx, prodInfoTxIdx, prodInfoDeviceIdx, prodInfoRackIdx, prodInfoAmpIdx
+                 }
+            ::= { productInfoTable 1 }
+
+        
+        ProductInfoEntry ::=
+            SEQUENCE { 
+                prodInfoModuleIdx
+                    ProdInfoModuleNameTv,
+                prodInfoTxIdx
+                    IndexTransmitter,
+                prodInfoDeviceIdx
+                    IndexAB,
+                prodInfoRackIdx
+                    IndexRack,
+                prodInfoAmpIdx
+                    IndexAmplifier,
+                prodInfoModuleName
+                    ProdInfoModuleNameTv,
+                prodInfoSerialNumber
+                    ReadableString,
+                prodInfoIdentNumberSW
+                    ReadableString,
+                prodInfoVersionNumberSW
+                    ReadableString,
+                prodInfoIdentNumberHW
+                    ReadableString,
+                prodInfoVersionNumberHW
+                    ReadableString,
+                productInfoProductDateHW
+                    DateAndTime
+             }
+
+        prodInfoModuleIdx OBJECT-TYPE
+            SYNTAX ProdInfoModuleNameTv
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The module index."
+            ::= { productInfoEntry 1 }
+
+        
+        prodInfoTxIdx OBJECT-TYPE
+            SYNTAX IndexTransmitter
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The transmitter index. There are max. 8 main transmitters (transmitterA), if you have an 8+1 system
+                and the reserve transmitter (transmitterB(1))."
+            ::= { productInfoEntry 2 }
+
+        
+        prodInfoDeviceIdx OBJECT-TYPE
+            SYNTAX IndexAB
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The dedicated device (A/B)."
+            ::= { productInfoEntry 3 }
+
+        
+        prodInfoRackIdx OBJECT-TYPE
+            SYNTAX IndexRack
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The rack number (1..10)."
+            ::= { productInfoEntry 4 }
+
+        
+        prodInfoAmpIdx OBJECT-TYPE
+            SYNTAX IndexAmplifier
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Amplifier Index"
+            ::= { productInfoEntry 5 }
+
+        
+        prodInfoModuleName OBJECT-TYPE
+            SYNTAX ProdInfoModuleNameTv
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The name of the module as a text."
+            ::= { productInfoEntry 6 }
+
+        
+        prodInfoSerialNumber OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The serial number of the subdevice."
+            ::= { productInfoEntry 7 }
+
+        
+        prodInfoIdentNumberSW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz identification number of the software, for example 2094.2090.02."
+            ::= { productInfoEntry 8 }
+
+        
+        prodInfoVersionNumberSW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz revision number of the software, for example 1.2.1."
+            ::= { productInfoEntry 9 }
+
+        
+        prodInfoIdentNumberHW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz identification number of the hardware, for example 2095.8007.02 (NetCCU)."
+            ::= { productInfoEntry 10 }
+
+        
+        prodInfoVersionNumberHW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz revision number (product index) of the hardware, for example 03.03."
+            ::= { productInfoEntry 11 }
+
+        
+        productInfoProductDateHW OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz production date of the hardware,"
+            ::= { productInfoEntry 12 }
+
+        
+-- *****************************************************************************
+-- **          event definitions
+-- *****************************************************************************
+        rsXx8000TxEvents OBJECT IDENTIFIER ::= { rsXx8000Tx 3 }
+
+        
+        eventsV2 OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION 
+                "Compatibility to SMIv1."
+            ::= { rsXx8000TxEvents 0 }
+
+        
+        txSummaryFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "Transmitter Summary Fault"
+            ::= { eventsV2 1 }
+
+        
+        txSummaryWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "Transmitter Summary Warning"
+            ::= { eventsV2 2 }
+
+        
+        txLocal NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "Transmitter Local/Remote"
+            ::= { eventsV2 3 }
+
+        
+        txRfOn NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "Transmitter RF On/Off"
+            ::= { eventsV2 4 }
+
+        
+        txRfOk NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "Transmitter RF Ok / Not OK"
+            ::= { eventsV2 5 }
+
+        
+        txParamSetSubDeviceDiffers NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS obsolete
+            DESCRIPTION 
+                "Parameterset of subdevice is different.
+                The currently loaded parameterset is inconsistent because
+                a subdevice (e.g. an exciter) has a different configuration than expected.
+                To correct this, save settings to the current or save a complete new."
+            ::= { eventsV2 6 }
+
+        
+        txParamSetValuesChanged NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "Value Of Current Parameterset Changed.
+                The currently loaded parameterset is inconsistent because
+                there were changes happening since the load/save of it.
+                To correct this, save settings to the current or save a complete new."
+            ::= { eventsV2 7 }
+
+        
+        txRfLoopProgram NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU Loop Program"
+            ::= { eventsV2 8 }
+
+        
+        txRfLoopReserve NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU Loop Reserve"
+            ::= { eventsV2 9 }
+
+        
+        txRfWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU RF Warning"
+            ::= { eventsV2 10 }
+
+        
+        txReflectionWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU Reflection Warning"
+            ::= { eventsV2 11 }
+
+        
+        txNoConnection NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NSU connection to NetCCU faulty."
+            ::= { eventsV2 12 }
+
+        
+        txNetCCUFanFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU Fan Fault"
+            ::= { eventsV2 14 }
+
+        
+        txNetCCUPowerSupply NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU Power Supply"
+            ::= { eventsV2 15 }
+
+        
+        txRfFail NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU (Transmitter) RF Fail"
+            ::= { eventsV2 16 }
+
+        
+        txReflectionFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU Reflection Fault"
+            ::= { eventsV2 17 }
+
+        
+        txNetCCUBoardTemperatureFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS deprecated
+            DESCRIPTION 
+                "NetCCU Board Temperature Fault
+                
+                deprecated: this information is now handled as a warning
+                (txNetCCUBoardTemperatureWarning)"
+            ::= { eventsV2 18 }
+
+        
+        txNetCCUNoConnectionToExcA NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU Connection To ExciterA Faulty"
+            ::= { eventsV2 19 }
+
+        
+        txNetCCUNoConnectionToOstA NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU Connection To OutputstageA Faulty"
+            ::= { eventsV2 20 }
+
+        
+        txNetCCUNoConnectionToExcB NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU Connection To ExciterB Faulty"
+            ::= { eventsV2 21 }
+
+        
+        txNetCCUNoConnectionToOstB NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU Connection To OutputstageB Faulty"
+            ::= { eventsV2 22 }
+
+        
+        txAutomaticExcReady NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Automatic Ready."
+            ::= { eventsV2 23 }
+
+        
+        txAutomaticExcChanged NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Automatic Changed."
+            ::= { eventsV2 24 }
+
+        
+        txAutomaticExcFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Automatic Fault."
+            ::= { eventsV2 25 }
+
+        
+        txNetCCUBoardTemperatureWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU Board Temperature Warning"
+            ::= { eventsV2 29 }
+
+        
+        txInternalPowerSupplyWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU internal Power Supply warning"
+            ::= { eventsV2 30 }
+
+        
+        txExternalPowerSupplyWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU external (additional) Power Supply warning"
+            ::= { eventsV2 31 }
+
+        
+        txNoConnectionApaIf NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU can not communicate to the APA-Interface."
+            ::= { eventsV2 32 }
+
+        
+        txAbsorberFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+            STATUS current
+            DESCRIPTION 
+                "Absorber fault occurred.
+                "
+            ::= { eventsV2 33 }
+
+        
+        txOstSummaryFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Outputstage Summary Fault"
+            ::= { eventsV2 200 }
+
+        
+        txOstSummaryWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Outputstage Summary Warning"
+            ::= { eventsV2 201 }
+
+        
+        txOstRfOn NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Outputstage RF On"
+            ::= { eventsV2 202 }
+
+        
+        txOstRfOk NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Outputstage RF Ok"
+            ::= { eventsV2 203 }
+
+        
+        txOstNoInput NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Outputstage no input signal"
+            ::= { eventsV2 204 }
+
+        
+        txOstRfWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Outputstage RF Warning"
+            ::= { eventsV2 205 }
+
+        
+        txOstReflectionWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Outputstage Reflection Warning"
+            ::= { eventsV2 206 }
+
+        
+        txOstRackWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Outputstage Rack Warning. At least one rack has an error pending."
+            ::= { eventsV2 207 }
+
+        
+        txOstCoolingWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Outputstage Cooling Warning"
+            ::= { eventsV2 208 }
+
+        
+        txOstRfFail NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Outputstage RF Fail"
+            ::= { eventsV2 209 }
+
+        
+        txOstReflectionFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Outputstage Reflection Fault"
+            ::= { eventsV2 210 }
+
+        
+        txOstACFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Outputstage AC Fault"
+            ::= { eventsV2 211 }
+
+        
+        txOstCoolingFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Outputstage Cooling Fault"
+            ::= { eventsV2 212 }
+
+        
+        txOstCommFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Outputstage Communication Fault"
+            ::= { eventsV2 213 }
+
+        
+        txRackSumFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "Summary Fault at a designated rack.
+                This event automatically leads to txOstRackWarning."
+            ::= { eventsV2 300 }
+
+        
+        txRackSumWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "Summary Warning at a designated rack."
+            ::= { eventsV2 301 }
+
+        
+        txRackOn NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "The designated racks operation mode is on."
+            ::= { eventsV2 302 }
+
+        
+        txRackGpiWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "A warning on the general purpose input occurred.
+                This depends on the current configuration of the GPI. (See:Rack Setup/Rack Controller)"
+            ::= { eventsV2 303 }
+
+        
+        txRackFan1Fault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "The designated rack signals a fault of fan 1."
+            ::= { eventsV2 304 }
+
+        
+        txRackFan2Fault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "The designated rack signals a fault of fan 2."
+            ::= { eventsV2 305 }
+
+        
+        txRackCoolingSumWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "The designated rack signals a summary cooling warning."
+            ::= { eventsV2 306 }
+
+        
+        txRackAmplifierSumFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "The designated rack signals at least one faulty amplifier."
+            ::= { eventsV2 307 }
+
+        
+        txRackNoLink NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "No communication to the designated rack."
+            ::= { eventsV2 308 }
+
+        
+        txRackGpiFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "A fault on the general purpose input occurred.
+                This depends on the current configuration of the GPI. (See:Rack Setup/Rack Controller)"
+            ::= { eventsV2 309 }
+
+        
+        txRackTemperatureFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "The designated rack signals a temperature fault - temperature too high."
+            ::= { eventsV2 310 }
+
+        
+        txRackACFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "The designated rack signals an AC (phase) fault."
+            ::= { eventsV2 311 }
+
+        
+        txRackCoolingSumFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "The designated rack signals a summary cooling fault."
+            ::= { eventsV2 312 }
+
+        
+        txRackTempFaultAbs1 NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "The designated rack signals a temperature fault of absorber 1."
+            ::= { eventsV2 313 }
+
+        
+        txRackTempFaultAbs2 NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "The designated rack signals a temperature fault of absorber 2."
+            ::= { eventsV2 314 }
+
+        
+        txRackDCFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "The designated rack signals a DC fault."
+            ::= { eventsV2 315 }
+
+        
+        txRackRfOn NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB, indexRack
+                 }
+            STATUS current
+            DESCRIPTION 
+                "RF power is on."
+            ::= { eventsV2 318 }
+
+        
+        txRackRfOk NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB, indexRack
+                 }
+            STATUS current
+            DESCRIPTION 
+                "RF power is ok."
+            ::= { eventsV2 319 }
+
+        
+        txRackRfWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "RF power decreased the warning threshold."
+            ::= { eventsV2 320 }
+
+        
+        txRackRfFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "RF output power decreased the fault threshold."
+            ::= { eventsV2 321 }
+
+        
+        txRackReflectionWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "The reflected power increased the warning threshold"
+            ::= { eventsV2 322 }
+
+        
+        txRackReflectionFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "The reflected power increased the fault threshold."
+            ::= { eventsV2 323 }
+
+        
+        txRackProbeNotCalibrated NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack }
+            STATUS current
+            DESCRIPTION 
+                "At least one probe is not calibrated."
+            ::= { eventsV2 330 }
+
+        
+        txRackTemperatureWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB, indexRack
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Rack temperature exceeded the warning threshold."
+            ::= { eventsV2 331 }
+
+        
+        txRackOvervoltProtectWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB, indexRack
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Overvoltage protection is out of order."
+            ::= { eventsV2 335 }
+
+        
+        txAmpSumFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack, indexAmplifier }
+            STATUS current
+            DESCRIPTION 
+                "The designated amplifier signals summary fault."
+            ::= { eventsV2 400 }
+
+        
+        txAmpSumWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack, indexAmplifier }
+            STATUS current
+            DESCRIPTION 
+                "The designated amplifier signals summary warning."
+            ::= { eventsV2 401 }
+
+        
+        txAmpPowerOn NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack, indexAmplifier }
+            STATUS current
+            DESCRIPTION 
+                "The designated amplifiers power is on."
+            ::= { eventsV2 402 }
+
+        
+        txAmpDCOk NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack, indexAmplifier }
+            STATUS current
+            DESCRIPTION 
+                "The designated amplifiers DC is ok."
+            ::= { eventsV2 403 }
+
+        
+        txAmpACOk NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack, indexAmplifier }
+            STATUS current
+            DESCRIPTION 
+                "The designated amplifiers AC is ok."
+            ::= { eventsV2 404 }
+
+        
+        txAmpRfInFail NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack, indexAmplifier }
+            STATUS current
+            DESCRIPTION 
+                "The designated amplifier signals RF input fail."
+            ::= { eventsV2 405 }
+
+        
+        txAmpRfFail NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack, indexAmplifier }
+            STATUS current
+            DESCRIPTION 
+                "The designated amplifier signals RF fail."
+            ::= { eventsV2 406 }
+
+        
+        txAmpReflectionFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack, indexAmplifier }
+            STATUS current
+            DESCRIPTION 
+                "The designated amplifier signals a reflection fault."
+            ::= { eventsV2 407 }
+
+        
+        txAmpTemperatureFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack, indexAmplifier }
+            STATUS current
+            DESCRIPTION 
+                "The designated amplifier signals a temperature fault - temperature is too high."
+            ::= { eventsV2 408 }
+
+        
+        txAmpTransistorFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+                indexRack, indexAmplifier }
+            STATUS current
+            DESCRIPTION 
+                "The designated amplifier signals at least one faulty transistor."
+            ::= { eventsV2 409 }
+
+        
+        eventsTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF EventsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This table contains necessary information for handling alarms.
+                For each alarm you have the following information:
+                - name (get),
+                - mask to enable/disable sending out (set/get),
+                - priority (set/get) and
+                - the current state (get only)."
+            ::= { rsXx8000TxEvents 1 }
+
+        
+        eventsEntry OBJECT-TYPE
+            SYNTAX EventsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the eventsTable."
+            INDEX { evtTxIdx, evtABIdx, evtRackIdx, evtAmpIdx, evtNameIdx
+                 }
+            ::= { eventsTable 1 }
+
+        
+        EventsEntry ::=
+            SEQUENCE { 
+                evtTxIdx
+                    IndexTransmitter,
+                evtABIdx
+                    IndexAB,
+                evtRackIdx
+                    IndexRack,
+                evtAmpIdx
+                    IndexAmplifier,
+                evtNameIdx
+                    EventMaxEntryNumber,
+                evtName
+                    INTEGER,
+                evtMask
+                    EventMask,
+                evtPriority
+                    EventPriority,
+                evtEvent
+                    EventState
+             }
+
+        evtTxIdx OBJECT-TYPE
+            SYNTAX IndexTransmitter
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The transmitter index.
+                This is a helper column and therefore not-accessible.."
+            ::= { eventsEntry 1 }
+
+        
+        evtABIdx OBJECT-TYPE
+            SYNTAX IndexAB
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The value for the module A (exciterA, outputstageA) or
+                B (exciterB, outputstageB) for alarms.
+                This is a helper column and therefore not-accessible."
+            ::= { eventsEntry 2 }
+
+        
+        evtRackIdx OBJECT-TYPE
+            SYNTAX IndexRack
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The number of the designated rack.
+                This is a helper column and therefore not-accessible."
+            ::= { eventsEntry 3 }
+
+        
+        evtAmpIdx OBJECT-TYPE
+            SYNTAX IndexAmplifier
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The number of the designated amplifier.
+                This is a helper column and therefore not-accessible."
+            ::= { eventsEntry 4 }
+
+        
+        evtNameIdx OBJECT-TYPE
+            SYNTAX EventMaxEntryNumber
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The event number as integer.
+                This is a helper column and therefore not-accessible."
+            ::= { eventsEntry 5 }
+
+        
+        evtName OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                txSummaryFault(1),
+                txSummaryWarning(2),
+                txLocal(3),
+                txRfOn(4),
+                txRfOk(5),
+                txParamSetSubDeviceDiffers(6),
+                txParamSetValuesChanged(7),
+                txRfLoopProgram(8),
+                txRfLoopReserve(9),
+                txRfWarning(10),
+                txReflectionWarning(11),
+                txNoConnection(12),
+                txNetCCUFanFault(14),
+                txNetCCUPowerSupply(15),
+                txRfFail(16),
+                txReflectionFault(17),
+                txNetCCUBoardTemperature(18),
+                txNetCCUNoConnectionToExcA(19),
+                txNetCCUNoConnectionToOstA(20),
+                txNetCCUNoConnectionToExcB(21),
+                txNetCCUNoConnectionToOstB(22),
+                txAutomaticExcReady(23),
+                txAutomaticExcChanged(24),
+                txAutomaticExcFault(25),
+                txNetCCUBoardTemperatureWarning(29),
+                txInternalPowerSupplyWarning(30),
+                txExternalPowerSupplyWarning(31),
+                txNoConnectionApaIf(32),
+                txAbsorberFault(33),
+                txOstSummaryFault(200),
+                txOstSummaryWarning(201),
+                txOstRfOn(202),
+                txOstRfOk(203),
+                txOstNoInput(204),
+                txOstRfWarning(205),
+                txOstReflectionWarning(206),
+                txOstRackWarning(207),
+                txOstCoolingWarning(208),
+                txOstRfFail(209),
+                txOstReflectionFault(210),
+                txOstACFault(211),
+                txOstCoolingFault(212),
+                txOstCommFault(213),
+                txRackSumFault(300),
+                txRackSumWarning(301),
+                txRackOn(302),
+                txRackGpiWarning(303),
+                txRackFan1Fault(304),
+                txRackFan2Fault(305),
+                txRackCoolingSumWarning(306),
+                txRackAmplifierSumFault(307),
+                txRackNoLink(308),
+                txRackGpiFault(309),
+                txRackTemperatureFault(310),
+                txRackACFault(311),
+                txRackCoolingSumFault(312),
+                txRackTempFaultAbs1(313),
+                txRackTempFaultAbs2(314),
+                txRackDCFault(315),
+                txRackRfOn(318),
+                txRackRfOk(319),
+                txRackRfWarning(320),
+                txRackRfFault(321),
+                txRackReflectionWarning(322),
+                txRackReflectionFault(323),
+                txRackProbeNotCalibrated(330),
+                txRackTemperatureWarning(331),
+                txRackOvervoltProtectWarning(335),
+                txAmpSumFault(400),
+                txAmpSumWarning(401),
+                txAmpPowerOn(402),
+                txAmpDCOk(403),
+                txAmpACOk(404),
+                txAmpRfInFail(405),
+                txAmpRfFail(406),
+                txAmpReflectionFault(407),
+                txAmpTemperatureFault(408),
+                txAmpTransistorFault(409)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The event number as integer and the value as readable text.
+                The enumeration correlates with the notifications under eventsTxV2."
+            ::= { eventsEntry 6 }
+
+        
+        evtMask OBJECT-TYPE
+            SYNTAX EventMask
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsEntry 7 }
+
+        
+        evtPriority OBJECT-TYPE
+            SYNTAX EventPriority
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsEntry 8 }
+
+        
+        evtEvent OBJECT-TYPE
+            SYNTAX EventState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsEntry 9 }
+
+        
+-- *****************************************************************************
+-- **          conformance statements
+-- *****************************************************************************
+        rsXx8000TxConf OBJECT IDENTIFIER ::= { rsXx8000Tx 5 }
+
+        
+        rsXx8000TxGroups OBJECT IDENTIFIER ::= { rsXx8000TxConf 1 }
+
+        
+        groupTxObjsGeneral OBJECT-GROUP
+            OBJECTS { cmdTxName, cmdTxResetSumFault, cmdTxParametersetLoad, cmdTxParametersetSave, cmdTxOperationModeProgram, 
+                statusTxName, statusTxNoConnection, statusTxSummaryFault, statusTxSummaryWarning, statusTxLocalMode, 
+                statusTxRfOn, statusTxForwardPower, statusTxReflectedPower, statusTxSummaryFaultExcA, statusTxSummaryFaultOstA, 
+                statusTxChangeable, statusTxToBeChanged }
+            STATUS current
+            DESCRIPTION 
+                "Group for objects of transmitters."
+            ::= { rsXx8000TxGroups 11 }
+
+        
+        groupTxObjsDualDrive OBJECT-GROUP
+            OBJECTS { cmdTxOperationModeReserve, cmdTxOpModeExcAutomatic, cmdTxPreselectExciter, cmdTxDelayTimeExcAutomatic, statusTxSummaryFaultExcB, 
+                statusTxExciterAutomaticReady, statusTxExciterAutomaticChanged, statusTxExciterAutomaticFault, statusTxNoConnectionExcB, statusTxActiveExcA, 
+                statusTxActiveExcB }
+            STATUS current
+            DESCRIPTION 
+                "Group for additional objects of transmitters in case of DualDrive."
+            ::= { rsXx8000TxGroups 12 }
+
+        
+        groupObjsOstReserve OBJECT-GROUP
+            OBJECTS { statusTxSummaryFaultOstB, statusOstReflectedPower, statusTxAbsorberFault, statusTxNoConnectionApaIf, statusTxNoConnectionOstB, 
+                cmdTxOpModeOstAutomatic, cmdTxPreselectOutputstage, cmdTxDelayTimeOstAutomatic, statusTxOstAutomaticReady, statusTxOstAutomaticChanged, 
+                statusTxOstAutomaticFault, statusTxActiveOstA, statusTxActiveOstB }
+            STATUS current
+            DESCRIPTION 
+                "Group for additional objects of transmitters in case of active/passive reserve."
+            ::= { rsXx8000TxGroups 13 }
+
+        
+        groupTxObjsMp OBJECT-GROUP
+            OBJECTS { cmdOstRefVoltageVision, cmdOstMaxOutletTempThreshold, statusOstForwardPower }
+            STATUS current
+            DESCRIPTION 
+                "Group for additional objects of medium or high transmitters."
+            ::= { rsXx8000TxGroups 14 }
+
+        
+        groupTxObjsNetCCU OBJECT-GROUP
+            OBJECTS { statusTxNoConnectionExcA, statusTxNoConnectionOstA, statusTxOstSwitch, statusTxExcSwitch, statusTxAdditionalPowerSupply, 
+                statusTxPowerSupply }
+            STATUS current
+            DESCRIPTION 
+                "Group for additional objects of transmitters with NetCCU."
+            ::= { rsXx8000TxGroups 15 }
+
+        
+        groupRfProbes OBJECT-GROUP
+            OBJECTS { rfProbesNetCCURfProbe1, rfProbesNetCCURfProbe2, rfProbesAntFwdNominal, rfProbesAntFwdWarningLimit, rfProbesAntFwdFailLimit, 
+                rfProbesAntFwdDelayTimeRfFail, rfProbesAntFwdSetOffset, rfProbesAntFwdSetGain, rfProbesAntReflWarningLimit, rfProbesAntReflSetOffset, 
+                rfProbesAntReflSetGain, rfProbesOstFwdNominal, rfProbesOstFwdWarningLimit, rfProbesOstFwdFailLimit, rfProbesOstFwdDelayTimeRfFail, 
+                rfProbesOstFwdSetOffset, rfProbesOstFwdSetGain, rfProbesOstReflWarningLimit, rfProbesOstReflSetOffset, rfProbesOstReflSetGain
+                 }
+            STATUS current
+            DESCRIPTION 
+                "This group includes all OIDs regarding RF Probes."
+            ::= { rsXx8000TxGroups 16 }
+
+        
+        groupTxObjsRack OBJECT-GROUP
+            OBJECTS { rackInletTemperature, rackOutletTemperature, rackAuxPowerSupply }
+            STATUS current
+            DESCRIPTION 
+                "Group for objects of rackTable."
+            ::= { rsXx8000TxGroups 17 }
+
+        
+        groupObjsAmplifier OBJECT-GROUP
+            OBJECTS { ampI1A, ampI2A, ampI3A, ampI4A, ampI1B, 
+                ampI2B, ampI3B, ampI4B, ampIDrv, ampUDc, 
+                ampIDc, ampUDcControl, ampUReg, ampPowerA, ampPowerB, 
+                ampPowerOut, ampPowerReflection, ampPowerReference, ampDeltaPhase, ampCmdDeltaPhase
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Group for objects of amplifierTable."
+            ::= { rsXx8000TxGroups 18 }
+
+        
+        groupTxObjsAddPowerSupply OBJECT-GROUP
+            OBJECTS { statusTxInternalPowerSupply, statusTxExternalPowerSupply }
+            STATUS current
+            DESCRIPTION 
+                "Objects that are available only when statusTxAdditionalPowerSupply is true."
+            ::= { rsXx8000TxGroups 19 }
+
+        
+        groupDummyLoadRF OBJECT-GROUP
+            OBJECTS { rfProbesDLFwdNominal, rfProbesDLFwdWarningLimit, rfProbesDLFwdFailLimit, rfProbesDLFwdDelayTimeRfFail, rfProbesDLFwdSetOffset, 
+                rfProbesDLFwdSetGain, rfProbesDLReflWarningLimit, rfProbesDLReflSetOffset, rfProbesDLReflSetGain }
+            STATUS current
+            DESCRIPTION 
+                "This group includes all object types regarding probes from dummy load.
+                The object types in this group are defined only when a dummy load measure point exists.
+                This can occur in reserve concept active reserve only.
+                "
+            ::= { rsXx8000TxGroups 20 }
+
+        
+        groupObjectsSingleEnded OBJECT-GROUP
+            OBJECTS { cmdTxRfSwitch }
+            STATUS current
+            DESCRIPTION 
+                "Group for objects in case of SingleTx or DualDrive."
+            ::= { rsXx8000TxGroups 21 }
+
+        
+        groupObjectsSx801Amplifier OBJECT-GROUP
+            OBJECTS { sx801AmpRfOut, sx801AmpRfIn, sx801AmpReflection, sx801AmpOn, sx801AmpAC, 
+                sx801AmpCommunication, sx801AmpTransistor, sx801AmpDriver, sx801AmpTemperature, sx801AmpBlower, 
+                sx801AmpRegulation, sx801AmpUpdate, sx801Supply1Temperature, sx801Supply2Temperature, sx801SupplyRTemperature, 
+                sx801Supply1DC, sx801Supply2DC, sx801SupplyRDC, sx801AmpValueI1, sx801AmpValueI2, 
+                sx801AmpValueI3, sx801AmpValueI4, sx801AmpValueIPre, sx801AmpValueIDrv1, sx801AmpValueIDrv2, 
+                sx801AmpValuePowerOut, sx801AmpValueReflection, sx801AmpValueVRef, sx801AmpValueVReg, sx801AmpValueTemperature, 
+                sx801AmpValueMonAtt, sx801AmpValueVAux1, sx801AmpValueVAux2, sx801Supply1ValuePwr, sx801Supply2ValuePwr, 
+                sx801Supply1ValueDc, sx801Supply2ValueDc }
+            STATUS current
+            DESCRIPTION 
+                "Objects for Sx801/SA801 amplifier status."
+            ::= { rsXx8000TxGroups 22 }
+
+        
+        groupTxObjsLogbookNetCCU OBJECT-GROUP
+            OBJECTS { netCCULbCfgNumberOfEntries, netCCULbCfgClear, netCCULogbookEntryNbr, netCCULogbookType, netCCULogbookSlope, 
+                netCCULogbookMessage, netCCULogbookDateTime }
+            STATUS current
+            DESCRIPTION 
+                "Group for objects of logbooks of NetCCU."
+            ::= { rsXx8000TxGroups 30 }
+
+        
+        groupTxObjsLogbookOst OBJECT-GROUP
+            OBJECTS { ostLbCfgNumberOfEntries, ostLbCfgClear, ostLogbookEntryNbr, ostLogbookType, ostLogbookSlope, 
+                ostLogbookMessage, ostLogbookDateTime }
+            STATUS current
+            DESCRIPTION 
+                "Group for objects of logbooks of outputstages A."
+            ::= { rsXx8000TxGroups 32 }
+
+        
+        groupTxObjsProductInfo OBJECT-GROUP
+            OBJECTS { prodInfoModuleName, prodInfoSerialNumber, prodInfoIdentNumberSW, prodInfoVersionNumberSW, prodInfoIdentNumberHW, 
+                prodInfoVersionNumberHW, productInfoProductDateHW }
+            STATUS current
+            DESCRIPTION 
+                "Group for ProductInfoTable of transmitters."
+            ::= { rsXx8000TxGroups 50 }
+
+        
+        groupEventTable OBJECT-GROUP
+            OBJECTS { evtName, evtMask, evtPriority, evtEvent }
+            STATUS current
+            DESCRIPTION 
+                "Group for all objects of event tables."
+            ::= { rsXx8000TxGroups 90 }
+
+        
+        groupTxEvents NOTIFICATION-GROUP
+            NOTIFICATIONS { txSummaryFault, txSummaryWarning, txLocal, txRfOn, txRfOk, 
+                txParamSetValuesChanged, txRfLoopProgram, txRfWarning, txReflectionWarning, txNetCCUFanFault, 
+                txNetCCUPowerSupply, txRfFail, txReflectionFault, txNetCCUNoConnectionToExcA, txNetCCUNoConnectionToOstA, 
+                txOstSummaryFault, txOstSummaryWarning, txOstRfOn, txOstRfOk, txOstNoInput, 
+                txOstRfWarning, txOstReflectionWarning, txOstRackWarning, txOstCoolingWarning, txOstRfFail, 
+                txOstReflectionFault, txOstACFault, txOstCoolingFault, txOstCommFault, txRackSumFault, 
+                txRackSumWarning, txRackOn, txRackGpiWarning, txRackFan1Fault, txRackFan2Fault, 
+                txRackCoolingSumWarning, txRackAmplifierSumFault, txRackNoLink, txRackGpiFault, txRackTemperatureFault, 
+                txRackACFault, txRackCoolingSumFault, txRackTempFaultAbs1, txRackTempFaultAbs2, txRackDCFault, 
+                txNoConnection, txRackReflectionFault, txRackReflectionWarning, txRackRfFault, txRackRfWarning, 
+                txRackProbeNotCalibrated, txRackRfOk, txRackRfOn, txRackOvervoltProtectWarning, txRackTemperatureWarning, 
+                txNetCCUBoardTemperatureWarning, txRfLoopReserve, txNetCCUNoConnectionToExcB, txAutomaticExcReady, txAutomaticExcChanged, 
+                txAutomaticExcFault }
+            STATUS current
+            DESCRIPTION 
+                "Group for events of transmitters."
+            ::= { rsXx8000TxGroups 201 }
+
+        
+        groupEventsObsoleted NOTIFICATION-GROUP
+            NOTIFICATIONS { txParamSetSubDeviceDiffers, txNetCCUBoardTemperatureFault }
+            STATUS obsolete
+            DESCRIPTION 
+                "obsoleted or deprecated events"
+            ::= { rsXx8000TxGroups 202 }
+
+        
+        groupEventsAdditionalPowerSupply NOTIFICATION-GROUP
+            NOTIFICATIONS { txInternalPowerSupplyWarning, txExternalPowerSupplyWarning }
+            STATUS current
+            DESCRIPTION 
+                "Events that are available only when statusTxAdditionalPowerSupply is true."
+            ::= { rsXx8000TxGroups 203 }
+
+        
+        groupEventsAmplifier NOTIFICATION-GROUP
+            NOTIFICATIONS { txAmpSumFault, txAmpSumWarning, txAmpPowerOn, txAmpDCOk, txAmpACOk, 
+                txAmpRfInFail, txAmpRfFail, txAmpReflectionFault, txAmpTemperatureFault, txAmpTransistorFault
+                 }
+            STATUS current
+            DESCRIPTION 
+                "events from the amplifier (medium/high power only)"
+            ::= { rsXx8000TxGroups 204 }
+
+        
+        groupEventsOstReserve NOTIFICATION-GROUP
+            NOTIFICATIONS { txNetCCUNoConnectionToOstB, txNoConnectionApaIf, txAbsorberFault }
+            STATUS current
+            DESCRIPTION 
+                "Group for additional events of transmitters in case of active/passive reserve."
+            ::= { rsXx8000TxGroups 205 }
+
+        
+        rsXx8000TxCompls OBJECT IDENTIFIER ::= { rsXx8000TxConf 3 }
+
+        
+        rsXx8000TxMp MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION 
+                "Single medium power transmitters."
+            MODULE -- this module
+                MANDATORY-GROUPS { groupTxObjsGeneral, groupTxObjsMp, groupTxObjsLogbookNetCCU, groupTxObjsProductInfo, groupEventTable, 
+                    groupRfProbes, groupTxObjsNetCCU, groupObjectsSingleEnded, groupTxEvents, groupTxObjsRack, 
+                    groupTxObjsLogbookOst }
+                GROUP groupEventsAdditionalPowerSupply
+                    DESCRIPTION 
+                        "only when statusTxAdditionalPowerSupply is true"
+                GROUP groupObjsAmplifier
+                    DESCRIPTION 
+                        "not for face-lift configuration"
+                GROUP groupEventsAmplifier
+                    DESCRIPTION 
+                        "not for face-lift configuration"
+                GROUP groupTxObjsAddPowerSupply
+                    DESCRIPTION 
+                        "only when statusTxAdditionalPowerSupply is true"
+            ::= { rsXx8000TxCompls 1 }
+
+        
+        rsXx8000TxMpDual MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION 
+                "Dual drive medium power transmitters."
+            MODULE -- this module
+                MANDATORY-GROUPS { groupTxObjsGeneral, groupTxObjsMp, groupTxObjsLogbookNetCCU, groupTxObjsProductInfo, groupEventTable, 
+                    groupRfProbes, groupTxObjsNetCCU, groupObjectsSingleEnded, groupTxEvents, groupTxObjsDualDrive, 
+                    groupTxObjsRack, groupTxObjsLogbookOst }
+                GROUP groupEventsAdditionalPowerSupply
+                    DESCRIPTION 
+                        "only when statusTxAdditionalPowerSupply is true"
+                GROUP groupObjsAmplifier
+                    DESCRIPTION 
+                        "not for face-lift configuration"
+                GROUP groupEventsAmplifier
+                    DESCRIPTION 
+                        "not for face-lift configuration"
+                GROUP groupTxObjsAddPowerSupply
+                    DESCRIPTION 
+                        "only when statusTxAdditionalPowerSupply is true"
+            ::= { rsXx8000TxCompls 2 }
+
+        
+        rsXx8000TxMpOstReserve MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION 
+                "Active/Passive Reserve medium power transmitters."
+            MODULE -- this module
+                MANDATORY-GROUPS { groupTxObjsGeneral, groupTxObjsMp, groupTxObjsLogbookNetCCU, groupTxObjsProductInfo, groupEventTable, 
+                    groupObjsOstReserve, groupRfProbes, groupTxObjsNetCCU, groupEventsOstReserve, groupTxEvents, 
+                    groupTxObjsDualDrive, groupTxObjsRack, groupTxObjsLogbookOst }
+                GROUP groupEventsAdditionalPowerSupply
+                    DESCRIPTION 
+                        "only when statusTxAdditionalPowerSupply is true"
+                GROUP groupObjsAmplifier
+                    DESCRIPTION 
+                        "not for face-lift configuration"
+                GROUP groupEventsAmplifier
+                    DESCRIPTION 
+                        "not for face-lift configuration"
+                GROUP groupTxObjsAddPowerSupply
+                    DESCRIPTION 
+                        "only when statusTxAdditionalPowerSupply is true"
+                GROUP groupDummyLoadRF
+                    DESCRIPTION 
+                        "only when a dummy load measure point exists"
+            ::= { rsXx8000TxCompls 3 }
+
+        
+        rsXx8000TxLpWithNetCCU MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION 
+                "Low power transmitters with NetCCUs."
+            MODULE -- this module
+                MANDATORY-GROUPS { groupTxObjsGeneral, groupTxObjsLogbookNetCCU, groupTxObjsProductInfo, groupEventTable, groupRfProbes, 
+                    groupTxEvents, groupTxObjsNetCCU }
+                GROUP groupEventsAdditionalPowerSupply
+                    DESCRIPTION 
+                        "only when statusTxAdditionalPowerSupply is true"
+                GROUP groupTxObjsAddPowerSupply
+                    DESCRIPTION 
+                        "only when statusTxAdditionalPowerSupply is true"
+                GROUP groupObjectsSx801Amplifier
+                    DESCRIPTION 
+                        "for Sx801/SA801 only"
+            ::= { rsXx8000TxCompls 4 }
+
+        
+        rsXx8000TxLpWithoutNetCCU MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION 
+                "Low power transmitters without NetCCUs."
+            MODULE -- this module
+                MANDATORY-GROUPS { groupTxObjsGeneral, groupEventTable, groupTxEvents }
+                GROUP groupObjectsSx801Amplifier
+                    DESCRIPTION 
+                        "for Sx801/SA801 only"
+            ::= { rsXx8000TxCompls 5 }
+
+        
+    
+    END

@@ -1,0 +1,672 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **
+-- **  COPYRIGHT      (c) 2008 Rohde & Schwarz GmbH & Co. KG
+-- **                          Muehldorfstrasse 15
+-- **    R & S                 D-81671 Muenchen
+-- **
+-- *****************************************************************************
+-- **
+-- **  MODULE         RS-XX8000-GPS-MIB
+-- **  
+-- **  DESCRIPTION    Rohde & Schwarz SNMP
+-- **
+-- **  HISTORY        
+-- **                 2008-03-10 ks - initial version
+-- **                 2008-08-26 ks - gpsStlID read-only
+-- **                 2010-12-02 ks - cmdUseGpsTime added
+-- **
+-- *****************************************************************************
+-- *****************************************************************************
+
+    RS-XX8000-GPS-MIB DEFINITIONS ::= BEGIN
+ 
+        IMPORTS
+            rsXx8000, eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, 
+            indexAB, rsXx8000MibModule, IndexTransmitter, IndexAB, SwitchOnOff, 
+            FloatingPoint, ReadableString, EventPriority, EventState, EventMask, 
+            EventMaxEntryNumber            
+                FROM RS-XX8000-COMMON-MIB            
+            OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP            
+                FROM SNMPv2-CONF            
+            Integer32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, NOTIFICATION-TYPE            
+                FROM SNMPv2-SMI            
+            TruthValue, DateAndTime            
+                FROM SNMPv2-TC;
+    
+    
+        rsXx8000GpsMibModule MODULE-IDENTITY 
+            LAST-UPDATED "201012020900Z"		-- December 02, 2010 at 09:00 GMT
+            ORGANIZATION 
+                "Rohde&Schwarz GmbH & Co. KG"
+            CONTACT-INFO 
+                "Torsten Huebscher
+                Department 7TS2
+                Broadcasting Division
+                Muehldorfstrasse 15
+                81671 Munich, Germany
+                torsten.huebscher@rohde-schwarz.com"
+            DESCRIPTION 
+                "This MIB defines GPS units of transmitting systems from Rohde & Schwarz.
+                
+                Use this MIB if your system meets the following requirements:
+                        - series XX8000 (SLx or XLx),
+                        - GPS unit installed.
+                        
+                The following MIBs are related to this:
+                - RS-COMMON-MIB         - mandatory for this MIB
+                - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+            REVISION "201012020900Z"		-- December 02, 2010 at 09:00 GMT
+            DESCRIPTION 
+                "cmdUseGpsTime added"
+            REVISION "200808260900Z"		-- August 26, 2008 at 09:00 GMT
+            DESCRIPTION 
+                "- gpsStlID read-only"
+            REVISION "200803100949Z"		-- March 10, 2008 at 09:49 GMT
+            DESCRIPTION 
+                "initial version"
+            ::= { rsXx8000MibModule 102 }
+
+        
+    
+    
+--
+-- Node definitions
+--
+    
+        rsXx8000Gps OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION 
+                "Xx8000 GPS module"
+            ::= { rsXx8000 102 }
+
+        
+        rsXx8000GpsObjs OBJECT IDENTIFIER ::= { rsXx8000Gps 1 }
+
+        
+        commandsGpsTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF CommandsGpsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This table contains all changeable parameters for the GPS modules."
+            ::= { rsXx8000GpsObjs 1 }
+
+        
+        commandsGpsEntry OBJECT-TYPE
+            SYNTAX CommandsGpsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "an entry for a designated GPS module"
+            INDEX { gpsTxId, gpsDeviceIdx }
+            ::= { commandsGpsTable 1 }
+
+        
+        CommandsGpsEntry ::=
+            SEQUENCE { 
+                gpsTxId
+                    IndexTransmitter,
+                gpsDeviceIdx
+                    IndexAB,
+                cmdGpsActiveAntenna
+                    SwitchOnOff,
+                cmdGpsShowPosition
+                    SwitchOnOff,
+                cmdUseGpsTime
+                    SwitchOnOff
+             }
+
+        gpsTxId OBJECT-TYPE
+            SYNTAX IndexTransmitter
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The transmitter index in case of n+1 systems.
+                If you have one transmitter only (all reserve concepts except n+1) this index is always 1."
+            ::= { commandsGpsEntry 1 }
+
+        
+        gpsDeviceIdx OBJECT-TYPE
+            SYNTAX IndexAB
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This column is used to show parameters for both exiters,
+                if you have dualdrive transmitters."
+            ::= { commandsGpsEntry 2 }
+
+        
+        cmdGpsActiveAntenna OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "enables/disables a 5V supply for an active GPS antenna.
+                Using an active antenna allows to use longer cables between antenna and transmitter."
+            ::= { commandsGpsEntry 3 }
+
+        
+        cmdGpsShowPosition OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "enables/disables output of position"
+            ::= { commandsGpsEntry 4 }
+
+        
+        cmdUseGpsTime OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Take time information from the GPS module."
+            ::= { commandsGpsEntry 5 }
+
+        
+        detailedInfo OBJECT IDENTIFIER ::= { rsXx8000GpsObjs 3 }
+
+        
+        gpsStatusTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF GpsStatusEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "GPS status values"
+            ::= { detailedInfo 1 }
+
+        
+        gpsStatusEntry OBJECT-TYPE
+            SYNTAX GpsStatusEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "an entry for a designated GPS module"
+            AUGMENTS { commandsGpsEntry }
+            ::= { gpsStatusTable 1 }
+
+        
+        GpsStatusEntry ::=
+            SEQUENCE { 
+                gpsStatusSatellitesUsed
+                    Integer32,
+                gpsStatusSatellitesInView
+                    Integer32,
+                gpsStatusAntennaState
+                    INTEGER,
+                gpsStatusPositionValid
+                    TruthValue,
+                gpsStatusSurveyInTimeMode
+                    INTEGER,
+                gpsStatusTDOP
+                    FloatingPoint,
+                gpsStatusLatitude
+                    ReadableString,
+                gpsStatusLongitude
+                    ReadableString
+             }
+
+        gpsStatusSatellitesUsed OBJECT-TYPE
+            SYNTAX Integer32 (0..16)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Number of satellites currently being used for position and time determination"
+            ::= { gpsStatusEntry 1 }
+
+        
+        gpsStatusSatellitesInView OBJECT-TYPE
+            SYNTAX Integer32 (0..16)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Number of satellites currently being received"
+            ::= { gpsStatusEntry 2 }
+
+        
+        gpsStatusAntennaState OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                init(1),
+                unknown(2),
+                ok(3),
+                short(4),
+                notConnected(5)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "shows if the GPS antenna is properly connected to the device
+                With active antennas, the following may be displayed:
+                - unknown: The antenna status cannot be determined 
+                - ok: The active antenna is correctly connected
+                - short: A short-circuit has been detected at the antenna input
+                - notConnected: No active antenna is connected
+                The status display is always 'unknown' for passive antennas."
+            ::= { gpsStatusEntry 3 }
+
+        
+        gpsStatusPositionValid OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "- true: The position (latitude and longitude) can be determined
+                - false: The position cannot be determined"
+            ::= { gpsStatusEntry 4 }
+
+        
+        gpsStatusSurveyInTimeMode OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                idle(1),
+                surveyIn(2),
+                fixed(3)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "- survey in:
+                receiver does not know exactly its position.
+                The reference is stable but after an interruption of power supply
+                it will take some time until the receiver will be locked again.
+                - fixed:
+                receiver has stored its last position.
+                After a reboot it guesses that it has not been moved during power fail.
+                In this mode the receiver is able to calculate a stable reference after some seconds.
+                
+                The software automatically switches between these two modes"
+            ::= { gpsStatusEntry 5 }
+
+        
+        gpsStatusTDOP OBJECT-TYPE
+            SYNTAX FloatingPoint
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Time Dilution of Precision.
+                A small value (less than 2) indicates a high time precision."
+            ::= { gpsStatusEntry 6 }
+
+        
+        gpsStatusLatitude OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "shows latitude of current position in WGS84
+                when enabled with cmdGpsShowPosition"
+            ::= { gpsStatusEntry 7 }
+
+        
+        gpsStatusLongitude OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "shows longitude of current position in WGS84
+                when enabled with cmdGpsShowPosition"
+            ::= { gpsStatusEntry 8 }
+
+        
+        gpsSatellitesTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF GpsSatellitesEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "status values for received satellites"
+            ::= { detailedInfo 2 }
+
+        
+        gpsSatellitesEntry OBJECT-TYPE
+            SYNTAX GpsSatellitesEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "an entry for a designated satellite"
+            INDEX { gpsTxId, gpsDeviceIdx, gpsStlNo }
+            ::= { gpsSatellitesTable 1 }
+
+        
+        GpsSatellitesEntry ::=
+            SEQUENCE { 
+                gpsStlNo
+                    Integer32,
+                gpsStlID
+                    Integer32,
+                gpsStlQuality
+                    Integer32,
+                gpsStlCNR
+                    Integer32
+             }
+
+        gpsStlNo OBJECT-TYPE
+            SYNTAX Integer32 (1..16)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "index of the satellite
+                The satellites are sorted by signal/noise ration (best value at top)."
+            ::= { gpsSatellitesEntry 1 }
+
+        
+        gpsStlID OBJECT-TYPE
+            SYNTAX Integer32 (0..255)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "ID for a received satellite"
+            ::= { gpsSatellitesEntry 2 }
+
+        
+        gpsStlQuality OBJECT-TYPE
+            SYNTAX Integer32 (0..7)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Reception quality for the satellite concerned together with the following
+                classification:
+                - 0: Satellite not visible
+                - 1, 2 : Receiver searching for satellite signal
+                - 3: Receiver has detected a satellite signal, but signal is unusable
+                - 4: Receiver has switched to the C/A code
+                - 5, 6: Receiver has switched to the C/A code and carrier L1
+                - 7: Receiver can read out satellite data with 50 bps"
+            ::= { gpsSatellitesEntry 3 }
+
+        
+        gpsStlCNR OBJECT-TYPE
+            SYNTAX Integer32 (0..99)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Signal/noise ratio referenced to carrier"
+            ::= { gpsSatellitesEntry 4 }
+
+        
+        productInfoTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF ProductInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Product Informations about the module. These informations are necessary when contacting R&S service."
+            ::= { detailedInfo 100 }
+
+        
+        productInfoEntry OBJECT-TYPE
+            SYNTAX ProductInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated GPS module."
+            AUGMENTS { commandsGpsEntry }
+            ::= { productInfoTable 1 }
+
+        
+        ProductInfoEntry ::=
+            SEQUENCE { 
+                prodInfoSerialNumber
+                    ReadableString,
+                prodInfoIdentNumberSW
+                    ReadableString,
+                prodInfoVersionNumberSW
+                    ReadableString,
+                prodInfoIdentNumberHW
+                    ReadableString,
+                prodInfoVersionNumberHW
+                    ReadableString,
+                productInfoProductDateHW
+                    DateAndTime
+             }
+
+        prodInfoSerialNumber OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The serial number of the subdevice."
+            ::= { productInfoEntry 2 }
+
+        
+        prodInfoIdentNumberSW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz identification number of the software, for example 2094.2090.02."
+            ::= { productInfoEntry 3 }
+
+        
+        prodInfoVersionNumberSW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz revision number of the software, for example 1.2.1."
+            ::= { productInfoEntry 4 }
+
+        
+        prodInfoIdentNumberHW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz identification number of the hardware, for example 2095.8007.02 (NetCCU)."
+            ::= { productInfoEntry 5 }
+
+        
+        prodInfoVersionNumberHW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz revision number (product index) of the hardware, for example 03.03."
+            ::= { productInfoEntry 6 }
+
+        
+        productInfoProductDateHW OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz production date of the hardware."
+            ::= { productInfoEntry 7 }
+
+        
+        rsXx8000GpsEvents OBJECT IDENTIFIER ::= { rsXx8000Gps 3 }
+
+        
+        eventGps OBJECT IDENTIFIER ::= { rsXx8000GpsEvents 1 }
+
+        
+        eventsGpsV2 OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION 
+                "Compatibility to SMIv1."
+            ::= { eventGps 0 }
+
+        
+        gpsAntennaInvalid NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "GPS Antenna OK/notOK. Check gpsStatusAntennaState for more detailed informations."
+            ::= { eventsGpsV2 1 }
+
+        
+        gpsPositionInvalid NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "GPS Position Ok/notOk. Check gpsStatusPositionValid for more detailed informations."
+            ::= { eventsGpsV2 2 }
+
+        
+        eventsGpsTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF EventsGpsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This table contains necessary information for handling alarms. 
+                For each alarm you have the following information: 
+                - name (get),
+                - mask to enable/disable sending out (set/get),
+                - priority (set/get) and 
+                - the current state (get only)."
+            ::= { eventGps 1 }
+
+        
+        eventsGpsEntry OBJECT-TYPE
+            SYNTAX EventsGpsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An event entry always consists of its indexes
+                (used for addressing within redundancy systems) and 3 values:
+                - name: an enumerated list of all possible notifications
+                - mask: the corresponding mask (enable/disable)
+                - priority: the corresponding priority (value in range 0..255)
+                - event: the event itself (active/inactive)"
+            INDEX { gpsTxId, gpsDeviceIdx, eventGpsNameIdx }
+            ::= { eventsGpsTable 1 }
+
+        
+        EventsGpsEntry ::=
+            SEQUENCE { 
+                eventGpsNameIdx
+                    EventMaxEntryNumber,
+                eventGpsName
+                    INTEGER,
+                eventGpsMask
+                    EventMask,
+                eventGpsPriority
+                    EventPriority,
+                eventGpsEvent
+                    EventState
+             }
+
+        eventGpsNameIdx OBJECT-TYPE
+            SYNTAX EventMaxEntryNumber
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The event number as an integer.
+                This is a helper column and therefore not-accessible."
+            ::= { eventsGpsEntry 3 }
+
+        
+        eventGpsName OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                gpsAntennaInvalid(1),
+                gpsPositionInvalid(2)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The event number as integer and the value as readable text.
+                The enumeration correlates with the notifications under eventsGpsV2."
+            ::= { eventsGpsEntry 4 }
+
+        
+        eventGpsMask OBJECT-TYPE
+            SYNTAX EventMask
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsGpsEntry 5 }
+
+        
+        eventGpsPriority OBJECT-TYPE
+            SYNTAX EventPriority
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsGpsEntry 6 }
+
+        
+        eventGpsEvent OBJECT-TYPE
+            SYNTAX EventState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsGpsEntry 7 }
+
+        
+        rsXx8000GpsConf OBJECT IDENTIFIER ::= { rsXx8000Gps 4 }
+
+        
+        rsXx8000GpsGroups OBJECT IDENTIFIER ::= { rsXx8000GpsConf 1 }
+
+        
+        groupCommandsGps OBJECT-GROUP
+            OBJECTS { cmdGpsActiveAntenna, cmdGpsShowPosition, cmdUseGpsTime }
+            STATUS current
+            DESCRIPTION 
+                "This group includes all changeable object types."
+            ::= { rsXx8000GpsGroups 1 }
+
+        
+        groupStatusGps OBJECT-GROUP
+            OBJECTS { gpsStatusSatellitesUsed, gpsStatusSatellitesInView, gpsStatusAntennaState, gpsStatusPositionValid, gpsStatusSurveyInTimeMode, 
+                gpsStatusTDOP, gpsStatusLatitude, gpsStatusLongitude }
+            STATUS current
+            DESCRIPTION 
+                "This group includes nonchangeable object types for a GPS module."
+            ::= { rsXx8000GpsGroups 2 }
+
+        
+        groupSatelliteGps OBJECT-GROUP
+            OBJECTS { gpsStlID, gpsStlQuality, gpsStlCNR }
+            STATUS current
+            DESCRIPTION 
+                "This group includes nonchangeable object types for a satellite."
+            ::= { rsXx8000GpsGroups 3 }
+
+        
+        groupProductInfo OBJECT-GROUP
+            OBJECTS { prodInfoSerialNumber, prodInfoIdentNumberSW, prodInfoVersionNumberSW, prodInfoIdentNumberHW, prodInfoVersionNumberHW, 
+                productInfoProductDateHW }
+            STATUS current
+            DESCRIPTION 
+                "This group includes product info object types for a GPS module."
+            ::= { rsXx8000GpsGroups 4 }
+
+        
+        groupEventTable OBJECT-GROUP
+            OBJECTS { eventGpsName, eventGpsMask, eventGpsPriority, eventGpsEvent }
+            STATUS current
+            DESCRIPTION 
+                "Group for all objects of event tables."
+            ::= { rsXx8000GpsGroups 5 }
+
+        
+        groupAlarmsGps NOTIFICATION-GROUP
+            NOTIFICATIONS { gpsAntennaInvalid, gpsPositionInvalid }
+            STATUS current
+            DESCRIPTION 
+                "Group for events of the GPS-Modul."
+            ::= { rsXx8000GpsGroups 6 }
+
+        
+        rsXx8000GpsCompls OBJECT IDENTIFIER ::= { rsXx8000GpsConf 2 }
+
+        
+        gps MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION 
+                "This is the only implementation variant."
+            MODULE -- this module
+                MANDATORY-GROUPS { groupCommandsGps, groupStatusGps, groupSatelliteGps, groupProductInfo, groupEventTable, 
+                    groupAlarmsGps }
+            ::= { rsXx8000GpsCompls 1 }
+
+        
+    
+    END

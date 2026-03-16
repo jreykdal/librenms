@@ -1,0 +1,190 @@
+mib: ECRESO-FM-TRANS-MIB:IRT-COMMONVARBINDS-MIB:IRT-FM-SINGLETRANSMITTER-MIB:IRT-TRANSMITTER-SMI-MIB
+  
+modules:
+  os:
+    hardware:
+      - ECRESO-FM-TRANS-MIB::syGeHardRel.0
+      - ECRESO-FM-TRANS-MIB::syGeType.0
+    hardware_template: '{{ ECRESO-FM-TRANS-MIB::syGeHardRel.0 }} {{ ECRESO-FM-TRANS-MIB::syGeType.0 }}'
+    serial: ECRESO-FM-TRANS-MIB::syGeSerial.0
+    version: ECRESO-FM-TRANS-MIB::syGeSoftRel.0
+
+  sensors:
+    temperature:
+      data:
+        - oid: maMoCoMeAmb
+          value: maMoCoMeAmb
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.3.1.1.{{ $index }}'
+          index: 'tempReading.{{ $index }}'
+          descr: 'Ambient Temp'
+          high_limit: 35
+          low_limit: 0
+          low_warn_limit: 10
+          warn_limit: 30
+          divisor: 1
+
+        - oid: maMoCoMeExcTemp
+          value: maMoCoMeExcTemp
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.3.1.11.{{ $index }}'
+          index: 'exciterTemp.{{ $index }}'
+          descr: 'Exciter Temp'
+          divisor: 1
+
+        - oid: maMoCoMePsuTemp
+          value: maMoCoMePsuTemp
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.3.1.9.{{ $index }}'
+          index: 'psuTemp.{{ $index }}'
+          descr: 'PSU Temp'
+          divisor: 1
+
+        - oid: maMoCoMeIntTemp
+          value: maMoCoMeIntTemp
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.3.1.10.{{ $index }}'
+          index: 'intTemp.{{ $index }}'
+          descr: 'Internal Temp'
+          divisor: 1
+
+        - oid: maMoCoMeHeat1
+          value: maMoCoMeHeat1
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.3.1.7.{{ $index }}'
+          index: 'HeatSink1Temp.{{ $index }}'
+          descr: 'Heatsink 1 temperature'
+          divisor: 1
+
+    power:
+      data:
+        - oid: txGnMsForwardPower
+          value: txGnMsForwardPower
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.7.1.3.1.{{ $index }}'
+          index: 'txForwardPower.{{ $index }}'
+          descr: 'Forward Power'
+          divisor: 1
+          low_limit: 90
+          high_limit: 110
+
+        - oid: txGnMsReflectedPower
+          value: txGnMsReflectedPower
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.7.1.3.2.{{ $index }}'
+          index: 'txReflectedPower.{{ $index }}'
+          descr: 'Reflected Power'
+          divisor: 10
+
+    dbm:
+      data:
+        - oid: txGnMsVSWR
+          value: txGnMsVSWR
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.7.1.3.3.{{ $index }}'
+          index: 'txVSWR.{{ $index }}'
+          descr: 'VSWR'
+          divisor: 10
+          high_limit: 1.5
+
+    voltage:
+      data:
+        - oid: maMoAuMe5V
+          value: maMoAuMe5V
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.4.1.1.{{ $index }}'
+          index: '5vRail.{{ $index }}'
+          descr: '5V Rail'
+          divisor: 100
+
+        - oid: maMoAuMe12V
+          value: maMoAuMe12V
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.4.1.2.{{ $index }}'
+          index: '12vRail.{{ $index }}'
+          descr: '12V Rail'
+          divisor: 100
+
+        - oid: maMoAuMeN12V
+          value: maMoAuMeN12V
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.4.1.3.{{ $index }}'
+          index: 'neg12vRail.{{ $index }}'
+          descr: '-12V Rail'
+          divisor: 100
+        
+        - oid: maMoMeVolt1
+          value: maMoMeVolt1
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.6.1.{{ $index }}'
+          index: 'maMoMeVolt1.{{ $index }}'
+          descr: 'Main 24V Voltage'
+          divisor: 10
+          low_limit: 22
+          high_limit: 26
+
+    
+    current:
+      data:
+        - oid: maMoMeCur1
+          value: maMoMeCur1
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.6.3.{{ $index }}'
+          index: 'maMoMeCur1.{{ $index }}'
+          descr: 'Main Current'
+          divisor: 10
+          low_limit: 4
+          high_limit: 5
+
+
+
+
+
+    fanspeed:
+      data:
+        - oid: maMoFanSpeed
+          value: maMoFanSpeed
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.5.1.2.{{ $index }}'
+          index: 'fan0.{{ $index }}'
+          descr: 'Fan Speed'
+          divisor: 1
+
+    pressure:
+      data:
+        - oid: maMoCoMePressure
+          value: maMoCoMePressure
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.3.1.6.{{ $index }}'
+          index: 'pressure.{{ $index }}'
+          descr: 'Pressure'
+          divisor: 1
+     
+    percent:
+      data:
+        - oid: maMoMaEffTrans
+          value: maMoMaEffTrans
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.1.1.{{ $index }}'
+          index: 'EffTrans.{{ $index }}'
+          descr: 'Transmitter efficiency'
+          divisor: 1
+        
+        - oid: maMoMaEffPa
+          value: maMoMaEffPa
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.1.2.{{ $index }}'
+          index: 'EffPA.{{ $index }}'
+          descr: 'Power amplifiers efficiency'
+          divisor: 1
+        
+        - oid: maMoMaEffPsu
+          value: maMoMaEffPsu
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.1.3.{{ $index }}'
+          index: 'EffPSU.{{ $index }}'
+          descr: 'Power supplies efficiency'
+          divisor: 1
+
+        - oid: maMoMaEffSys
+          value: maMoMaEffSys
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.11.1.1.4.{{ $index }}'
+          index: 'EffSys.{{ $index }}'
+          descr: 'System efficiency'
+          divisor: 1    
+    state:
+      data:
+        - 
+          oid: txSfCoState
+          value: txSfCoState
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.7.2.2.1.{{ $index }}'
+          index: 'txSfCoState.{{ $index }}'
+          group: SmartFM
+          state_name: SmartFM
+          states:
+            - { value: 1, generic: 1, graph: 1, descr: ON }
+            - { value: 2, generic: 0, graph: 1, descr: OFF }
+
+

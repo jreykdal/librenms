@@ -1,0 +1,12 @@
+os: rs-XX8000
+text: Rohde & Schwarz FM transmitter
+icon: rs
+over:
+    - { graph: device_power, text: Output Power }
+type: appliance
+mib_dir: rs
+discovery:
+    -
+        sysDescr_regex:
+            - '/^Linux netccu800/'
+            - '/^SR8000 OSEDelta 4.6/'

@@ -1,0 +1,2545 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **
+-- **  COPYRIGHT      (c) 2008 Rohde & Schwarz GmbH & Co. KG
+-- **                          Muehldorfstrasse 15
+-- **    R & S                 D-81671 Muenchen
+-- **
+-- *****************************************************************************
+-- **
+-- **  MODULE         RS-XX8000-DAB-EXC-MIB
+-- **  
+-- **  DESCRIPTION    Rohde & Schwarz SNMP
+-- **
+-- **  HISTORY        
+-- **  2009-03-17 ks - initial version
+-- **  2009-11-26 ks - cmdExcRfWarningLimit added
+-- **  2010-19-04 ks - cmdExcRfOutputAttenuationPrecise added
+-- **  2011-04-15 ks - rsXx8000DabExcMibModule OID corrected
+-- **  2011-05-02 ks - excStatusEnsembleName, excStatusEnsembleID added
+-- **  2011-05-12 ks - cmdExcFailDelayMode, excStatusFailDelay added
+-- *****************************************************************************
+-- *****************************************************************************
+-- 
+
+  RS-XX8000-DAB-EXC-MIB DEFINITIONS ::= BEGIN
+ 
+    IMPORTS
+      rsXx8000, eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, 
+      indexAB, rsXx8000MibModule, EventPriority, EventClass, EventState, 
+      IndexTransmitter, IndexAB, SwitchOnOff, FloatingPoint, Trigger, 
+      EqualizerCalibrationState, ReadableString, LogbookMaxEntryNumber, LogbookEntrySlope, LogbookEntryMessagesExcTv, 
+      ProdInfoModuleNameTv, EventMaxEntryNumber, EventMask, FailDelayMode, FailDelayStatus      
+        FROM RS-XX8000-COMMON-MIB      
+      OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP      
+        FROM SNMPv2-CONF      
+      Integer32, Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, 
+      NOTIFICATION-TYPE      
+        FROM SNMPv2-SMI      
+      TruthValue, DateAndTime, TEXTUAL-CONVENTION      
+        FROM SNMPv2-TC;
+  
+  
+    rsXx8000DabExcMibModule MODULE-IDENTITY 
+      LAST-UPDATED "201105120800Z"		-- May 12, 2011 at 08:00 GMT
+      ORGANIZATION 
+        "Rohde&Schwarz GmbH & Co. "
+      CONTACT-INFO 
+        "Torsten Huebscher
+        Department 7TS2
+        Broadcasting Division
+        Muehldorfstrasse 15
+        81671 Munich, Germany
+        torsten.huebscher@rohde-schwarz.com"
+      DESCRIPTION 
+        "This MIB defines transmitting systems from Rohde & Schwarz.
+        
+        Use this MIB if your system meets the following requirements:
+        - series XX8000 (NetCCU800),
+        - DAB,
+        - transmitter reserve concept SingleTx, DualDrive,
+          Active Reserve or Passive Reserve.
+        
+        The following MIBs are related to this:
+        - RS-COMMON-MIB         - mandatory for this MIB
+        - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+      REVISION "201105120800Z"		-- May 12, 2011 at 08:00 GMT
+      DESCRIPTION 
+        "cmdExcFailDelayMode, excStatusFailDelay added"
+      REVISION "201105020800Z"		-- May 02, 2011 at 08:00 GMT
+      DESCRIPTION 
+        "excStatusEnsembleName, excStatusEnsembleID added
+        "
+      REVISION "201004190800Z"		-- April 19, 2010 at 08:00 GMT
+      DESCRIPTION 
+        "cmdExcRfOutputAttenuationPrecise added"
+      REVISION "200911260800Z"		-- November 26, 2009 at 08:00 GMT
+      DESCRIPTION 
+        "cmdExcRfWarningLimit added"
+      REVISION "200903170700Z"		-- March 17, 2009 at 07:00 GMT
+      DESCRIPTION 
+        "initial revision"
+      ::= { rsXx8000MibModule 211 }
+
+    
+  
+--
+-- Textual conventions
+--
+  
+    DabTxMode ::= TEXTUAL-CONVENTION
+      STATUS current
+      DESCRIPTION 
+        "DAB Tx Mode"
+      SYNTAX INTEGER
+        {
+        iv(1),
+        i(2),
+        ii(3),
+        iii(4)
+        }
+
+  
+--
+-- Node definitions
+--
+  
+    rsXx8000DabExc OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Xx8000 DAB exciter."
+      ::= { rsXx8000 211 }
+
+    
+    rsXx8000DabExcObjs OBJECT IDENTIFIER ::= { rsXx8000DabExc 1 }
+
+    
+    commandsTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF CommandsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains important commands for the exciter."
+      ::= { rsXx8000DabExcObjs 1 }
+
+    
+    commandsEntry OBJECT-TYPE
+      SYNTAX CommandsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for a designated device."
+      INDEX { cmdTxIdx, cmdExcIdx }
+      ::= { commandsTable 1 }
+
+    
+    CommandsEntry ::=
+      SEQUENCE { 
+        cmdTxIdx
+          IndexTransmitter,
+        cmdExcIdx
+          IndexAB,
+        cmdExcOpModeInputAutomatic
+          SwitchOnOff,
+        cmdExcPreselectInput
+          INTEGER,
+        cmdExcNetworkMode
+          INTEGER,
+        cmdExcEnableTII
+          SwitchOnOff,
+        cmdExcTxAddress
+          Integer32,
+        cmdExcInputPriority
+          INTEGER,
+        cmdExcInputErrorFrmWindowLength
+          Integer32,
+        cmdExcInputErrorFreeFrames
+          Integer32,
+        cmdExcInputMaxEOHErrorRate
+          FloatingPoint,
+        cmdExcInputMaxEOFErrorRate
+          FloatingPoint,
+        cmdExcManualTxMode
+          DabTxMode,
+        cmdExcUseManualTxMode
+          SwitchOnOff,
+        cmdExcManualTIIMainId
+          Integer32,
+        cmdExcManualTIISubId
+          Integer32,
+        cmdExcUseManualTII
+          SwitchOnOff,
+        cmdExcNetCompensationDelayTS1
+          FloatingPoint,
+        cmdExcNetCompensationDelayTS2
+          FloatingPoint,
+        cmdExcDynamicSFNTISTSource
+          INTEGER,
+        cmdExcDynamicSFNMaxTISTLevel
+          INTEGER,
+        cmdExcSFNDeviationTime
+          FloatingPoint,
+        cmdExcInputFailDelayTime
+          Integer32,
+        cmdExcTxDelay
+          FloatingPoint,
+        cmdExcManualTxOffsetDelay
+          FloatingPoint,
+        cmdExcUseManualTxOffsetDelay
+          SwitchOnOff,
+        cmdExcTestInputMeasurement
+          SwitchOnOff,
+        cmdExcTestInputMeasurementInput
+          INTEGER,
+        cmdExcTestInputPRBSPolynomial
+          INTEGER,
+        cmdExcTestInputResetPRBS
+          Trigger,
+        cmdExcTestRFTestMode
+          INTEGER,
+        cmdExcTestRFSubcarrier1
+          Integer32,
+        cmdExcTestRFSubcarrier2
+          Integer32,
+        cmdExcTestRFSubcarrierSpacing
+          INTEGER,
+        cmdExcTestRFRandomOFDMSymbols
+          SwitchOnOff,
+        cmdExcTestInserterMode
+          INTEGER,
+        cmdExcTestInserterAudioChnMode
+          INTEGER,
+        cmdExcTestInserterDataChnMode
+          SwitchOnOff,
+        cmdExcTestInserterPRBSInsrtMode
+          INTEGER,
+        cmdExcTestInserterSubchannel
+          Integer32,
+        cmdExcFrequency
+          Integer32,
+        cmdExcDabChannel
+          INTEGER,
+        cmdExcReferenceSource
+          INTEGER,
+        cmdExcMuteOnPPSFail
+          INTEGER,
+        cmdExcMuteOnReferenceFail
+          INTEGER,
+        cmdExcRefFailDelayTime
+          Integer32,
+        cmdExcMonitoringOutput
+          INTEGER,
+        cmdExcOxcoAdjust
+          Integer32,
+        cmdExcTypeLossOfInput
+          INTEGER,
+        cmdExcRfOutput
+          SwitchOnOff,
+        cmdExcRfOutputRegulation
+          SwitchOnOff,
+        cmdExcRfOutputManualRfLevel
+          FloatingPoint,
+        cmdExcRfOutputAttenuation
+          Integer32,
+        cmdExcRfOutputRfSlope
+          FloatingPoint,
+        cmdExcFrequencyRegion
+          INTEGER,
+        cmdExcRfIqAdjustStart
+          INTEGER,
+        cmdExcRfIqAdjustTestsignal
+          SwitchOnOff,
+        cmdExcRfIqAdjustBiasCoarseI
+          Integer32,
+        cmdExcRfIqAdjustBiasCoarseQ
+          Integer32,
+        cmdExcRfIqAdjustBiasFineI
+          Integer32,
+        cmdExcRfIqAdjustBiasFineQ
+          Integer32,
+        cmdExcRfIqAdjustGainI
+          Integer32,
+        cmdExcRfIqAdjustGainQ
+          Integer32,
+        cmdExcRfIqAdjustPhase
+          FloatingPoint,
+        cmdExcRfOutputAttenuationPrecise
+          FloatingPoint,
+        cmdExcRfWarningLimit
+          FloatingPoint,
+        cmdExcRfFailLimit
+          FloatingPoint,
+        cmdExcOutputPower
+          FloatingPoint,
+        cmdExcFailDelayMode
+          FailDelayMode
+       }
+
+    cmdTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index. "
+      ::= { commandsEntry 1 }
+
+    
+    cmdExcIdx OBJECT-TYPE
+      SYNTAX IndexAB
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This index distinguishes the exiters.
+        Necessary if you have dual drive transmitters."
+      ::= { commandsEntry 2 }
+
+    
+    cmdExcOpModeInputAutomatic OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Activates/deactivates the input automatic. 
+        If a loss of input signal is detected on the current input
+        the reserve input will be used instead."
+      ::= { commandsEntry 3 }
+
+    
+    cmdExcPreselectInput OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        eti1(1),
+        eti2(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "This is used to select which input has priority (if enabled),
+        otherwise this input is used first when the automatic input is turned on."
+      ::= { commandsEntry 4 }
+
+    
+    cmdExcNetworkMode OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        dynamicSFN(1),
+        staticSFN(2),
+        mfn(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Used to select the network mode.
+        In Dynamic SFN mode, TIST warnings become active.
+        In static SFN and MFN mode, the network compensation delays must be set such
+        that the delay difference is 0 to allow seamless switching."
+      ::= { commandsEntry 6 }
+
+    
+    cmdExcEnableTII OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Enables / disables transmission of Transmitter Identification Information."
+      ::= { commandsEntry 7 }
+
+    
+    cmdExcTxAddress OBJECT-TYPE
+      SYNTAX Integer32 (0..65535)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The unique transmitter id used for addressing MNSC data."
+      ::= { commandsEntry 9 }
+
+    
+    cmdExcInputPriority OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        equal(1),
+        prior(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Equal: There are no differences between both inputs. 
+        If a failure on the current input is detected it will be switched to the reserve input. 
+        It stays there until the reserve shows a failure. 
+        Prior: Whenever possible a certain input shall be used. 
+        If a failure is detected the reserve will be used as short as possible."
+      ::= { commandsEntry 13 }
+
+    
+    cmdExcInputErrorFrmWindowLength OBJECT-TYPE
+      SYNTAX Integer32 (1..999)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The window length in ETI Frames used to average the CRC error rate.
+        Corresponds with Q in ETSI EN 302 0777-1 section 4.3.2.3 ."
+      ::= { commandsEntry 14 }
+
+    
+    cmdExcInputErrorFreeFrames OBJECT-TYPE
+      SYNTAX Integer32 (1..999)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The number of ETI Frames without any CRC errors, before the ETI stream is marked as present.
+        Corresponds with M in ETSI EN 302 0777-1 section 4.3.2.3 ."
+      ::= { commandsEntry 15 }
+
+    
+    cmdExcInputMaxEOHErrorRate OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Percent"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The maximum end of header CRC error rate allowed (within the above-specified window length)
+        before the ETI stream is marked as absent.
+        Corresponds with P in ETSI EN 302 0777-1 section 4.3.2.3 .
+        min: 0.0, max: 100.0"
+      ::= { commandsEntry 16 }
+
+    
+    cmdExcInputMaxEOFErrorRate OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Percent"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The maximum end of frame CRC error rate allowed (within the above-specified window length)
+        before the ETI stream is marked as present.
+        Corresponds with P in ETSI EN 302 0777-1 section 4.3.2.3 .
+        min: 0.0, max: 100.0"
+      ::= { commandsEntry 17 }
+
+    
+    cmdExcManualTxMode OBJECT-TYPE
+      SYNTAX DabTxMode
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "sets the Tx mode when cmdExcUseManualTxMode is 'on'."
+      ::= { commandsEntry 18 }
+
+    
+    cmdExcUseManualTxMode OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "If 'on' the Tx Mode is according to the manual setting in cmdExcManualTxMode.
+        if 'off' the Tx mode is taken automatically from the transmitted ETI header."
+      ::= { commandsEntry 19 }
+
+    
+    cmdExcManualTIIMainId OBJECT-TYPE
+      SYNTAX Integer32 (0..69)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "TII Main ID manual setting (used if cmdExcUseManualTII is set to 'on')."
+      ::= { commandsEntry 20 }
+
+    
+    cmdExcManualTIISubId OBJECT-TYPE
+      SYNTAX Integer32 (1..23)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "TII Sub ID manual setting (used if cmdExcUseManualTII is set to 'on')."
+      ::= { commandsEntry 21 }
+
+    
+    cmdExcUseManualTII OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Selects the source for the TII Main ID and Sub ID:
+        Select 'off' to use the values in the active input MNSC field.
+        Select 'on' to use the values specified in cmdExcManualTIIMainId, cmdExcManualTIISubId."
+      ::= { commandsEntry 22 }
+
+    
+    cmdExcNetCompensationDelayTS1 OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "micro sec"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "ETI 1 Network Compensation Delay.
+        In static SFN mode this is used to ensure an equal delay
+        between the multiplexer and the transmitter network adapter.
+        In MFN mode the reserve channel delay will be automatically adjusted
+        to achieve identical network delays for both ETI streams.
+        In static SFN mode, the user is responsible for setting this delay according to the network topography.
+        In dynamic SFN mode this delay is set through the TIST value from the multiplexer
+        and is shown for information only.
+        min: 0.000, max: 1000000.000"
+      ::= { commandsEntry 23 }
+
+    
+    cmdExcNetCompensationDelayTS2 OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "micro sec"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "ETI 2 Network Compensation Delay.
+        In static SFN mode this is used to ensure an equal delay
+        between the multiplexer and the transmitter network adapter.
+        In MFN mode the reserve channel delay will be automatically adjusted
+        to achieve identical network delays for both ETI streams.
+        In static SFN mode, the user is responsible for setting this delay according to the network topography.
+        In dynamic SFN mode this delay is set through the TIST value from the multiplexer
+        and is shown for information only.
+        min: 0.000, max: 1000000.000"
+      ::= { commandsEntry 24 }
+
+    
+    cmdExcDynamicSFNTISTSource OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        etiLi(1),
+        etiNa(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "selects the TIST source for both input channels in dynamic SFN mode"
+      ::= { commandsEntry 25 }
+
+    
+    cmdExcDynamicSFNMaxTISTLevel OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        level1(1),
+        level2(2),
+        level3(3),
+        level4(4),
+        level5(5)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The selected maximum TIST level.
+        The higher the TIST level, the finer the delay time resolution."
+      ::= { commandsEntry 26 }
+
+    
+    cmdExcSFNDeviationTime OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Percent"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The maximum time deviation (as a % of the guard interval)
+        between the required and actual transmission time
+        above which a hard resynchronisation will occur.
+        Below this threshold, the symbol rate will be regulated
+        to reduce any discrepancies in the transmission time.
+        min: 10.0, max: 100.0"
+      ::= { commandsEntry 27 }
+
+    
+    cmdExcInputFailDelayTime OBJECT-TYPE
+      SYNTAX Integer32 (0..600)
+      UNITS "seconds"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the time delay before signalling a sum fault
+        if the type of loss of input is set to fault."
+      ::= { commandsEntry 30 }
+
+    
+    cmdExcTxDelay OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "micro sec"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "This delay should be the same for all transmitters in the SFN.
+        min: 0.000, max: 1000000.000"
+      ::= { commandsEntry 36 }
+
+    
+    cmdExcManualTxOffsetDelay OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "micro sec"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "A manual setting for the offset delay,
+        used when cmdExcUseManualTxOffsetDelay is set to 'on'.
+        min: 0.000, max: 2047.000"
+      ::= { commandsEntry 37 }
+
+    
+    cmdExcUseManualTxOffsetDelay OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "When 'off' is selected, the offset delay from the active input MNSC data is used.
+        When 'on' is selected, the offset delay configured in cmdExcManualTxOffsetDelay is used."
+      ::= { commandsEntry 38 }
+
+    
+    cmdExcTestInputMeasurement OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Switches the PRBS measurement (mode G.703 as defined in Annex G of ETS 300 799) on or off."
+      ::= { commandsEntry 39 }
+
+    
+    cmdExcTestInputMeasurementInput OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        eti1(1),
+        eti2(2),
+        activeEti(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Selects which input to use for BER measurement."
+      ::= { commandsEntry 40 }
+
+    
+    cmdExcTestInputPRBSPolynomial OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        x20(1),
+        x23(2),
+        x15(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Selects the PRBS polynomial of the incoming sequence."
+      ::= { commandsEntry 41 }
+
+    
+    cmdExcTestInputResetPRBS OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Restarts the PRBS BER measurement."
+      ::= { commandsEntry 43 }
+
+    
+    cmdExcTestRFTestMode OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        off(1),
+        carrier1(2),
+        carrier2(3),
+        twoCarriers(4),
+        bandpass(5),
+        bandstop(6),
+        centralCarrier(7)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Selects a subset of sub-carriers to be transmitted."
+      ::= { commandsEntry 44 }
+
+    
+    cmdExcTestRFSubcarrier1 OBJECT-TYPE
+      SYNTAX Integer32 (-768..768)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Select sub-carrier 1."
+      ::= { commandsEntry 45 }
+
+    
+    cmdExcTestRFSubcarrier2 OBJECT-TYPE
+      SYNTAX Integer32 (-768..768)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Select sub-carrier 2."
+      ::= { commandsEntry 46 }
+
+    
+    cmdExcTestRFSubcarrierSpacing OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        kHz2(1),
+        kHz1(2),
+        kHz4(3),
+        kHz8(4)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Select the Sub-Carrier Spacing (values correspond with the four DAB Tx modes)."
+      ::= { commandsEntry 47 }
+
+    
+    cmdExcTestRFRandomOFDMSymbols OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "This setting is used to insert random OFDM symbols
+        and is only effective in bandpass and bandstop modes."
+      ::= { commandsEntry 48 }
+
+    
+    cmdExcTestInserterMode OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        off(1),
+        testEnsemble(2),
+        prbsOnly(3),
+        testFicOverallTxDelay(4),
+        testFicProcessingDelay(5)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "In Test Ensemble mode, a test ensemble will be inserted into the output stream.
+        In PRBS mode, PRBS data will be inserted into an already existing sub-channel
+        (from the active ETI input).
+        The Test FIC Modes are used to measure the overall transmitter delay or processing delay.
+        In these modes a specific data pattern will be inserted into ETI Frames
+        with frame phase 0 and a period of 96 frames.
+        A trigger pulse will appear at the Monitoring Output synchronous
+        with the first bit of the selected ETI frames either at the transmitter input (Overall Tx Delay)
+        or at the COFDM encoder input (Processing Delay).
+        This corresponds with the test described in ETSI EN 302 077-1 V1.1.1 Annex C."
+      ::= { commandsEntry 49 }
+
+    
+    cmdExcTestInserterAudioChnMode OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        audio(1),
+        prbs(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "In Test Ensemble mode, this switch enables / disables generation of an audio sub-channel
+        containing either PRBS or audio data.
+        The audio channel can be configured under Ensemble Setup."
+      ::= { commandsEntry 50 }
+
+    
+    cmdExcTestInserterDataChnMode OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "In Test Ensemble mode, this switch enables / disables generation of a sub-channel
+        containing PRBS data. The data channel can be configured under Ensemble Setup."
+      ::= { commandsEntry 51 }
+
+    
+    cmdExcTestInserterPRBSInsrtMode OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        x20(1),
+        x23(2),
+        x15(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Selects which PRBS polynomial to use when inserting / overwriting with PRBS."
+      ::= { commandsEntry 52 }
+
+    
+    cmdExcTestInserterSubchannel OBJECT-TYPE
+      SYNTAX Integer32 (0..63)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "This item is only active when Inserter Mode is set to PRBS.
+        In this case, the item is used to select which sub-channel to overwrite with PRBS data."
+      ::= { commandsEntry 53 }
+
+    
+    cmdExcFrequency OBJECT-TYPE
+      SYNTAX Integer32 (170000000..1500000000)
+      UNITS "Hertz"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "This is the RF frequency.
+        Writable only when cmdExcDabChannel is 'other'."
+      ::= { commandsEntry 54 }
+
+    
+    cmdExcDabChannel OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        c5A(1),
+        c5B(2),
+        c5C(3),
+        c5D(4),
+        c6A(5),
+        c6B(6),
+        c6C(7),
+        c6D(8),
+        c7A(9),
+        c7B(10),
+        c7C(11),
+        c7D(12),
+        c8A(13),
+        c8B(14),
+        c8C(15),
+        c8D(16),
+        c9A(17),
+        c9B(18),
+        c9C(19),
+        c9D(20),
+        c10A(21),
+        c10B(22),
+        c10C(23),
+        c10D(24),
+        c10N(25),
+        c11A(26),
+        c11B(27),
+        c11C(28),
+        c11D(29),
+        c11N(30),
+        c12A(31),
+        c12B(32),
+        c12C(33),
+        c12D(34),
+        c12N(35),
+        c13A(36),
+        c13B(37),
+        c13C(38),
+        c13D(39),
+        c13E(40),
+        c13F(41),
+        other(42)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "a preferred DAB channel"
+      ::= { commandsEntry 55 }
+
+    
+    cmdExcReferenceSource OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        intern(1),
+        extern5Mhz(2),
+        extern10Mhz(3),
+        extern1PPS(4),
+        intern1PPS(5)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The Source of the reference signal."
+      ::= { commandsEntry 56 }
+
+    
+    cmdExcMuteOnPPSFail OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        off(1),
+        onlyAtStartup(2),
+        afterFailDelayTime(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Select the behaviour if the external second pulse is not available."
+      ::= { commandsEntry 57 }
+
+    
+    cmdExcMuteOnReferenceFail OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        off(1),
+        onlyAtStartup(2),
+        afterFailDelayTime(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Select the behaviour if the external reference is not available."
+      ::= { commandsEntry 58 }
+
+    
+    cmdExcRefFailDelayTime OBJECT-TYPE
+      SYNTAX Integer32 (0..24)
+      UNITS "h"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the time after the RF shall be muted in case of a reference problem.
+        Zero hours means it reacts immediately."
+      ::= { commandsEntry 59 }
+
+    
+    cmdExcMonitoringOutput OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        off(1),
+        reference10MHz(2),
+        generated1PPS(3),
+        kHz1(4),
+        pulse1PPS(5),
+        ficTestTriggerPulse(6),
+        delayedFicTestTriggerPulse(7)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Selects which signal appears at the monitoring output.
+        If the Test FIC is currently active
+        a synchronous trigger pulse will appear at regular intervals at the monitoring output."
+      ::= { commandsEntry 60 }
+
+    
+    cmdExcOxcoAdjust OBJECT-TYPE
+      SYNTAX Integer32 (0..65535)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the frequency of the internal 10 MHz reference.
+        This value only takes effect if the reference source'internal' is selected."
+      ::= { commandsEntry 61 }
+
+    
+    cmdExcTypeLossOfInput OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        warning(1),
+        fault(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "If warning is selected, loss of input will lead to a sum warning.
+        If fault is selected, loss of input will lead to a sum fault after the fail delay time.
+        This will lead to a switchover to a reserve transmitter, if present."
+      ::= { commandsEntry 62 }
+
+    
+    cmdExcRfOutput OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Turns on/switches off the output signal. This switch takes the same effect as the switch on the frontpanel of the exciter."
+      ::= { commandsEntry 63 }
+
+    
+    cmdExcRfOutputRegulation OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Turns on/switches off the automatic output level regulation."
+      ::= { commandsEntry 64 }
+
+    
+    cmdExcRfOutputManualRfLevel OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Percent"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the RF level (0.0 ... 100.0). The value relates to an attenuation of 0 dB."
+      ::= { commandsEntry 65 }
+
+    
+    cmdExcRfOutputAttenuation OBJECT-TYPE
+      SYNTAX Integer32 (0..9)
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Activates internal attenuators to reduce the output level of the exciter.
+        Adjustable in steps of 3 dB only."
+      ::= { commandsEntry 66 }
+
+    
+    cmdExcRfOutputRfSlope OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Percent"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts a slope in the RF signal (-50.0 ... 50.0)."
+      ::= { commandsEntry 67 }
+
+    
+    cmdExcFrequencyRegion OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        etsi(1),
+        republicOfKorea(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Sets the geographical region in which the transmitter will be used.
+        The Republic of Korea has a different channel -> frequency table than
+        the ETSI standard TR 101 496-3 V1.1.2 Table 5.5.2."
+      ::= { commandsEntry 68 }
+
+    
+    cmdExcRfIqAdjustStart OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        stop(1),
+        start(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Starts the automatic IQ adjustment.
+        It works for the current used local 1 frequency and lasts up to 5 minutes.
+        In this time the output will be muted.
+        During the adjustment no transmitter parameter shall be changed.
+        Break will stop the automatic immediately.
+        The IQ modulator looses its adjustment!
+        Read values mean idle(1) and started(2)."
+      ::= { commandsEntry 69 }
+
+    
+    cmdExcRfIqAdjustTestsignal OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Generates a test signal to adjust the IQ modulation.
+        It is necessary to disconnect the rf-cable to the output stages."
+      ::= { commandsEntry 70 }
+
+    
+    cmdExcRfIqAdjustBiasCoarseI OBJECT-TYPE
+      SYNTAX Integer32 (-2048..2047)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the offset for I in huge steps."
+      ::= { commandsEntry 71 }
+
+    
+    cmdExcRfIqAdjustBiasCoarseQ OBJECT-TYPE
+      SYNTAX Integer32 (-2048..2047)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the offset for Q in huge steps."
+      ::= { commandsEntry 72 }
+
+    
+    cmdExcRfIqAdjustBiasFineI OBJECT-TYPE
+      SYNTAX Integer32 (-32767..32767)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the offset for I in small steps."
+      ::= { commandsEntry 73 }
+
+    
+    cmdExcRfIqAdjustBiasFineQ OBJECT-TYPE
+      SYNTAX Integer32 (-32767..32767)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the offset for Q in small steps."
+      ::= { commandsEntry 74 }
+
+    
+    cmdExcRfIqAdjustGainI OBJECT-TYPE
+      SYNTAX Integer32 (-2048..2047)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the gain for I in small steps."
+      ::= { commandsEntry 75 }
+
+    
+    cmdExcRfIqAdjustGainQ OBJECT-TYPE
+      SYNTAX Integer32 (-2048..2047)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the gain for Q in small steps."
+      ::= { commandsEntry 76 }
+
+    
+    cmdExcRfIqAdjustPhase OBJECT-TYPE
+      SYNTAX FloatingPoint
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the phase between I and Q
+        Sx: min: -14.000, max: 14.000
+        xLx: min: -512.000, max: 511.000"
+      ::= { commandsEntry 77 }
+
+    
+    cmdExcRfOutputAttenuationPrecise OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Activates internal attenuators to reduce the output level of the exciter.
+        Adjustable in steps of 0.5 dB in range 0 - 9 dB.
+        
+        Available for Sx801, SA801 only."
+      ::= { commandsEntry 78 }
+
+    
+    cmdExcRfWarningLimit OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Warning limit for the RF control.
+        min: -15.0, max: 0.0"
+      ::= { commandsEntry 97 }
+
+    
+    cmdExcRfFailLimit OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Fault limit for the RF control.
+        min: -15.0, max: 0.0"
+      ::= { commandsEntry 98 }
+
+    
+    cmdExcOutputPower OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "W"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjustment of the output power.
+        0 ... 330 W"
+      ::= { commandsEntry 99 }
+
+    
+    cmdExcFailDelayMode OBJECT-TYPE
+      SYNTAX FailDelayMode
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Condition when the fail delay time is used."
+      ::= { commandsEntry 115 }
+
+    
+    excInputTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ExcInputEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "A table for more detailed information about the exciter.
+        These values are all read-only. For settings, refer to commands."
+      ::= { rsXx8000DabExcObjs 2 }
+
+    
+    excInputEntry OBJECT-TYPE
+      SYNTAX ExcInputEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for a designated input channel."
+      INDEX { cmdTxIdx, cmdExcIdx, excInputChannelIdx }
+      ::= { excInputTable 1 }
+
+    
+    ExcInputEntry ::=
+      SEQUENCE { 
+        excInputChannelIdx
+          Integer32,
+        excInputChannelName
+          INTEGER,
+        excInputSyncState
+          INTEGER,
+        excInputSeamless
+          TruthValue,
+        excInputPreselected
+          TruthValue,
+        excInputActive
+          INTEGER,
+        excInputRsDecodingBER
+          FloatingPoint,
+        excInputRsDecodingResetBER
+          Trigger,
+        excInputCrcEohErrorRate
+          FloatingPoint,
+        excInputCrcEofErrorRate
+          FloatingPoint,
+        excInputCrcStatus
+          INTEGER,
+        excInputTISTPresent
+          TruthValue,
+        excInputTISTJitterShortTerm
+          FloatingPoint,
+        excInputTISTJitterMediumTerm
+          FloatingPoint,
+        excInputTISTJitterLongTerm
+          FloatingPoint,
+        excInputTISTStatus
+          INTEGER,
+        excInputEohCrcErrorRateSum
+          FloatingPoint,
+        excInputEofCrcErrorRateSum
+          FloatingPoint,
+        excInputCrcErrorRateSum
+          INTEGER
+       }
+
+    excInputChannelIdx OBJECT-TYPE
+      SYNTAX Integer32 (1..2)
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The index for the different input channels.
+        For not channel specific parameters this value is 1. "
+      ::= { excInputEntry 2 }
+
+    
+    excInputChannelName OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        eti1(1),
+        eti2(2)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the logical name for the index for the different input channels.
+        For not channel specific parameters this value is 1 (eti1)."
+      ::= { excInputEntry 3 }
+
+    
+    excInputSyncState OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        los(1),
+        ais(2),
+        etiNi(3),
+        g704Only(4),
+        etiNa5592(5),
+        etiNa5376(6),
+        g703Only(7)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "ETI Sync Status."
+      ::= { excInputEntry 4 }
+
+    
+    excInputSeamless OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The input channel is in seamless mode."
+      ::= { excInputEntry 5 }
+
+    
+    excInputPreselected OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The input channel is the preselected."
+      ::= { excInputEntry 6 }
+
+    
+    excInputActive OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        eti1(1),
+        eti2(2)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The input channel is active."
+      ::= { excInputEntry 7 }
+
+    
+    excInputRsDecodingBER OBJECT-TYPE
+      SYNTAX FloatingPoint
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "ETI estimated bit error rate (up to 1E-10) before Reed-Solomon correction.
+        This function is only available if an ETI (NA) stream is detected,
+        and PRBS measurement is not active for this input.
+        Use excInputRsDecodingResetBER to restart this measurement."
+      ::= { excInputEntry 8 }
+
+    
+    excInputRsDecodingResetBER OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Restarts the ETI BER measurement."
+      ::= { excInputEntry 10 }
+
+    
+    excInputCrcEohErrorRate OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Percent"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "ETI Actual End of Header CRC Error Rate."
+      ::= { excInputEntry 11 }
+
+    
+    excInputCrcEofErrorRate OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Percent"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "ETI Actual End of Frame CRC Error Rate."
+      ::= { excInputEntry 12 }
+
+    
+    excInputCrcStatus OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        off(1),
+        warning(3),
+        ok(4)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "OK if both CRC Error Rates are lower than the preset maximum."
+      ::= { excInputEntry 13 }
+
+    
+    excInputTISTPresent OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "ETI detected TIST status."
+      ::= { excInputEntry 14 }
+
+    
+    excInputTISTJitterShortTerm OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "micro sec"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "ETI maximum TIST jitter in the last minute
+        (indicates a timing problem at the multiplexer)."
+      ::= { excInputEntry 15 }
+
+    
+    excInputTISTJitterMediumTerm OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "micro sec"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "ETI maximum TIST jitter in the last 10 minutes
+        (indicates a timing problem at the multiplexer)."
+      ::= { excInputEntry 16 }
+
+    
+    excInputTISTJitterLongTerm OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "micro sec"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "ETI 1 maximum TIST jitter in the last 60 minutes
+        (indicates a timing problem at the multiplexer)."
+      ::= { excInputEntry 17 }
+
+    
+    excInputTISTStatus OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        notApplicable(1),
+        warning(3),
+        ok(4)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "ETI 1 TIST Status. OK when the TIST is present and
+        TIST jitter within the last minute is smaller than the maximum deviation time."
+      ::= { excInputEntry 18 }
+
+    
+    excInputEohCrcErrorRateSum OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Percent"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Actual End of Header CRC Error Rate (after input switch)."
+      ::= { excInputEntry 20 }
+
+    
+    excInputEofCrcErrorRateSum OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Percent"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Actual End of Frame CRC Error Rate (after input switch)."
+      ::= { excInputEntry 21 }
+
+    
+    excInputCrcErrorRateSum OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        off(1),
+        warning(3),
+        ok(4)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "OK if both CRC Error Rates are lower than the
+        preset maximum (after input switch)."
+      ::= { excInputEntry 22 }
+
+    
+    exciterStatusTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ExciterStatusEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Exciter status values."
+      ::= { rsXx8000DabExcObjs 20 }
+
+    
+    exciterStatusEntry OBJECT-TYPE
+      SYNTAX ExciterStatusEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "A row (an entry) for one exciter."
+      AUGMENTS { commandsEntry }
+      ::= { exciterStatusTable 1 }
+
+    
+    ExciterStatusEntry ::=
+      SEQUENCE { 
+        excStatusActualPower
+          FloatingPoint,
+        excStatusActiveTxMode
+          DabTxMode,
+        excStatusActiveTIIMainId
+          Integer32,
+        excStatusActiveTIISubId
+          Integer32,
+        excStatusFrameStructureMatch
+          TruthValue,
+        excStatusDelayDifference
+          FloatingPoint,
+        excStatusSFNDeviationTime
+          FloatingPoint,
+        excStatusTxCompensationDelay
+          FloatingPoint,
+        excStatusTxProcessingDelay
+          FloatingPoint,
+        excStatusActiveTxOffsetDelay
+          FloatingPoint,
+        excStatusOverallSignalDelay
+          FloatingPoint,
+        excStatusPrbsSynchronized
+          TruthValue,
+        excStatusBitErrorRate
+          FloatingPoint,
+        excStatusEnsembleName
+          ReadableString,
+        excStatusEnsembleID
+          Unsigned32,
+        excStatusFailDelay
+          FailDelayStatus
+       }
+
+    excStatusActualPower OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "W"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Displays the forward power."
+      ::= { exciterStatusEntry 2 }
+
+    
+    excStatusActiveTxMode OBJECT-TYPE
+      SYNTAX DabTxMode
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "the currently active Tx mode"
+      ::= { exciterStatusEntry 8 }
+
+    
+    excStatusActiveTIIMainId OBJECT-TYPE
+      SYNTAX Integer32 (0..69)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Active TII Main ID (only transmitted if TII is enabled)"
+      ::= { exciterStatusEntry 9 }
+
+    
+    excStatusActiveTIISubId OBJECT-TYPE
+      SYNTAX Integer32 (1..23)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Active TII Sub ID (only transmitted if TII is enabled)"
+      ::= { exciterStatusEntry 10 }
+
+    
+    excStatusFrameStructureMatch OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Indicates that identical ETI frames have been detected on both ETI inputs
+        with a time difference of less than one second."
+      ::= { exciterStatusEntry 11 }
+
+    
+    excStatusDelayDifference OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "micro sec"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The time difference between frames arriving on each ETI input (ETI2 - ETI1).
+        In static SFN mode the network compensation delays should be set such that the delay difference is 0.
+        In dynamic SFN mode, the TIST values will ensure that the delay difference is 0.
+        In MFN mode the network compensation delay of the reserve input
+        will be automatically adjusted where possible to achieve a delay difference of 0.
+        The delay difference is only valid if a frame structure match has been detected."
+      ::= { exciterStatusEntry 12 }
+
+    
+    excStatusSFNDeviationTime OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "micro sec"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Maximum deviation time in micro sec.
+        On a change of Tx Mode, this value will be updated according to the
+        currently set value in percent of the guard interval excStatusSFNDeviationTime."
+      ::= { exciterStatusEntry 13 }
+
+    
+    excStatusTxCompensationDelay OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "micro sec"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The compensation delay applied to the input ETI stream to maintain the Tx Delay."
+      ::= { exciterStatusEntry 14 }
+
+    
+    excStatusTxProcessingDelay OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "micro sec"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The processing delay for the current tx mode.
+        In static SFN mode, this includes any delays in the network adapter.
+        In dynamic SFN mode, this only takes into account delays starting at the COFDM encoder."
+      ::= { exciterStatusEntry 15 }
+
+    
+    excStatusActiveTxOffsetDelay OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "micro sec"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The currently active offset delay."
+      ::= { exciterStatusEntry 16 }
+
+    
+    excStatusOverallSignalDelay OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "micro sec"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The total signal delay through the transmitter comprised of
+        the Network Compensation Delay for the active input,
+        the Tx delay and the Tx Offset Delay."
+      ::= { exciterStatusEntry 17 }
+
+    
+    excStatusPrbsSynchronized OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Indicates whether the transmitter has synchronized with the incoming PRBS."
+      ::= { exciterStatusEntry 18 }
+
+    
+    excStatusBitErrorRate OBJECT-TYPE
+      SYNTAX FloatingPoint
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Bit Error Rate."
+      ::= { exciterStatusEntry 19 }
+
+    
+    excStatusEnsembleName OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "ensemble name"
+      ::= { exciterStatusEntry 21 }
+
+    
+    excStatusEnsembleID OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "ensemble name"
+      ::= { exciterStatusEntry 22 }
+
+    
+    excStatusFailDelay OBJECT-TYPE
+      SYNTAX FailDelayStatus
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Shows whether the fail delay time is qualified."
+      ::= { exciterStatusEntry 40 }
+
+    
+    exciterPrecorrectionTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ExciterPrecorrectionEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Exciter status values."
+      ::= { rsXx8000DabExcObjs 21 }
+
+    
+    exciterPrecorrectionEntry OBJECT-TYPE
+      SYNTAX ExciterPrecorrectionEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "A row (an entry) for one exciter."
+      AUGMENTS { commandsEntry }
+      ::= { exciterPrecorrectionTable 1 }
+
+    
+    ExciterPrecorrectionEntry ::=
+      SEQUENCE { 
+        excPrecLinCorrection
+          SwitchOnOff,
+        excPrecNonlinCorrection
+          SwitchOnOff,
+        excPrecUserState
+          EqualizerCalibrationState,
+        excPrecFactoryState
+          EqualizerCalibrationState,
+        excPrecRestoreCurrentSettings
+          INTEGER,
+        excPrecRestoreAllSettings
+          INTEGER
+       }
+
+    excPrecLinCorrection OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Switches on/turns off the linear precorrector."
+      ::= { exciterPrecorrectionEntry 4 }
+
+    
+    excPrecNonlinCorrection OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Switches on/turns off the nonlinear precorrector."
+      ::= { exciterPrecorrectionEntry 12 }
+
+    
+    excPrecUserState OBJECT-TYPE
+      SYNTAX EqualizerCalibrationState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "status of the user precorrection settings"
+      ::= { exciterPrecorrectionEntry 100 }
+
+    
+    excPrecFactoryState OBJECT-TYPE
+      SYNTAX EqualizerCalibrationState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "status of the factory precorrection settings"
+      ::= { exciterPrecorrectionEntry 101 }
+
+    
+    excPrecRestoreCurrentSettings OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        stop(1),
+        start(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "restores current factory precorrection setting"
+      ::= { exciterPrecorrectionEntry 102 }
+
+    
+    excPrecRestoreAllSettings OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        stop(1),
+        start(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "restores all factory precorrection settings"
+      ::= { exciterPrecorrectionEntry 103 }
+
+    
+    exciterServiceInformationTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ExciterServiceInformationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Subchannel Information."
+      ::= { rsXx8000DabExcObjs 22 }
+
+    
+    exciterServiceInformationEntry OBJECT-TYPE
+      SYNTAX ExciterServiceInformationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "A row (an entry) for one subchannel in one exciter."
+      INDEX { cmdTxIdx, cmdExcIdx, excSrvInfScIdx }
+      ::= { exciterServiceInformationTable 1 }
+
+    
+    ExciterServiceInformationEntry ::=
+      SEQUENCE { 
+        excSrvInfScIdx
+          Integer32,
+        excSrvInfSubchannelId
+          Integer32,
+        excSrvInfStartAddress
+          Integer32,
+        excSrvInfProtectionLevel
+          INTEGER,
+        excSrvInfUncodedDataRate
+          Integer32,
+        excSrvInfShortLabel
+          ReadableString
+       }
+
+    excSrvInfScIdx OBJECT-TYPE
+      SYNTAX Integer32 (1..64)
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The index for the different subchannels."
+      ::= { exciterServiceInformationEntry 1 }
+
+    
+    excSrvInfSubchannelId OBJECT-TYPE
+      SYNTAX Integer32 (0..63)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Stream subchannel ID."
+      ::= { exciterServiceInformationEntry 2 }
+
+    
+    excSrvInfStartAddress OBJECT-TYPE
+      SYNTAX Integer32 (0..863)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Stream start address ."
+      ::= { exciterServiceInformationEntry 3 }
+
+    
+    excSrvInfProtectionLevel OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        l1(1),
+        l2(2),
+        l3(3),
+        l4(4),
+        l5(5),
+        l1A(6),
+        l2A(7),
+        l3A(8),
+        l4A(9),
+        l1B(10),
+        l2B(11),
+        l3B(12),
+        l4B(13)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Stream Protection Level."
+      ::= { exciterServiceInformationEntry 4 }
+
+    
+    excSrvInfUncodedDataRate OBJECT-TYPE
+      SYNTAX Integer32 (0..1824)
+      UNITS "kbps"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Stream Uncoded Data Rate."
+      ::= { exciterServiceInformationEntry 5 }
+
+    
+    excSrvInfShortLabel OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Stream Short Label."
+      ::= { exciterServiceInformationEntry 6 }
+
+    
+    logbook OBJECT IDENTIFIER ::= { rsXx8000DabExcObjs 90 }
+
+    
+    excLogbookConfigTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ExcLogbookConfigEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Configuration for DAB exciter logbook table."
+      ::= { logbook 1 }
+
+    
+    excLogbookConfigEntry OBJECT-TYPE
+      SYNTAX ExcLogbookConfigEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry (conceptual row) in the excLogbookConfigTable."
+      AUGMENTS { commandsEntry }
+      ::= { excLogbookConfigTable 1 }
+
+    
+    ExcLogbookConfigEntry ::=
+      SEQUENCE { 
+        excLbCfgNumberOfEntries
+          LogbookMaxEntryNumber,
+        excLbCfgClear
+          Trigger
+       }
+
+    excLbCfgNumberOfEntries OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in logbook."
+      ::= { excLogbookConfigEntry 1 }
+
+    
+    excLbCfgClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear the logbook.
+        idle(1)    --> ready
+        clear(2)   --> do clear now
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+      ::= { excLogbookConfigEntry 2 }
+
+    
+    excLogbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ExcLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DAB exciter logbook table."
+      ::= { logbook 2 }
+
+    
+    excLogbookEntry OBJECT-TYPE
+      SYNTAX ExcLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is a entry in the logbook."
+      INDEX { cmdTxIdx, cmdExcIdx, excLogbookEntryIdx }
+      ::= { excLogbookTable 1 }
+
+    
+    ExcLogbookEntry ::=
+      SEQUENCE { 
+        excLogbookEntryIdx
+          LogbookMaxEntryNumber,
+        excLogbookEntryNbr
+          LogbookMaxEntryNumber,
+        excLogbookType
+          EventClass,
+        excLogbookSlope
+          LogbookEntrySlope,
+        excLogbookMessage
+          LogbookEntryMessagesExcTv,
+        excLogbookDateTime
+          DateAndTime
+       }
+
+    excLogbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to 128. It is used as an index column for SNMP."
+      ::= { excLogbookEntry 1 }
+
+    
+    excLogbookEntryNbr OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from max 128 down to 1."
+      ::= { excLogbookEntry 2 }
+
+    
+    excLogbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { excLogbookEntry 3 }
+
+    
+    excLogbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Either set (event raises) or reset (event disappears)"
+      ::= { excLogbookEntry 4 }
+
+    
+    excLogbookMessage OBJECT-TYPE
+      SYNTAX LogbookEntryMessagesExcTv
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "See RS-XX8000-COMMON-MIB - TextualConvention - LogbookEntryMessagesNetCCU for details."
+      ::= { excLogbookEntry 5 }
+
+    
+    excLogbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The time of the logbook entry."
+      ::= { excLogbookEntry 6 }
+
+    
+    productInfoTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ProductInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The table for all product typeplates."
+      ::= { rsXx8000DabExcObjs 100 }
+
+    
+    productInfoEntry OBJECT-TYPE
+      SYNTAX ProductInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "A row (an entry) for one typeplate."
+      INDEX { prodInfoModuleIdx, cmdTxIdx, cmdExcIdx }
+      ::= { productInfoTable 1 }
+
+    
+    ProductInfoEntry ::=
+      SEQUENCE { 
+        prodInfoModuleIdx
+          ProdInfoModuleNameTv,
+        prodInfoModuleName
+          ProdInfoModuleNameTv,
+        prodInfoSerialNumber
+          ReadableString,
+        prodInfoIdentNumberSW
+          ReadableString,
+        prodInfoVersionNumberSW
+          ReadableString,
+        prodInfoIdentNumberHW
+          ReadableString,
+        prodInfoVersionNumberHW
+          ReadableString,
+        productInfoProductDateHW
+          DateAndTime
+       }
+
+    prodInfoModuleIdx OBJECT-TYPE
+      SYNTAX ProdInfoModuleNameTv
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The module index."
+      ::= { productInfoEntry 1 }
+
+    
+    prodInfoModuleName OBJECT-TYPE
+      SYNTAX ProdInfoModuleNameTv
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The readable module type."
+      ::= { productInfoEntry 6 }
+
+    
+    prodInfoSerialNumber OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The serial number of the subdevice."
+      ::= { productInfoEntry 7 }
+
+    
+    prodInfoIdentNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the software, for example 
+        2094.2090.02."
+      ::= { productInfoEntry 8 }
+
+    
+    prodInfoVersionNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number of the software, for example 1.2.1."
+      ::= { productInfoEntry 9 }
+
+    
+    prodInfoIdentNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the hardware, for example 
+        2095.8007.02 (NetCCU)."
+      ::= { productInfoEntry 10 }
+
+    
+    prodInfoVersionNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number (product index) of the hardware, for example 
+        03.03."
+      ::= { productInfoEntry 11 }
+
+    
+    productInfoProductDateHW OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz production date of the hardware,"
+      ::= { productInfoEntry 12 }
+
+    
+    rsXx8000DabExcEvents OBJECT IDENTIFIER ::= { rsXx8000DabExc 3 }
+
+    
+    eventsV2 OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Compatibility to SMIv1."
+      ::= { rsXx8000DabExcEvents 0 }
+
+    
+    txExcSummaryFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter Summary Fault."
+      ::= { eventsV2 100 }
+
+    
+    txExcSummaryWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter Summary Warning."
+      ::= { eventsV2 101 }
+
+    
+    txExcInputNoConnectTS1 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter Input TS1 has no connected input signal"
+      ::= { eventsV2 105 }
+
+    
+    txExcInputNoConnectTS2 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter Input TS2 has no connected input signal"
+      ::= { eventsV2 106 }
+
+    
+    txExcInputActiveETI1 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter Input TS1 is active"
+      ::= { eventsV2 109 }
+
+    
+    txExcInputActiveETI2 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter Input TS2 is active"
+      ::= { eventsV2 110 }
+
+    
+    txExcOn NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter On"
+      ::= { eventsV2 113 }
+
+    
+    txExcRfOn NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter RF On"
+      ::= { eventsV2 114 }
+
+    
+    txExcNoInput NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter has no valid input signal."
+      ::= { eventsV2 115 }
+
+    
+    txExcRfLoop NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter RF loop"
+      ::= { eventsV2 116 }
+
+    
+    txExcRfFail NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter RF Fail"
+      ::= { eventsV2 117 }
+
+    
+    txExcSelfTest NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter hardware self test"
+      ::= { eventsV2 118 }
+
+    
+    txExcOutputOpen NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter output open"
+      ::= { eventsV2 119 }
+
+    
+    txExcBoardTemperatureWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter Board Temperature"
+      ::= { eventsV2 120 }
+
+    
+    txExcFanWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter has one faulty fan"
+      ::= { eventsV2 121 }
+
+    
+    txExcFanFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Both exciter fans are faulty."
+      ::= { eventsV2 122 }
+
+    
+    txExcTestSignal NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter Testsignal Active"
+      ::= { eventsV2 124 }
+
+    
+    txExcDelay NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "A warning is generated if the total delay is too long for the transmitter buffers
+        or too short for the processing delay."
+      ::= { eventsV2 125 }
+
+    
+    txExcMute NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter Mute"
+      ::= { eventsV2 127 }
+
+    
+    txExcPPSFail NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter PPS Fail"
+      ::= { eventsV2 128 }
+
+    
+    txExcReferenceFail NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Exciter Reference Fail"
+      ::= { eventsV2 129 }
+
+    
+    txExcTISTWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "TIST Warning: TIST is not present or
+        TIST jitter within the last minute is greater than the maximum deviation time."
+      ::= { eventsV2 131 }
+
+    
+    txExcTIIWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Warning indicates that the Main ID is not valid for the current mode.
+        In Tx Mode 'iii' values between 0 and 5 are valid.
+        If the Main ID is not valid, TII transmission will be disabled."
+      ::= { eventsV2 132 }
+
+    
+    eventsTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF EventsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains necessary information for handling alarms.
+        For each alarm you have the following information:
+        - name (get),
+        - mask to enable/disable sending out (set/get),
+        - priority (set/get) and
+        - the current state (get only)."
+      ::= { rsXx8000DabExcEvents 1 }
+
+    
+    eventsEntry OBJECT-TYPE
+      SYNTAX EventsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry (conceptual row) in the eventsTable."
+      INDEX { cmdTxIdx, cmdExcIdx, eventExcNameIdx }
+      ::= { eventsTable 1 }
+
+    
+    EventsEntry ::=
+      SEQUENCE { 
+        eventExcNameIdx
+          EventMaxEntryNumber,
+        eventExcName
+          INTEGER,
+        eventExcMask
+          EventMask,
+        eventExcPriority
+          EventPriority,
+        eventExcEvent
+          EventState
+       }
+
+    eventExcNameIdx OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The event number as integer.
+        This is a helper column and therefore not-accessible."
+      ::= { eventsEntry 3 }
+
+    
+    eventExcName OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        txExcSummaryFault(100),
+        txExcSummaryWarning(101),
+        txExcInputNoConnectTS1(105),
+        txExcInputNoConnectTS2(106),
+        txExcInputActiveTS1(109),
+        txExcInputActiveTS2(110),
+        txExcOn(113),
+        txExcRfOn(114),
+        txExcNoInput(115),
+        txExcRfLoop(116),
+        txExcRfFail(117),
+        txExcSelfTest(118),
+        txExcOutputOpen(119),
+        txExcBoardTemperatureWarning(120),
+        txExcFanWarning(121),
+        txExcFanFault(122),
+        txExcTestSignal(124),
+        txExcDelay(125),
+        txExcMute(127),
+        txExcPPSFail(128),
+        txExcReferenceFail(129),
+        txExcTISTWarning(131),
+        txExcTIIWarning(132)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The event name as readable integer.
+        The enumeration correlates with the notifications under eventsTxV2."
+      ::= { eventsEntry 4 }
+
+    
+    eventExcMask OBJECT-TYPE
+      SYNTAX EventMask
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsEntry 5 }
+
+    
+    eventExcPriority OBJECT-TYPE
+      SYNTAX EventPriority
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsEntry 6 }
+
+    
+    eventExcEvent OBJECT-TYPE
+      SYNTAX EventState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsEntry 7 }
+
+    
+    rsXx8000DabExcConf OBJECT IDENTIFIER ::= { rsXx8000DabExc 5 }
+
+    
+    rsXx8000DabExcGroups OBJECT IDENTIFIER ::= { rsXx8000DabExcConf 1 }
+
+    
+    groupObjectsGeneral OBJECT-GROUP
+      OBJECTS { cmdExcOpModeInputAutomatic, cmdExcPreselectInput, cmdExcNetworkMode, cmdExcInputPriority, cmdExcSFNDeviationTime, 
+        cmdExcMuteOnPPSFail, cmdExcMuteOnReferenceFail, cmdExcRfIqAdjustBiasFineQ, cmdExcRfIqAdjustBiasFineI, cmdExcRfIqAdjustBiasCoarseQ, 
+        cmdExcRfIqAdjustBiasCoarseI, cmdExcRfIqAdjustTestsignal, cmdExcRfIqAdjustStart, cmdExcFrequencyRegion, cmdExcRfOutputRfSlope, 
+        cmdExcRfOutputAttenuation, cmdExcRfOutputManualRfLevel, cmdExcRfOutputRegulation, cmdExcRfOutput, cmdExcTypeLossOfInput, 
+        cmdExcOxcoAdjust, cmdExcMonitoringOutput, cmdExcReferenceSource, cmdExcDabChannel, cmdExcFrequency, 
+        cmdExcTestInserterSubchannel, cmdExcTestInserterPRBSInsrtMode, cmdExcTestInserterDataChnMode, cmdExcTestInserterAudioChnMode, cmdExcTestInserterMode, 
+        cmdExcTestRFRandomOFDMSymbols, cmdExcTestRFSubcarrierSpacing, cmdExcTestRFSubcarrier2, cmdExcTestRFSubcarrier1, cmdExcTestRFTestMode, 
+        cmdExcTestInputResetPRBS, cmdExcTestInputPRBSPolynomial, cmdExcTestInputMeasurementInput, cmdExcUseManualTxOffsetDelay, cmdExcManualTxOffsetDelay, 
+        cmdExcTxDelay, cmdExcInputFailDelayTime, cmdExcDynamicSFNMaxTISTLevel, cmdExcDynamicSFNTISTSource, cmdExcNetCompensationDelayTS2, 
+        cmdExcNetCompensationDelayTS1, cmdExcUseManualTII, cmdExcManualTIISubId, cmdExcManualTIIMainId, cmdExcUseManualTxMode, 
+        cmdExcManualTxMode, cmdExcInputMaxEOFErrorRate, cmdExcInputMaxEOHErrorRate, cmdExcInputErrorFreeFrames, cmdExcInputErrorFrmWindowLength, 
+        cmdExcOutputPower, cmdExcRfFailLimit, cmdExcRfIqAdjustPhase, cmdExcRfIqAdjustGainQ, cmdExcRfIqAdjustGainI, 
+        excSrvInfShortLabel, excSrvInfUncodedDataRate, excSrvInfProtectionLevel, excSrvInfStartAddress, excSrvInfSubchannelId, 
+        excPrecRestoreAllSettings, excPrecRestoreCurrentSettings, excPrecFactoryState, excPrecUserState, excPrecNonlinCorrection, 
+        excPrecLinCorrection, excStatusBitErrorRate, excStatusPrbsSynchronized, excStatusOverallSignalDelay, excStatusActiveTxOffsetDelay, 
+        excStatusTxProcessingDelay, excStatusTxCompensationDelay, excStatusSFNDeviationTime, excStatusDelayDifference, excStatusFrameStructureMatch, 
+        excStatusActiveTIISubId, excStatusActiveTIIMainId, excStatusActiveTxMode, excStatusActualPower, excInputCrcErrorRateSum, 
+        excInputEofCrcErrorRateSum, excInputEohCrcErrorRateSum, excInputTISTStatus, excInputTISTJitterLongTerm, excInputTISTJitterMediumTerm, 
+        excInputTISTJitterShortTerm, excInputTISTPresent, excInputCrcStatus, excInputCrcEofErrorRate, excInputCrcEohErrorRate, 
+        excInputRsDecodingResetBER, excInputRsDecodingBER, excInputActive, excInputPreselected, excInputSeamless, 
+        excInputSyncState, excInputChannelName, cmdExcRfWarningLimit, excStatusEnsembleID, excStatusEnsembleName, 
+        excStatusFailDelay, cmdExcFailDelayMode, cmdExcTxAddress, cmdExcEnableTII, cmdExcTestInputMeasurement, 
+        cmdExcRefFailDelayTime }
+      STATUS current
+      DESCRIPTION 
+        "group for common objects of DAB exciters"
+      ::= { rsXx8000DabExcGroups 1 }
+
+    
+    groupEventsGeneral NOTIFICATION-GROUP
+      NOTIFICATIONS { txExcSummaryFault, txExcSummaryWarning, txExcInputNoConnectTS1, txExcInputNoConnectTS2, txExcOn, 
+        txExcPPSFail, txExcReferenceFail, txExcInputActiveETI1, txExcInputActiveETI2, txExcRfOn, 
+        txExcTIIWarning, txExcTISTWarning, txExcMute, txExcDelay, txExcTestSignal, 
+        txExcFanFault, txExcFanWarning, txExcBoardTemperatureWarning, txExcOutputOpen, txExcSelfTest, 
+        txExcRfFail, txExcRfLoop, txExcNoInput }
+      STATUS current
+      DESCRIPTION 
+        "group for common events of DAB exciters"
+      ::= { rsXx8000DabExcGroups 2 }
+
+    
+    groupEventTable OBJECT-GROUP
+      OBJECTS { eventExcName, eventExcMask, eventExcPriority, eventExcEvent }
+      STATUS current
+      DESCRIPTION 
+        "Group for all objects of event table."
+      ::= { rsXx8000DabExcGroups 3 }
+
+    
+    groupObjectsProductInfo OBJECT-GROUP
+      OBJECTS { prodInfoModuleName, prodInfoSerialNumber, prodInfoIdentNumberSW, prodInfoVersionNumberSW, prodInfoIdentNumberHW, 
+        prodInfoVersionNumberHW, productInfoProductDateHW }
+      STATUS current
+      DESCRIPTION 
+        "Group for productInfoTable."
+      ::= { rsXx8000DabExcGroups 4 }
+
+    
+    groupObjectsLogbook OBJECT-GROUP
+      OBJECTS { excLbCfgNumberOfEntries, excLbCfgClear, excLogbookEntryNbr, excLogbookType, excLogbookSlope, 
+        excLogbookMessage, excLogbookDateTime }
+      STATUS current
+      DESCRIPTION 
+        "Group for objects of logbooks of NetCCU."
+      ::= { rsXx8000DabExcGroups 5 }
+
+    
+    groupObjectsSA801 OBJECT-GROUP
+      OBJECTS { cmdExcRfOutputAttenuationPrecise }
+      STATUS current
+      DESCRIPTION 
+        "additional objects for SA801 devices"
+      ::= { rsXx8000DabExcGroups 6 }
+
+    
+    rsXx8000DabExcCompl OBJECT IDENTIFIER ::= { rsXx8000DabExcConf 2 }
+
+    
+    rsXx8000DabExcAll MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "all DAB exciters"
+      MODULE -- this module
+        MANDATORY-GROUPS { groupObjectsGeneral, groupEventsGeneral, groupEventTable, groupObjectsProductInfo, groupObjectsLogbook
+           }
+      ::= { rsXx8000DabExcCompl 1 }
+
+    
+    rsXx8000DabExcSA801 MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "SA801 DAB exciters"
+      MODULE -- this module
+        MANDATORY-GROUPS { groupObjectsGeneral, groupEventsGeneral, groupEventTable, groupObjectsProductInfo, groupObjectsLogbook, 
+          groupObjectsSA801 }
+      ::= { rsXx8000DabExcCompl 2 }
+
+    
+  
+  END

@@ -1,0 +1,1035 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **
+-- **  COPYRIGHT      (c) 2008 Rohde & Schwarz GmbH & Co. KG
+-- **                          Muehldorfstrasse 15
+-- **    R & S                 D-81671 Muenchen
+-- **
+-- *****************************************************************************
+-- **
+-- **  MODULE         RS-XX8000-DVB-REC-MON-MIB
+-- **  
+-- **  DESCRIPTION    Rohde & Schwarz SNMP
+-- **
+-- **  HISTORY
+-- **
+-- **  2008-06-04 ks - initial version
+-- **  2008-10-08 sr - cmdDvbRecMonRfFrequency range 170..862 MHz
+-- **  2010-01-11 ks - cmdDvbRecMonBERErrorThreshold, cmdDvbRecMonPERErrorThreshold,
+-- **                  cmdDvbRecErrorThresholdTimeout added
+-- **  2010-01-21 ks - cmdDvbRecMonUserOperationOn added
+-- **
+-- *****************************************************************************
+-- *****************************************************************************
+
+  RS-XX8000-DVB-REC-MON-MIB DEFINITIONS ::= BEGIN
+ 
+    IMPORTS
+      rsXx8000, eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, 
+      indexAB, rsXx8000MibModule, EventPriority, EventClass, EventState, 
+      IndexTransmitter, IndexAB, SwitchOnOff, FloatingPoint, ReadableString, 
+      EventMaxEntryNumber, EventMask      
+        FROM RS-XX8000-COMMON-MIB      
+      OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP      
+        FROM SNMPv2-CONF      
+      Integer32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, NOTIFICATION-TYPE      
+        FROM SNMPv2-SMI      
+      TruthValue, DateAndTime, TEXTUAL-CONVENTION      
+        FROM SNMPv2-TC;
+  
+  
+    rsXx8000DvbRecMonMibModule MODULE-IDENTITY 
+      LAST-UPDATED "201001210800Z"		-- January 21, 2010 at 08:00 GMT
+      ORGANIZATION 
+        "Rohde&Schwarz GmbH & Co. KG"
+      CONTACT-INFO 
+        "Torsten Huebscher
+        Department 7TS2
+        Broadcasting Division
+        Muehldorfstrasse 15
+        81671 Munich, Germany
+        torsten.huebscher@rohde-schwarz.com"
+      DESCRIPTION 
+        "This MIB defines DVB Receiver/Monitor units
+        of transmitting systems from Rohde & Schwarz.
+        
+        Use this MIB if your system meets the following requirements:
+                - series XX8000 (SLx or XLx),
+                - DVB Receiver/Monitor unit installed.
+                
+        The following MIBs are related to this:
+        - RS-COMMON-MIB         - mandatory for this MIB
+        - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+      REVISION "201001210800Z"		-- January 21, 2010 at 08:00 GMT
+      DESCRIPTION 
+        "cmdDvbRecMonUserOperationOn added"
+      REVISION "201001110800Z"		-- January 11, 2010 at 08:00 GMT
+      DESCRIPTION 
+        "cmdDvbRecMonBERErrorThreshold, cmdDvbRecMonPERErrorThreshold,
+        cmdDvbRecErrorThresholdTimeout added"
+      REVISION "200810081230Z"		-- October 08, 2008 at 12:30 GMT
+      DESCRIPTION 
+        "cmdDvbRecMonRfFrequency range 170..862 MHz"
+      REVISION "200806051200Z"		-- June 05, 2008 at 12:00 GMT
+      DESCRIPTION 
+        "initial revision"
+      ::= { rsXx8000MibModule 104 }
+
+    
+  
+--
+-- Textual conventions
+--
+  
+    ErrorRateThreshold ::= TEXTUAL-CONVENTION
+      STATUS current
+      DESCRIPTION 
+        "The values have the following meaning:
+        0: off,
+        1: 1e-1, 2:1e-2, 3: 1e-3, 4: 1e-4, 5: 1e-5, 6: 1e-6, 7: 1e-7, 8: 1e-8,
+        9: 1e-9, 10: 1e-10, 11: 1e-11, 12: 1e-12"
+      SYNTAX Integer32 (0..12)
+
+    CodeRate ::= TEXTUAL-CONVENTION
+      STATUS current
+      DESCRIPTION 
+        "Possible code rate values."
+      SYNTAX INTEGER
+        {
+        oneHalf(1),
+        twoThird(2),
+        threeQuater(3),
+        fiveSixth(4),
+        sevenEighth(5)
+        }
+
+    RoleManagerStatus ::= TEXTUAL-CONVENTION
+      STATUS current
+      DESCRIPTION 
+        "Possible status values for role manager."
+      SYNTAX INTEGER
+        {
+        invalidated(1),
+        error(2),
+        warning(3),
+        ok(4)
+        }
+
+  
+--
+-- Node definitions
+--
+  
+    rsXx8000DvbRecMon OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Xx8000 DVB Receiver/Monitor module"
+      ::= { rsXx8000 104 }
+
+    
+    rsXx8000DvbRecMonObjs OBJECT IDENTIFIER ::= { rsXx8000DvbRecMon 1 }
+
+    
+    commandsDvbRecMonTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF CommandsDvbRecMonEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains all changeable parameters for the DVB Receiver/Monitor modules."
+      ::= { rsXx8000DvbRecMonObjs 1 }
+
+    
+    commandsDvbRecMonEntry OBJECT-TYPE
+      SYNTAX CommandsDvbRecMonEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "an entry for a designated DVB Receiver/Monitor module"
+      INDEX { dvbRecMonTxIdx, dvbRecMonDeviceIdx, dvbRecMonModuleIdx }
+      ::= { commandsDvbRecMonTable 1 }
+
+    
+    CommandsDvbRecMonEntry ::=
+      SEQUENCE { 
+        dvbRecMonTxIdx
+          IndexTransmitter,
+        dvbRecMonDeviceIdx
+          IndexAB,
+        cmdDvbRecMonEnableHierarchy
+          SwitchOnOff,
+        dvbRecMonModuleIdx
+          INTEGER,
+        cmdDvbRecMonRfFrequency
+          Integer32,
+        cmdDvbRecMonBandwidth
+          INTEGER,
+        cmdDvbRecMonAntennaAttenuation
+          Integer32,
+        cmdDvbRecMonInputSelection
+          INTEGER,
+        cmdDvbRecMonBERWarningThreshold
+          ErrorRateThreshold,
+        cmdDvbRecMonPERWarningThreshold
+          ErrorRateThreshold,
+        cmdDvbRecMonBERErrorThreshold
+          ErrorRateThreshold,
+        cmdDvbRecMonPERErrorThreshold
+          ErrorRateThreshold,
+        cmdDvbRecErrorThresholdTimeout
+          Integer32,
+        cmdDvbRecMonUserOperationOn
+          SwitchOnOff
+       }
+
+    dvbRecMonTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of n+1 systems.
+        If you have one transmitter only (all reserve concepts except n+1) this index is always 1."
+      ::= { commandsDvbRecMonEntry 1 }
+
+    
+    dvbRecMonDeviceIdx OBJECT-TYPE
+      SYNTAX IndexAB
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This column is used to show parameters for both exiters,
+        if you have dualdrive transmitters."
+      ::= { commandsDvbRecMonEntry 2 }
+
+    
+    cmdDvbRecMonEnableHierarchy OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Enable hierarchy in case of two modules."
+      ::= { commandsDvbRecMonEntry 3 }
+
+    
+    dvbRecMonModuleIdx OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        module1(1),
+        module2(2)
+        }
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Index of the DVB Receiver/Monitor module."
+      ::= { commandsDvbRecMonEntry 4 }
+
+    
+    cmdDvbRecMonRfFrequency OBJECT-TYPE
+      SYNTAX Integer32 (170000000..862000000)
+      UNITS "Hz"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Frequency"
+      ::= { commandsDvbRecMonEntry 5 }
+
+    
+    cmdDvbRecMonBandwidth OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        fiveMHz(5),
+        sixMHz(6),
+        sevenMHz(7),
+        eightMHz(8)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Bandwidth"
+      ::= { commandsDvbRecMonEntry 6 }
+
+    
+    cmdDvbRecMonAntennaAttenuation OBJECT-TYPE
+      SYNTAX Integer32 (0..31)
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Antenna Attenuation"
+      ::= { commandsDvbRecMonEntry 7 }
+
+    
+    cmdDvbRecMonInputSelection OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        antenna(1),
+        amplifier(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Input
+        Available only for the first board
+        and only if dvbRMStatusModuleMode is 'monitor'."
+      ::= { commandsDvbRecMonEntry 8 }
+
+    
+    cmdDvbRecMonBERWarningThreshold OBJECT-TYPE
+      SYNTAX ErrorRateThreshold
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Limit for BER warning"
+      ::= { commandsDvbRecMonEntry 9 }
+
+    
+    cmdDvbRecMonPERWarningThreshold OBJECT-TYPE
+      SYNTAX ErrorRateThreshold
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Limit for PER warning"
+      ::= { commandsDvbRecMonEntry 10 }
+
+    
+    cmdDvbRecMonBERErrorThreshold OBJECT-TYPE
+      SYNTAX ErrorRateThreshold
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Limit for BER error"
+      ::= { commandsDvbRecMonEntry 11 }
+
+    
+    cmdDvbRecMonPERErrorThreshold OBJECT-TYPE
+      SYNTAX ErrorRateThreshold
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Limit for PER error"
+      ::= { commandsDvbRecMonEntry 12 }
+
+    
+    cmdDvbRecErrorThresholdTimeout OBJECT-TYPE
+      SYNTAX Integer32 (0..3600)
+      UNITS "second"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Timeout for BER/PER error threshold"
+      ::= { commandsDvbRecMonEntry 13 }
+
+    
+    cmdDvbRecMonUserOperationOn OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Enables usage of monitor module for input/output monitoring."
+      ::= { commandsDvbRecMonEntry 20 }
+
+    
+    detailedInfo OBJECT IDENTIFIER ::= { rsXx8000DvbRecMonObjs 3 }
+
+    
+    productInfoTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ProductInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Product Informations about the module. These informations are necessary when contacting R&S service."
+      ::= { detailedInfo 100 }
+
+    
+    productInfoEntry OBJECT-TYPE
+      SYNTAX ProductInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for a designated DVB Receiver/Monitor module."
+      AUGMENTS { commandsDvbRecMonEntry }
+      ::= { productInfoTable 1 }
+
+    
+    ProductInfoEntry ::=
+      SEQUENCE { 
+        prodInfoSerialNumber
+          ReadableString,
+        prodInfoIdentNumberSW
+          ReadableString,
+        prodInfoVersionNumberSW
+          ReadableString,
+        prodInfoIdentNumberHW
+          ReadableString,
+        prodInfoVersionNumberHW
+          ReadableString,
+        prodInfoProductDateHW
+          DateAndTime
+       }
+
+    prodInfoSerialNumber OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The serial number of the subdevice."
+      ::= { productInfoEntry 2 }
+
+    
+    prodInfoIdentNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the software."
+      ::= { productInfoEntry 3 }
+
+    
+    prodInfoVersionNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number of the software."
+      ::= { productInfoEntry 4 }
+
+    
+    prodInfoIdentNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the hardware."
+      ::= { productInfoEntry 5 }
+
+    
+    prodInfoVersionNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number (product index) of the hardware."
+      ::= { productInfoEntry 6 }
+
+    
+    prodInfoProductDateHW OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz production date of the hardware."
+      ::= { productInfoEntry 7 }
+
+    
+    dvbRecMonStatusTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF DvbRecMonStatusEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB Receiver/Monitor status values"
+      ::= { detailedInfo 1 }
+
+    
+    dvbRecMonStatusEntry OBJECT-TYPE
+      SYNTAX DvbRecMonStatusEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "an entry for a designated DVB Receiver/Monitor module"
+      AUGMENTS { commandsDvbRecMonEntry }
+      ::= { dvbRecMonStatusTable 1 }
+
+    
+    DvbRecMonStatusEntry ::=
+      SEQUENCE { 
+        dvbRMStatusModuleMode
+          INTEGER,
+        dvbRMStatusRfInputLevel
+          Integer32,
+        dvbRMStatusInputGain
+          Integer32,
+        dvbRMStatusTpsHierarchy
+          TruthValue,
+        dvbRMStatusTpsMode
+          INTEGER,
+        dvbRMStatusTpsCellID
+          Integer32,
+        dvbRMStatusTpsGuardIntervall
+          INTEGER,
+        dvbRMStatusTpsFFTSize
+          INTEGER,
+        dvbRMStatusTpsConstellation
+          INTEGER,
+        dvbRMStatusTpsHierarchicalLevel
+          INTEGER,
+        dvbRMStatusTpsCoderateHP
+          CodeRate,
+        dvbRMStatusTpsCoderateLP
+          CodeRate,
+        dvbRMStatusTpsTimeSlicing
+          TruthValue,
+        dvbRMStatusTpsInterleaving
+          INTEGER,
+        dvbRMStatusTpsMpeFec
+          TruthValue,
+        dvbRMStatusDemodSynchronized
+          TruthValue,
+        dvbRMStatusDemodEstimatedSN
+          FloatingPoint,
+        dvbRMStatusDemodZfAgcInput
+          FloatingPoint,
+        dvbRMStatusDemodBERbefore
+          FloatingPoint,
+        dvbRMStatusDemodBERafter
+          FloatingPoint,
+        dvbRMStatusDemodPER
+          FloatingPoint,
+        dvbRMStatusInputOk
+          INTEGER,
+        dvbRMStatusInputStatus
+          RoleManagerStatus,
+        dvbRMStatusBERStatus
+          RoleManagerStatus,
+        dvbRMStatusPERStatus
+          RoleManagerStatus
+       }
+
+    dvbRMStatusModuleMode OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        undefined(1),
+        monitor(2),
+        receiver(3)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Mode of module."
+      ::= { dvbRecMonStatusEntry 1 }
+
+    
+    dvbRMStatusRfInputLevel OBJECT-TYPE
+      SYNTAX Integer32 (-32767..32767)
+      UNITS "dB uV"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "RF Input Level."
+      ::= { dvbRecMonStatusEntry 2 }
+
+    
+    dvbRMStatusInputGain OBJECT-TYPE
+      SYNTAX Integer32 (-9..9)
+      UNITS "dB"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Input Gain."
+      ::= { dvbRecMonStatusEntry 3 }
+
+    
+    dvbRMStatusTpsHierarchy OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Hierarchy support."
+      ::= { dvbRecMonStatusEntry 4 }
+
+    
+    dvbRMStatusTpsMode OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        dvbT(1),
+        dvbH(2)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Mode."
+      ::= { dvbRecMonStatusEntry 5 }
+
+    
+    dvbRMStatusTpsCellID OBJECT-TYPE
+      SYNTAX Integer32 (0..65535)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Cell ID."
+      ::= { dvbRecMonStatusEntry 6 }
+
+    
+    dvbRMStatusTpsGuardIntervall OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        oneDiv32(1),
+        oneDiv16(2),
+        oneDiv8(3),
+        oneDiv4(4)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Guard Interval.
+        oneDiv32(1) - 1/32
+        oneDiv16(2) - 1/16
+        oneDiv8(3) - 1/8
+        oneDiv4(4) - 1/4"
+      ::= { dvbRecMonStatusEntry 7 }
+
+    
+    dvbRMStatusTpsFFTSize OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        k2(1),
+        k8(2),
+        k4(3)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "FFT Size."
+      ::= { dvbRecMonStatusEntry 8 }
+
+    
+    dvbRMStatusTpsConstellation OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        qpsk(1),
+        qam16(2),
+        qam64(3)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Constellation."
+      ::= { dvbRecMonStatusEntry 9 }
+
+    
+    dvbRMStatusTpsHierarchicalLevel OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        none(1),
+        alpha1(2),
+        alpha2(3),
+        alpha4(4)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Hierarchical Level."
+      ::= { dvbRecMonStatusEntry 10 }
+
+    
+    dvbRMStatusTpsCoderateHP OBJECT-TYPE
+      SYNTAX CodeRate
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Coderate (HP)."
+      ::= { dvbRecMonStatusEntry 11 }
+
+    
+    dvbRMStatusTpsCoderateLP OBJECT-TYPE
+      SYNTAX CodeRate
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Coderate (LP)."
+      ::= { dvbRecMonStatusEntry 12 }
+
+    
+    dvbRMStatusTpsTimeSlicing OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Time Slicing."
+      ::= { dvbRecMonStatusEntry 13 }
+
+    
+    dvbRMStatusTpsInterleaving OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        native(1),
+        inDepth(2)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Interleaving Mode (DVB-H only)."
+      ::= { dvbRecMonStatusEntry 14 }
+
+    
+    dvbRMStatusTpsMpeFec OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "MPE FEC (DVB-H only)."
+      ::= { dvbRecMonStatusEntry 15 }
+
+    
+    dvbRMStatusDemodSynchronized OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Synchronized."
+      ::= { dvbRecMonStatusEntry 16 }
+
+    
+    dvbRMStatusDemodEstimatedSN OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "dB"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Estimated S/N."
+      ::= { dvbRecMonStatusEntry 17 }
+
+    
+    dvbRMStatusDemodZfAgcInput OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Percent"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "ZF AGC Input."
+      ::= { dvbRecMonStatusEntry 18 }
+
+    
+    dvbRMStatusDemodBERbefore OBJECT-TYPE
+      SYNTAX FloatingPoint
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "BER before Viterbi."
+      ::= { dvbRecMonStatusEntry 19 }
+
+    
+    dvbRMStatusDemodBERafter OBJECT-TYPE
+      SYNTAX FloatingPoint
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "BER after  Viterbi."
+      ::= { dvbRecMonStatusEntry 20 }
+
+    
+    dvbRMStatusDemodPER OBJECT-TYPE
+      SYNTAX FloatingPoint
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "PER"
+      ::= { dvbRecMonStatusEntry 21 }
+
+    
+    dvbRMStatusInputOk OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        bad(1),
+        ok(2),
+        invalidated(3)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "May be invalidated if option keys are missing or wrong TV standard is set."
+      ::= { dvbRecMonStatusEntry 22 }
+
+    
+    dvbRMStatusInputStatus OBJECT-TYPE
+      SYNTAX RoleManagerStatus
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "May be invalidated if option keys are missing or wrong TV standard is set."
+      ::= { dvbRecMonStatusEntry 23 }
+
+    
+    dvbRMStatusBERStatus OBJECT-TYPE
+      SYNTAX RoleManagerStatus
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "May be invalidated if option keys are missing or wrong TV standard is set."
+      ::= { dvbRecMonStatusEntry 24 }
+
+    
+    dvbRMStatusPERStatus OBJECT-TYPE
+      SYNTAX RoleManagerStatus
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "May be invalidated if option keys are missing or wrong TV standard is set."
+      ::= { dvbRecMonStatusEntry 25 }
+
+    
+    rsXx8000DvbRecMonEvents OBJECT IDENTIFIER ::= { rsXx8000DvbRecMon 3 }
+
+    
+    eventDvbRecMon OBJECT IDENTIFIER ::= { rsXx8000DvbRecMonEvents 1 }
+
+    
+    eventsDvbRecMonV2 OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Compatibility to SMIv1."
+      ::= { eventDvbRecMon 0 }
+
+    
+    dvbRecMonHardwareError NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+        indexModule }
+      STATUS current
+      DESCRIPTION 
+        "Hardware error."
+      ::= { eventsDvbRecMonV2 1 }
+
+    
+    dvbRecMonNoOptionKey NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+        indexModule }
+      STATUS current
+      DESCRIPTION 
+        "No option key."
+      ::= { eventsDvbRecMonV2 2 }
+
+    
+    dvbRecMonInputWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+        indexModule }
+      STATUS current
+      DESCRIPTION 
+        "Bad input."
+      ::= { eventsDvbRecMonV2 3 }
+
+    
+    dvbRecMonNotSynchronized NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+        indexModule }
+      STATUS current
+      DESCRIPTION 
+        "Demodulator not synchronized."
+      ::= { eventsDvbRecMonV2 4 }
+
+    
+    dvbRecMonBERWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+        indexModule }
+      STATUS current
+      DESCRIPTION 
+        "BER not ok."
+      ::= { eventsDvbRecMonV2 5 }
+
+    
+    dvbRecMonPERWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB, 
+        indexModule }
+      STATUS current
+      DESCRIPTION 
+        "PER not ok."
+      ::= { eventsDvbRecMonV2 6 }
+
+    
+    eventsDvbRecMonTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF EventsDvbRecMonEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains necessary information for handling alarms. 
+        For each alarm you have the following information: 
+        - name (get),
+        - mask to enable/disable sending out (set/get),
+        - priority (set/get) and 
+        - the current state (get only)."
+      ::= { eventDvbRecMon 1 }
+
+    
+    eventsDvbRecMonEntry OBJECT-TYPE
+      SYNTAX EventsDvbRecMonEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An event entry always consists of its indexes
+        (used for addressing within redundancy systems) and 3 values:
+        - name: an enumerated list of all possible notifications
+        - mask: the corresponding mask (enable/disable)
+        - priority: the corresponding priority (value in range 0..255)
+        - event: the event itself (active/inactive)"
+      INDEX { dvbRecMonTxIdx, dvbRecMonDeviceIdx, dvbRecMonModuleIdx, eventDvbRecMonNameIdx }
+      ::= { eventsDvbRecMonTable 1 }
+
+    
+    EventsDvbRecMonEntry ::=
+      SEQUENCE { 
+        eventDvbRecMonNameIdx
+          EventMaxEntryNumber,
+        eventDvbRecMonName
+          INTEGER,
+        eventDvbRecMonMask
+          EventMask,
+        eventDvbRecMonPriority
+          EventPriority,
+        eventDvbRecMonEvent
+          EventState
+       }
+
+    eventDvbRecMonNameIdx OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The event number as integer.
+        This is a helper column and therefore not-accessible."
+      ::= { eventsDvbRecMonEntry 4 }
+
+    
+    eventDvbRecMonName OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        hardwareError(1),
+        noOptionKey(2),
+        inputWarning(3),
+        notSynchronized(4),
+        berWarning(5),
+        perWarning(6)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The event number as integer and the value as readable text.
+        The enumeration correlates with the notifications under eventsDvbRecMonV2."
+      ::= { eventsDvbRecMonEntry 5 }
+
+    
+    eventDvbRecMonMask OBJECT-TYPE
+      SYNTAX EventMask
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsDvbRecMonEntry 6 }
+
+    
+    eventDvbRecMonPriority OBJECT-TYPE
+      SYNTAX EventPriority
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsDvbRecMonEntry 7 }
+
+    
+    eventDvbRecMonEvent OBJECT-TYPE
+      SYNTAX EventState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsDvbRecMonEntry 8 }
+
+    
+    eventDvbRecMonMapObjects OBJECT IDENTIFIER ::= { rsXx8000DvbRecMonEvents 3 }
+
+    
+    indexModule OBJECT-TYPE
+      SYNTAX Integer32 (1..2)
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "This object holds the value for the module number when sending out a notification."
+      ::= { eventDvbRecMonMapObjects 1 }
+
+    
+    rsXx8000DvbRecMonConf OBJECT IDENTIFIER ::= { rsXx8000DvbRecMon 4 }
+
+    
+    rsXx8000DvbRecMonGroups OBJECT IDENTIFIER ::= { rsXx8000DvbRecMonConf 1 }
+
+    
+    groupCommandsDvbRecMon OBJECT-GROUP
+      OBJECTS { cmdDvbRecMonRfFrequency, cmdDvbRecMonBandwidth, cmdDvbRecMonAntennaAttenuation, cmdDvbRecMonBERWarningThreshold, cmdDvbRecMonPERErrorThreshold, 
+        cmdDvbRecMonBERErrorThreshold, cmdDvbRecErrorThresholdTimeout, cmdDvbRecMonPERWarningThreshold, cmdDvbRecMonEnableHierarchy }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all changeable object types
+        for both receiver and monitor modules."
+      ::= { rsXx8000DvbRecMonGroups 1 }
+
+    
+    groupCommandsMonitorOnly OBJECT-GROUP
+      OBJECTS { cmdDvbRecMonInputSelection, cmdDvbRecMonUserOperationOn }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all changeable object types
+        for monitor modules only."
+      ::= { rsXx8000DvbRecMonGroups 2 }
+
+    
+    groupStatusDvbRecMon OBJECT-GROUP
+      OBJECTS { dvbRMStatusModuleMode, dvbRMStatusRfInputLevel, dvbRMStatusInputGain, dvbRMStatusTpsHierarchy, dvbRMStatusTpsMode, 
+        dvbRMStatusTpsCellID, dvbRMStatusTpsGuardIntervall, dvbRMStatusTpsFFTSize, dvbRMStatusTpsConstellation, dvbRMStatusTpsHierarchicalLevel, 
+        dvbRMStatusTpsCoderateHP, dvbRMStatusTpsCoderateLP, dvbRMStatusTpsTimeSlicing, dvbRMStatusTpsInterleaving, dvbRMStatusTpsMpeFec, 
+        dvbRMStatusDemodSynchronized, dvbRMStatusDemodEstimatedSN, dvbRMStatusDemodZfAgcInput, dvbRMStatusDemodBERbefore, dvbRMStatusDemodBERafter, 
+        dvbRMStatusDemodPER, dvbRMStatusInputOk, dvbRMStatusInputStatus, dvbRMStatusBERStatus, dvbRMStatusPERStatus
+         }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all nonchangeable object types."
+      ::= { rsXx8000DvbRecMonGroups 4 }
+
+    
+    groupProductInfo OBJECT-GROUP
+      OBJECTS { prodInfoSerialNumber, prodInfoIdentNumberSW, prodInfoVersionNumberSW, prodInfoIdentNumberHW, prodInfoVersionNumberHW, 
+        prodInfoProductDateHW }
+      STATUS current
+      DESCRIPTION 
+        "This group includes product info object types for a DVB Receiver/Monitor module."
+      ::= { rsXx8000DvbRecMonGroups 5 }
+
+    
+    groupEventTable OBJECT-GROUP
+      OBJECTS { eventDvbRecMonName, eventDvbRecMonMask, eventDvbRecMonPriority, eventDvbRecMonEvent, indexModule
+         }
+      STATUS current
+      DESCRIPTION 
+        "Group for all objects of the event table."
+      ::= { rsXx8000DvbRecMonGroups 6 }
+
+    
+    groupAlarmsDvbRecMon NOTIFICATION-GROUP
+      NOTIFICATIONS { dvbRecMonHardwareError, dvbRecMonNoOptionKey, dvbRecMonInputWarning, dvbRecMonNotSynchronized, dvbRecMonBERWarning, 
+        dvbRecMonPERWarning }
+      STATUS current
+      DESCRIPTION 
+        "Group for all events."
+      ::= { rsXx8000DvbRecMonGroups 7 }
+
+    
+    rsXx8000DvbRecMonCompls OBJECT IDENTIFIER ::= { rsXx8000DvbRecMonConf 2 }
+
+    
+    dvbRecMonReceiver MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "The module as a receiver."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupCommandsDvbRecMon, groupStatusDvbRecMon, groupProductInfo, groupEventTable, groupAlarmsDvbRecMon
+           }
+      ::= { rsXx8000DvbRecMonCompls 1 }
+
+    
+    dvbRecMonMonitor MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "The module as a monitor."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupCommandsDvbRecMon, groupStatusDvbRecMon, groupProductInfo, groupEventTable, groupAlarmsDvbRecMon, 
+          groupCommandsMonitorOnly }
+      ::= { rsXx8000DvbRecMonCompls 2 }
+
+    
+  
+  END

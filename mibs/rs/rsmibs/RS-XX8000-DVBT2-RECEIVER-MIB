@@ -1,0 +1,1174 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **
+-- **  COPYRIGHT      (c) 2010 Rohde & Schwarz GmbH & Co. KG
+-- **                          Muehldorfstrasse 15
+-- **    R & S                 D-81671 Muenchen
+-- **
+-- *****************************************************************************
+-- **
+-- **  MODULE         RS-XX8000-DVB-T2-RECEIVER-MIB
+-- **
+-- **  DESCRIPTION    Rohde & Schwarz SNMP
+-- **
+-- *****************************************************************************
+-- *****************************************************************************
+
+  RS-XX8000-DVBT2-RECEIVER-MIB DEFINITIONS ::= BEGIN
+ 
+    IMPORTS
+      rsXx8000, eventAlarmClass, indexTransmitter, indexAB, rsXx8000MibModule, 
+      ReadableString, EventMaxEntryNumber, EventMask, EventPriority, EventState, 
+      IndexAB      
+        FROM RS-XX8000-COMMON-MIB      
+      OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP      
+        FROM SNMPv2-CONF      
+      Integer32, Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, 
+      NOTIFICATION-TYPE      
+        FROM SNMPv2-SMI      
+      TruthValue, DateAndTime      
+        FROM SNMPv2-TC;
+  
+  
+    rsXx8000DvbT2RcvMibModule MODULE-IDENTITY 
+      LAST-UPDATED "201106100800Z"		-- June 10, 2011 at 08:00 GMT
+      ORGANIZATION 
+        "Rohde&Schwarz GmbH & Co. KG"
+      CONTACT-INFO 
+        "Torsten Huebscher
+        Department 7TS2
+        Broadcasting Division
+        Muehldorfstrasse 15
+        81671 Munich, Germany
+        torsten.huebscher@rohde-schwarz.com"
+      DESCRIPTION 
+        "This MIB defines DVB-T2 Receiver/Monitor units
+        of transmitting systems from Rohde & Schwarz.
+        
+        Use this MIB if your system meets the following requirements:
+                - series XX8000 (TSE),
+                - DVB-T2 Receiver unit installed.
+                
+        The following MIBs are related to this:
+        - RS-COMMON-MIB         - mandatory for this MIB
+        - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+      REVISION "201106100800Z"		-- June 10, 2011 at 08:00 GMT
+      DESCRIPTION 
+        "giLdpcIterations added
+        indexTransmitter, indexAB added for each notification"
+      REVISION "201104010800Z"		-- April 01, 2011 at 08:00 GMT
+      DESCRIPTION 
+        "initial revision
+        changed giBER to pre LDPC
+        and BER precision to 10e-7"
+      REVISION "201011260800Z"		-- November 26, 2010 at 08:00 GMT
+      DESCRIPTION 
+        "preliminary revision"
+      ::= { rsXx8000MibModule 300 }
+
+    
+  
+  
+--
+-- Node definitions
+--
+  
+    rsXx8000DvbT2Rcv OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "XX8000 DVB-T2 Receiver module"
+      ::= { rsXx8000 300 }
+
+    
+-- *****************************************************************************
+-- **          object definitions
+-- *****************************************************************************
+    rsXx8000DvbT2RcvObjs OBJECT IDENTIFIER ::= { rsXx8000DvbT2Rcv 1 }
+
+    
+    commandsTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF CommandsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains all writable objects for the DVB-T2 receiver."
+      ::= { rsXx8000DvbT2RcvObjs 1 }
+
+    
+    commandsEntry OBJECT-TYPE
+      SYNTAX CommandsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry (conceptual row) in the commandsTable."
+      INDEX { cmdBoardIdx }
+      ::= { commandsTable 1 }
+
+    
+    CommandsEntry ::=
+      SEQUENCE { 
+        cmdBoardIdx
+          IndexAB,
+        cmdCenterFrequency
+          Unsigned32,
+        cmdChannelBandwidth
+          INTEGER,
+        cmdPlpNumber
+          Unsigned32,
+        cmdPlpSelection
+          INTEGER
+       }
+
+    cmdBoardIdx OBJECT-TYPE
+      SYNTAX IndexAB
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The board index. "
+      ::= { commandsEntry 1 }
+
+    
+    cmdCenterFrequency OBJECT-TYPE
+      SYNTAX Unsigned32 (150000000..300000000 | 450000000..900000000)
+      UNITS "Hz"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Tuner frequency."
+      ::= { commandsEntry 2 }
+
+    
+    cmdChannelBandwidth OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        mHz5(1),
+        mHz6(2),
+        mHz7(3),
+        mHz8(4)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Channel bandwidth:
+        mHz5(1) - 5MHz
+        mHz6(2) - 6MHz
+        mHz7(3) - 7MHz
+        mHz8(4) - 8MHz"
+      ::= { commandsEntry 3 }
+
+    
+    cmdPlpNumber OBJECT-TYPE
+      SYNTAX Unsigned32 (0..255)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Selects the PLP to process when cmdPlpSelection is manual(2)."
+      ::= { commandsEntry 4 }
+
+    
+    cmdPlpSelection OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        automatic(1),
+        manual(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "In automatic(1) mode the DVB-T2 receiver selects the first detected PLP.
+        In manual(2) mode the PLP given with cmdPlpNumber is used."
+      ::= { commandsEntry 5 }
+
+    
+    limitsTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF LimitsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Thresholds for notification generation."
+      ::= { rsXx8000DvbT2RcvObjs 2 }
+
+    
+    limitsEntry OBJECT-TYPE
+      SYNTAX LimitsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry (conceptual row) in the thresholdsTable."
+      AUGMENTS { commandsEntry }
+      ::= { limitsTable 1 }
+
+    
+    LimitsEntry ::=
+      SEQUENCE { 
+        limitMerWarning
+          Unsigned32,
+        limitMerFault
+          Unsigned32,
+        limitBerWarning
+          Unsigned32,
+        limitBerFault
+          Unsigned32
+       }
+
+    limitMerWarning OBJECT-TYPE
+      SYNTAX Unsigned32 (0..50)
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Limit for generating the merWarning notification."
+      ::= { limitsEntry 1 }
+
+    
+    limitMerFault OBJECT-TYPE
+      SYNTAX Unsigned32 (0..50)
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Limit for generating the merFault notification."
+      ::= { limitsEntry 2 }
+
+    
+    limitBerWarning OBJECT-TYPE
+      SYNTAX Unsigned32
+      UNITS "10e-7"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Limit for generating the berWarning notification."
+      ::= { limitsEntry 3 }
+
+    
+    limitBerFault OBJECT-TYPE
+      SYNTAX Unsigned32
+      UNITS "10e-7"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Limit for generating the berFault notification."
+      ::= { limitsEntry 4 }
+
+    
+    generalInfoTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF GeneralInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-T2 receiver measured values."
+      ::= { rsXx8000DvbT2RcvObjs 3 }
+
+    
+    generalInfoEntry OBJECT-TYPE
+      SYNTAX GeneralInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry (conceptual row) in the generalInfoTable."
+      AUGMENTS { commandsEntry }
+      ::= { generalInfoTable 1 }
+
+    
+    GeneralInfoEntry ::=
+      SEQUENCE { 
+        giRfInputLevel
+          Integer32,
+        giMER
+          Integer32,
+        giBER
+          Unsigned32,
+        giLdpcIterations
+          Unsigned32
+       }
+
+    giRfInputLevel OBJECT-TYPE
+      SYNTAX Integer32
+      UNITS "dBm / 10"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The RF input level in tenth of dBm."
+      ::= { generalInfoEntry 1 }
+
+    
+    giMER OBJECT-TYPE
+      SYNTAX Integer32
+      UNITS "dB / 10"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The modulation error ration in tenth of dB"
+      ::= { generalInfoEntry 2 }
+
+    
+    giBER OBJECT-TYPE
+      SYNTAX Unsigned32
+      UNITS "10e-7"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "pre LDPC BER"
+      ::= { generalInfoEntry 3 }
+
+    
+    giLdpcIterations OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Number of LDPC iterations."
+      ::= { generalInfoEntry 4 }
+
+    
+    localizationTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF LocalizationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Identification of the transmitting system."
+      ::= { rsXx8000DvbT2RcvObjs 4 }
+
+    
+    localizationEntry OBJECT-TYPE
+      SYNTAX LocalizationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry (conceptual row) in the identificationTable."
+      AUGMENTS { commandsEntry }
+      ::= { localizationTable 1 }
+
+    
+    LocalizationEntry ::=
+      SEQUENCE { 
+        networkID
+          Unsigned32,
+        t2SystemID
+          Unsigned32,
+        cellID
+          Unsigned32,
+        txIdAvailability
+          Unsigned32
+       }
+
+    networkID OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Uniquely identifies the current DVB-T2 network."
+      ::= { localizationEntry 1 }
+
+    
+    t2SystemID OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Uniquely identifies a T2 system within the DVB-T2 network."
+      ::= { localizationEntry 2 }
+
+    
+    cellID OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Uniquely identifies a geographic cell in a DVB-T2 network.
+        If the provision of the cell ID is not foreseen, the value of this field is '0'."
+      ::= { localizationEntry 3 }
+
+    
+    txIdAvailability OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Signal the availability of transmitter identification signals within the current geographic cell.
+        When no transmitter identification signals are used this field is set to 0x000.
+        All other bit combinations are reserved for future use."
+      ::= { localizationEntry 4 }
+
+    
+    l1FrameModulationTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF L1FrameModulationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The L1-pre signalling enables the reception and decoding of the L1-post signalling."
+      ::= { rsXx8000DvbT2RcvObjs 5 }
+
+    
+    l1FrameModulationEntry OBJECT-TYPE
+      SYNTAX L1FrameModulationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry (conceptual row) in the l1PreTable."
+      AUGMENTS { commandsEntry }
+      ::= { l1FrameModulationTable 1 }
+
+    
+    L1FrameModulationEntry ::=
+      SEQUENCE { 
+        l1FrModPreambleFormat
+          INTEGER,
+        l1FrModFFT
+          INTEGER,
+        l1L1ModBwtExt
+          TruthValue,
+        l1FrModConstellation
+          INTEGER,
+        l1FrModGuardInterval
+          INTEGER,
+        l1FrModPilotPattern
+          INTEGER,
+        l1FrModPAPR
+          INTEGER
+       }
+
+    l1FrModPreambleFormat OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        siso(1),
+        miso(2),
+        nonT2(3),
+        unknown(4)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Identifies the format of the P2 symbol(s)."
+      ::= { l1FrameModulationEntry 1 }
+
+    
+    l1FrModFFT OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        m2K(1),
+        m8K(2),
+        m4K(3),
+        m1K(4),
+        m16K(5),
+        m32K(6),
+        unknown(7)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "FFT size:
+        m2K  -  2K
+        m8K  -  8K
+        m4K  -  4K
+        m1K  -  1K
+        m16K - 16K
+        m32K - 32K"
+      ::= { l1FrameModulationEntry 2 }
+
+    
+    l1L1ModBwtExt OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Indicates whether the extended carrier mode is used in the case of 8K, 16K and 32K FFT sizes."
+      ::= { l1FrameModulationEntry 3 }
+
+    
+    l1FrModConstellation OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        bpsk(1),
+        qpsk(2),
+        qam16(3),
+        qam64(4),
+        unknown(5)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The L1-post constellation.
+        "
+      ::= { l1FrameModulationEntry 4 }
+
+    
+    l1FrModGuardInterval OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        g1div32(1),
+        g1div16(2),
+        g1div8(3),
+        g1div4(4),
+        g1div128(5),
+        g19div128(6),
+        g19div256(7),
+        unknown(8)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The guard interval of the current super-frame."
+      ::= { l1FrameModulationEntry 5 }
+
+    
+    l1FrModPilotPattern OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        pp1(1),
+        pp2(2),
+        pp3(3),
+        pp4(4),
+        pp5(5),
+        pp6(6),
+        pp7(7),
+        pp8(8),
+        unknown(9)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Indicates the scattered pilot pattern used for the data OFDM symbols."
+      ::= { l1FrameModulationEntry 6 }
+
+    
+    l1FrModPAPR OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        none(1),
+        ace(2),
+        tr(3),
+        trAce(4),
+        unknown(5)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Describes what kind of PAPR reduction is used, if any."
+      ::= { l1FrameModulationEntry 7 }
+
+    
+    l1FrameStructureTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF L1FrameStructureEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The L1-post signalling contains parameters which provide sufficient information
+        for the receiver to decode the desired physical layer pipes."
+      ::= { rsXx8000DvbT2RcvObjs 6 }
+
+    
+    l1FrameStructureEntry OBJECT-TYPE
+      SYNTAX L1FrameStructureEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry (conceptual row) in the l1PostTable."
+      AUGMENTS { commandsEntry }
+      ::= { l1FrameStructureTable 1 }
+
+    
+    L1FrameStructureEntry ::=
+      SEQUENCE { 
+        l1FrStructNumberOfPLPs
+          Unsigned32,
+        l1FrStructNumberOfAux
+          Unsigned32,
+        l1FrStructCodeRate
+          INTEGER,
+        l1FrStructFEC
+          INTEGER,
+        l1FrStructRepetition
+          TruthValue,
+        l1FrStructNumberOfSymbols
+          Unsigned32,
+        l1FrStructNumberOfFrames
+          Unsigned32
+       }
+
+    l1FrStructNumberOfPLPs OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Indicates the number of PLPs carried within the current super-frame."
+      ::= { l1FrameStructureEntry 1 }
+
+    
+    l1FrStructNumberOfAux OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Indicates the number of auxiliary streams."
+      ::= { l1FrameStructureEntry 2 }
+
+    
+    l1FrStructCodeRate OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        cr1div2(1),
+        unknown(2)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The L1-post code rate."
+      ::= { l1FrameStructureEntry 3 }
+
+    
+    l1FrStructFEC OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        ldpc16K(1),
+        unknown(2)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Indicates the type of the L1 forward error correction (FEC) used
+        for the L1-post signalling data block."
+      ::= { l1FrameStructureEntry 4 }
+
+    
+    l1FrStructRepetition OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Indicates whether the dynamic L1-post signalling is provided also for the next frame."
+      ::= { l1FrameStructureEntry 5 }
+
+    
+    l1FrStructNumberOfSymbols OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of data OFDM symbols per T2-frame, excluding P1 and P2."
+      ::= { l1FrameStructureEntry 6 }
+
+    
+    l1FrStructNumberOfFrames OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of T2-frames per super-frame."
+      ::= { l1FrameStructureEntry 7 }
+
+    
+    plpInfoTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF PlpInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Parameter of the currently selected PLP."
+      ::= { rsXx8000DvbT2RcvObjs 7 }
+
+    
+    plpInfoEntry OBJECT-TYPE
+      SYNTAX PlpInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry (conceptual row) in the plpInfoTable."
+      AUGMENTS { commandsEntry }
+      ::= { plpInfoTable 1 }
+
+    
+    PlpInfoEntry ::=
+      SEQUENCE { 
+        plpID
+          Unsigned32,
+        plpType
+          INTEGER,
+        plpGroupID
+          Unsigned32,
+        plpCodeRate
+          INTEGER,
+        plpConstellation
+          INTEGER,
+        plpRotation
+          TruthValue,
+        plpFEC
+          INTEGER,
+        plpTimeInterleaverLength
+          Unsigned32,
+        plpTimeInterleaverType
+          Unsigned32
+       }
+
+    plpID OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Identifies uniquely a PLP within the T2 system."
+      ::= { plpInfoEntry 1 }
+
+    
+    plpType OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        common(1),
+        data1(2),
+        data2(3),
+        unknown(4)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Indicates the type of the currently selected PLP."
+      ::= { plpInfoEntry 2 }
+
+    
+    plpGroupID OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Identifies with which PLP group within the T2 system the current PLP is associated."
+      ::= { plpInfoEntry 4 }
+
+    
+    plpCodeRate OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        cr1div2(1),
+        cr3div5(2),
+        cr2div3(3),
+        cr3div4(4),
+        cr4div5(5),
+        cr5div6(6),
+        unknown(7)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Indicates the code rate used by the currently selected PLP."
+      ::= { plpInfoEntry 5 }
+
+    
+    plpConstellation OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        qpsk(1),
+        qam16(2),
+        qam64(3),
+        qam256(4),
+        unknown(5)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Indicates the modulation used by the currently selected PLP."
+      ::= { plpInfoEntry 6 }
+
+    
+    plpRotation OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Indicates whether constellation rotation is in use or not
+        by the currently selected PLP."
+      ::= { plpInfoEntry 7 }
+
+    
+    plpFEC OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        ldpc16k(1),
+        ldpc64k(2),
+        unknown(3)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Indicates the FEC type used by the currently selected PLP."
+      ::= { plpInfoEntry 8 }
+
+    
+    plpTimeInterleaverLength OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The use of this field is determined by the values of the time interleaver type field."
+      ::= { plpInfoEntry 11 }
+
+    
+    plpTimeInterleaverType OBJECT-TYPE
+      SYNTAX Unsigned32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Indicates the type of time-interleaving.
+        A value of '0' indicates that one Interleaving Frame corresponds to one T2-frame
+        and contains one or more TI-blocks.
+        A value of '1' indicates that one Interleaving Frame is carried
+        in more than one T2-frame and contains only one TI-block."
+      ::= { plpInfoEntry 12 }
+
+    
+    productInfoTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ProductInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The table for product typeplates."
+      ::= { rsXx8000DvbT2RcvObjs 100 }
+
+    
+    productInfoEntry OBJECT-TYPE
+      SYNTAX ProductInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry (conceptual row) in the productInfoTable."
+      AUGMENTS { commandsEntry }
+      ::= { productInfoTable 1 }
+
+    
+    ProductInfoEntry ::=
+      SEQUENCE { 
+        prodInfoSerialNumber
+          ReadableString,
+        prodInfoIdentNumberSW
+          ReadableString,
+        prodInfoVersionNumberSW
+          ReadableString,
+        prodInfoIdentNumberHW
+          ReadableString,
+        prodInfoVersionNumberHW
+          ReadableString,
+        productInfoProductDateHW
+          DateAndTime
+       }
+
+    prodInfoSerialNumber OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The serial number of the receiver board."
+      ::= { productInfoEntry 1 }
+
+    
+    prodInfoIdentNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the software."
+      ::= { productInfoEntry 2 }
+
+    
+    prodInfoVersionNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number of the software."
+      ::= { productInfoEntry 3 }
+
+    
+    prodInfoIdentNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the hardware."
+      ::= { productInfoEntry 4 }
+
+    
+    prodInfoVersionNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number (product index) of the hardware."
+      ::= { productInfoEntry 5 }
+
+    
+    productInfoProductDateHW OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz production date of the hardware."
+      ::= { productInfoEntry 6 }
+
+    
+-- *****************************************************************************
+-- **          event definitions
+-- *****************************************************************************
+    rsXx8000DvbT2RcvEvents OBJECT IDENTIFIER ::= { rsXx8000DvbT2Rcv 3 }
+
+    
+    rsXx8000DvbT2RcvEventsV2 OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Compatibility to SMIv1."
+      ::= { rsXx8000DvbT2RcvEvents 0 }
+
+    
+    summaryFault NOTIFICATION-TYPE
+      OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "DVB-T2 receiver summary fault."
+      ::= { rsXx8000DvbT2RcvEventsV2 1 }
+
+    
+    summaryWarning NOTIFICATION-TYPE
+      OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "DVB-T2 receiver summary warning."
+      ::= { rsXx8000DvbT2RcvEventsV2 2 }
+
+    
+    hwError NOTIFICATION-TYPE
+      OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "DVB-T2 receiver hardware error."
+      ::= { rsXx8000DvbT2RcvEventsV2 3 }
+
+    
+    demodulatorLocked NOTIFICATION-TYPE
+      OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Synchronisation of carrier signal."
+      ::= { rsXx8000DvbT2RcvEventsV2 4 }
+
+    
+    mpegStreamLocked NOTIFICATION-TYPE
+      OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Synchronisation of transport stream."
+      ::= { rsXx8000DvbT2RcvEventsV2 5 }
+
+    
+    merFault NOTIFICATION-TYPE
+      OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "MER above thresholdFaultMER"
+      ::= { rsXx8000DvbT2RcvEventsV2 6 }
+
+    
+    merWarning NOTIFICATION-TYPE
+      OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "MER above thresholdWarningMER"
+      ::= { rsXx8000DvbT2RcvEventsV2 7 }
+
+    
+    berFault NOTIFICATION-TYPE
+      OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "BER above thresholdFaultBER"
+      ::= { rsXx8000DvbT2RcvEventsV2 8 }
+
+    
+    berWarning NOTIFICATION-TYPE
+      OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "BER above thresholdWarningBER"
+      ::= { rsXx8000DvbT2RcvEventsV2 9 }
+
+    
+    rsXx8000DvbT2RcvEventsTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF RsXx8000DvbT2RcvEventsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains necessary information for handling notifications.
+        For each notification you have the following information: 
+        - name (get),
+        - mask to enable/disable sending out (set/get),
+        - priority (set/get) and 
+        - the current state (get only)."
+      ::= { rsXx8000DvbT2RcvEvents 1 }
+
+    
+    rsXx8000DvbT2RcvEventsEntry OBJECT-TYPE
+      SYNTAX RsXx8000DvbT2RcvEventsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An event entry always consists of its indexes
+        (used for addressing within redundancy systems) and 3 values:
+        - name: an enumerated list of all possible notifications
+        - mask: the corresponding mask (enable/disable)
+        - priority: the corresponding priority (value in range 0..255)
+        - event: the event itself (active/inactive)"
+      INDEX { evtBoardIdx, evtNameIdx }
+      ::= { rsXx8000DvbT2RcvEventsTable 1 }
+
+    
+    RsXx8000DvbT2RcvEventsEntry ::=
+      SEQUENCE { 
+        evtBoardIdx
+          IndexAB,
+        evtNameIdx
+          EventMaxEntryNumber,
+        evtName
+          INTEGER,
+        evtMask
+          EventMask,
+        evtPriority
+          EventPriority,
+        evtEvent
+          EventState
+       }
+
+    evtBoardIdx OBJECT-TYPE
+      SYNTAX IndexAB
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The board index.
+        This is a helper column and therefore not-accessible."
+      ::= { rsXx8000DvbT2RcvEventsEntry 1 }
+
+    
+    evtNameIdx OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The event number as integer.
+        This is a helper column and therefore not-accessible."
+      ::= { rsXx8000DvbT2RcvEventsEntry 2 }
+
+    
+    evtName OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        summaryFault(1),
+        summaryWarning(2),
+        hwError(3),
+        demodulatorLocked(4),
+        mpegSyncLocked(5),
+        merFault(6),
+        merWarning(7),
+        berFault(8),
+        berWarning(9)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The event number as integer and the value as readable text.
+        The enumeration correlates with the notifications under rsXx8000DvbT2RcvEventsV2."
+      ::= { rsXx8000DvbT2RcvEventsEntry 3 }
+
+    
+    evtMask OBJECT-TYPE
+      SYNTAX EventMask
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { rsXx8000DvbT2RcvEventsEntry 4 }
+
+    
+    evtPriority OBJECT-TYPE
+      SYNTAX EventPriority
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { rsXx8000DvbT2RcvEventsEntry 5 }
+
+    
+    evtEvent OBJECT-TYPE
+      SYNTAX EventState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { rsXx8000DvbT2RcvEventsEntry 6 }
+
+    
+-- *****************************************************************************
+-- **          conformance statements
+-- *****************************************************************************
+    rsXx8000DvbT2RcvConf OBJECT IDENTIFIER ::= { rsXx8000DvbT2Rcv 5 }
+
+    
+    rsXx8000DvbT2RcvGroups OBJECT IDENTIFIER ::= { rsXx8000DvbT2RcvConf 1 }
+
+    
+    rsXx8000DvbT2RcvObjectGroup OBJECT-GROUP
+      OBJECTS { giMER, networkID, t2SystemID, cellID, txIdAvailability, 
+        plpID, plpType, plpGroupID, plpCodeRate, plpRotation, 
+        plpFEC, plpTimeInterleaverLength, plpTimeInterleaverType, cmdCenterFrequency, cmdChannelBandwidth, 
+        cmdPlpNumber, cmdPlpSelection, limitMerWarning, limitMerFault, limitBerWarning, 
+        limitBerFault, plpConstellation, l1FrModPreambleFormat, l1FrModFFT, l1L1ModBwtExt, 
+        l1FrModConstellation, l1FrModGuardInterval, l1FrModPilotPattern, l1FrModPAPR, l1FrStructNumberOfPLPs, 
+        l1FrStructNumberOfAux, l1FrStructCodeRate, l1FrStructFEC, l1FrStructRepetition, l1FrStructNumberOfSymbols, 
+        giLdpcIterations, l1FrStructNumberOfFrames, giRfInputLevel, giBER }
+      STATUS current
+      DESCRIPTION 
+        "Group for DVB-T2 receiver objects."
+      ::= { rsXx8000DvbT2RcvGroups 1 }
+
+    
+    rsXx8000DvbT2RcvProductInfoGroup OBJECT-GROUP
+      OBJECTS { prodInfoSerialNumber, prodInfoIdentNumberSW, prodInfoVersionNumberSW, prodInfoIdentNumberHW, prodInfoVersionNumberHW, 
+        productInfoProductDateHW }
+      STATUS current
+      DESCRIPTION 
+        "Objects from the productInfoTable."
+      ::= { rsXx8000DvbT2RcvGroups 3 }
+
+    
+    rsXx8000DvbT2RcvEventsTableGroup OBJECT-GROUP
+      OBJECTS { evtName, evtMask, evtPriority, evtEvent }
+      STATUS current
+      DESCRIPTION 
+        "Objects from the rsXx8000DvbT2RcvEventsTable."
+      ::= { rsXx8000DvbT2RcvGroups 4 }
+
+    
+    rsXx8000DvbT2RcvNotificationGroup NOTIFICATION-GROUP
+      NOTIFICATIONS { summaryFault, summaryWarning, hwError, demodulatorLocked, merFault, 
+        merWarning, berFault, berWarning, mpegStreamLocked }
+      STATUS current
+      DESCRIPTION 
+        "Group for DVB-T2 receiver notifications."
+      ::= { rsXx8000DvbT2RcvGroups 5 }
+
+    
+    rsXx8000DvbT2RcvCompls OBJECT IDENTIFIER ::= { rsXx8000DvbT2RcvConf 3 }
+
+    
+    rsXx8000DvbT2RcvAll MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "for all DVB-T2 receiver configurations"
+      MODULE -- this module
+        MANDATORY-GROUPS { rsXx8000DvbT2RcvObjectGroup, rsXx8000DvbT2RcvProductInfoGroup, rsXx8000DvbT2RcvEventsTableGroup, rsXx8000DvbT2RcvNotificationGroup }
+      ::= { rsXx8000DvbT2RcvCompls 1 }
+
+    
+  
+  END

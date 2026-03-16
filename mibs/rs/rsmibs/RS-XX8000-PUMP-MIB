@@ -1,0 +1,1214 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **
+-- **  COPYRIGHT      (c) 2007 Rohde & Schwarz GmbH & Co. KG
+-- **                          Muehldorfstrasse 15
+-- **    R & S                 D-81671 Muenchen
+-- **
+-- *****************************************************************************
+-- **
+-- **  MODULE         RS-XX8000-PUMP-MIB
+-- **  
+-- **  DESCRIPTION    Rohde & Schwarz SNMP
+-- **
+-- **  HISTORY        
+-- **
+-- **   2007-09-04 hue - initial version
+-- **   2008-07-25  sr - measureValuesPumpRevolutions, measureValuesPumpFlow, 
+-- **                    measureValuesFanRevolutions
+-- **
+-- *****************************************************************************
+-- *****************************************************************************
+
+  RS-XX8000-PUMP-MIB DEFINITIONS ::= BEGIN
+ 
+    IMPORTS
+      rsXx8000, rsXx8000MibModule, IndexTransmitter, IndexAB, FloatingPoint, 
+      SwitchOnOff, ReadableString, EventMaxEntryNumber, EventMask, EventPriority, 
+      EventState, EventClass      
+        FROM RS-XX8000-COMMON-MIB      
+      OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP      
+        FROM SNMPv2-CONF      
+      Integer32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, NOTIFICATION-TYPE      
+        FROM SNMPv2-SMI      
+      TruthValue, DateAndTime, TEXTUAL-CONVENTION      
+        FROM SNMPv2-TC;
+  
+  
+    rsXx8000PumpUnitMibModule MODULE-IDENTITY 
+      LAST-UPDATED "201004270830Z"		-- April 27, 2010 at 08:30 GMT
+      ORGANIZATION 
+        "Rohde&Schwarz GmbH & Co. KG"
+      CONTACT-INFO 
+        "Torsten Huebscher
+        Department 7TS2
+        Broadcasting Division
+        Muehldorfstrasse 15
+        81671 Munich, Germany
+        torsten.huebscher@rohde-schwarz.com"
+      DESCRIPTION 
+        "This MIB defines pump units of transmitting systems from Rohde & Schwarz.
+        
+        Use this MIB if your system meets the following requirements:
+        - series XX8000 (NetCCU800),
+        - cooling type: Liquid with R&S Pump ZK810.
+        
+        The following MIBs are related to this:
+        - RS-COMMON-MIB         - mandatory for this MIB
+        - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+      REVISION "201004270830Z"		-- April 27, 2010 at 08:30 GMT
+      DESCRIPTION 
+        "enhance descriptions"
+      REVISION "200807250830Z"		-- July 25, 2008 at 08:30 GMT
+      DESCRIPTION 
+        "- measureValuesPumpRevolutions, measureValuesPumpFlow, 
+          measureValuesFanRevolutions"
+      REVISION "200709041000Z"		-- September 04, 2007 at 10:00 GMT
+      DESCRIPTION 
+        "This is the initial version."
+      ::= { rsXx8000MibModule 100 }
+
+    
+  
+--
+-- Textual conventions
+--
+  
+    IndexPumpUnit ::= TEXTUAL-CONVENTION
+      DISPLAY-HINT 
+        "d"
+      STATUS current
+      DESCRIPTION 
+        "The index type of the PUCs (pump unit controllers)."
+      SYNTAX Integer32 (1..30)
+
+  
+--
+-- Node definitions
+--
+  
+    rsXx8000PumpUnit OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Xx8000 Pump Unit"
+      ::= { rsXx8000 100 }
+
+    
+-- *****************************************************************************
+-- **          object definitions
+-- *****************************************************************************
+    rsXx8000PumpUnitObjs OBJECT IDENTIFIER ::= { rsXx8000PumpUnit 1 }
+
+    
+    commandsPumpUnitTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF CommandsPumpUnitEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains the setup and configuration parameters."
+      ::= { rsXx8000PumpUnitObjs 1 }
+
+    
+    commandsPumpUnitEntry OBJECT-TYPE
+      SYNTAX CommandsPumpUnitEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for a designated pump unit or pump unit controller (PUC)."
+      INDEX { cmdPuTxIdx, cmdPuOstIdx, cmdPuPumpUnitIdx }
+      ::= { commandsPumpUnitTable 1 }
+
+    
+    CommandsPumpUnitEntry ::=
+      SEQUENCE { 
+        cmdPuTxIdx
+          IndexTransmitter,
+        cmdPuOstIdx
+          IndexAB,
+        cmdPuNumberOfPumpUnits
+          Integer32,
+        cmdPuNominalTemp
+          FloatingPoint,
+        cmdPuWarningTempThreshold
+          FloatingPoint,
+        cmdPuFaultTempThreshold
+          FloatingPoint,
+        cmdPuMaxFanSpeed
+          Integer32,
+        cmdPuAntiFreezeFan
+          SwitchOnOff,
+        cmdPuPumpUnitIdx
+          IndexPumpUnit,
+        cmdPuNumberOfPumps
+          Integer32,
+        cmdPuNumberOfFans
+          Integer32,
+        cmdPuLiquidFlowCorrection
+          Integer32,
+        cmdPuServiceMode
+          SwitchOnOff
+       }
+
+    cmdPuTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of n+1 systems.
+        If you have one transmitter only (all reserve concepts except n+1) this index is always 1."
+      ::= { commandsPumpUnitEntry 1 }
+
+    
+    cmdPuOstIdx OBJECT-TYPE
+      SYNTAX IndexAB
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The index of the outputstage.
+        If you have a transmitter with one outputstage only (SingleTx, DualDrive),
+        this index is always 1."
+      ::= { commandsPumpUnitEntry 2 }
+
+    
+    cmdPuNumberOfPumpUnits OBJECT-TYPE
+      SYNTAX Integer32 (0..30)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The number of pump units for the transmitting system.
+        You have to restart the NetCCU to activate this."
+      ::= { commandsPumpUnitEntry 3 }
+
+    
+    cmdPuNominalTemp OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Degree Celsius"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The nominal value of the outlet temperature (25.0 ... 40.0).
+        This setting is valid for all pump units of this outputstage.
+        You have to restart the NetCCU to activate this."
+      ::= { commandsPumpUnitEntry 4 }
+
+    
+    cmdPuWarningTempThreshold OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Degree Celsius"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The value of the warning threshold for outlet temperature (40.0 ... 57.0).
+        This setting is valid for all pump units of this outputstage.
+        You have to restart the NetCCU to activate this."
+      ::= { commandsPumpUnitEntry 5 }
+
+    
+    cmdPuFaultTempThreshold OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Degree Celsius"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The value of the fault threshold for outlet temperature (45.0 ... 62.0).
+        This setting is valid for all pump units of this outputstage.
+        You have to restart the NetCCU to activate this."
+      ::= { commandsPumpUnitEntry 6 }
+
+    
+    cmdPuMaxFanSpeed OBJECT-TYPE
+      SYNTAX Integer32 (50..100)
+      UNITS "Percent"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The maximum fan speed.
+        This setting is valid for all pump units of this outputstage."
+      ::= { commandsPumpUnitEntry 7 }
+
+    
+    cmdPuAntiFreezeFan OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "This switches the AntiFreeze on/off.
+        To avoid freezing when temperature is too low, the fan will be switched on at times."
+      ::= { commandsPumpUnitEntry 8 }
+
+    
+    cmdPuPumpUnitIdx OBJECT-TYPE
+      SYNTAX IndexPumpUnit
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The pump unit index."
+      ::= { commandsPumpUnitEntry 9 }
+
+    
+    cmdPuNumberOfPumps OBJECT-TYPE
+      SYNTAX Integer32 (0..2)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The configured number of pumps (stored inside of PUC).
+        This value is read-only! It is set and saved during configuration."
+      ::= { commandsPumpUnitEntry 10 }
+
+    
+    cmdPuNumberOfFans OBJECT-TYPE
+      SYNTAX Integer32 (0..4)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The configured number of fans (stored inside of PUC).
+        This value is read-only! It is set and saved during configuration."
+      ::= { commandsPumpUnitEntry 11 }
+
+    
+    cmdPuLiquidFlowCorrection OBJECT-TYPE
+      SYNTAX Integer32 (0..20)
+      UNITS "Percent"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "To avoid noise by vibrating pipes
+        or to add additional liquid cooled components
+        or if a liquid different to Antifrogen N is used,
+        it's possible to enhance the flow."
+      ::= { commandsPumpUnitEntry 12 }
+
+    
+    cmdPuServiceMode OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Switches the service mode on/off.
+        No PUC-Fault will switch the transmitter off if PUC is in Service Mode.
+        When operating in service mode, all signalling to outputstage and NetCCU is suppressed."
+      ::= { commandsPumpUnitEntry 13 }
+
+    
+    summaryInfo OBJECT IDENTIFIER ::= { rsXx8000PumpUnitObjs 2 }
+
+    
+    statusTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF StatusEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The table with status information."
+      ::= { summaryInfo 3 }
+
+    
+    statusEntry OBJECT-TYPE
+      SYNTAX StatusEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for a designated pump unit or pump unit controller (PUC)."
+      INDEX { statusTxIdx, statusOstIdx, statusPumpUnitIdx }
+      ::= { statusTable 1 }
+
+    
+    StatusEntry ::=
+      SEQUENCE { 
+        statusTxIdx
+          IndexTransmitter,
+        statusOstIdx
+          IndexAB,
+        statusPumpUnitIdx
+          IndexPumpUnit,
+        statusLinkOk
+          TruthValue,
+        statusSumFaultPUC
+          TruthValue,
+        statusSumWarningPUC
+          TruthValue,
+        statusOpModePUC
+          SwitchOnOff,
+        statusLinkedRacks
+          ReadableString
+       }
+
+    statusTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of n+1 systems.
+        If you have one transmitter only (all reserve concepts except n+1) this index is always 1."
+      ::= { statusEntry 1 }
+
+    
+    statusOstIdx OBJECT-TYPE
+      SYNTAX IndexAB
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The index of the outputstage.
+        If you have a transmitter with one outputstage only (SingleTx, DualDrive),
+        this index is always 1."
+      ::= { statusEntry 2 }
+
+    
+    statusPumpUnitIdx OBJECT-TYPE
+      SYNTAX IndexPumpUnit
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The pump unit index."
+      ::= { statusEntry 3 }
+
+    
+    statusLinkOk OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The link to the PUC is ok."
+      ::= { statusEntry 4 }
+
+    
+    statusSumFaultPUC OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "A summary fault is pending."
+      ::= { statusEntry 5 }
+
+    
+    statusSumWarningPUC OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "A summary warning is pending."
+      ::= { statusEntry 6 }
+
+    
+    statusOpModePUC OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The PUC is on/off."
+      ::= { statusEntry 7 }
+
+    
+    statusLinkedRacks OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Rack linkage of PUC:
+        This PUC is connected to the racks with the shown logical numbers."
+      ::= { statusEntry 8 }
+
+    
+    detailedInfo OBJECT IDENTIFIER ::= { rsXx8000PumpUnitObjs 3 }
+
+    
+    measureValuesTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF MeasureValuesEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The table for measured values."
+      ::= { detailedInfo 1 }
+
+    
+    measureValuesEntry OBJECT-TYPE
+      SYNTAX MeasureValuesEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for a designated pump unit or pump unit controller (PUC)."
+      INDEX { measureValuesTxIdx, measureValuesOstIdx, measureValuesPumpUnitIdx, measureValuesSubDeviceIdx }
+      ::= { measureValuesTable 1 }
+
+    
+    MeasureValuesEntry ::=
+      SEQUENCE { 
+        measureValuesTxIdx
+          IndexTransmitter,
+        measureValuesOstIdx
+          IndexAB,
+        measureValuesPumpUnitIdx
+          IndexTransmitter,
+        measureValuesBoardTemp
+          FloatingPoint,
+        measureValuesExternalTemp
+          FloatingPoint,
+        measureValuesSubDeviceIdx
+          Integer32,
+        measureValuesPumpRevolutions
+          Integer32,
+        measureValuesPumpFlow
+          FloatingPoint,
+        measureValuesFanRevolutions
+          Integer32
+       }
+
+    measureValuesTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of n+1 systems.
+        If you have one transmitter only (all reserve concepts except n+1) this index is always 1."
+      ::= { measureValuesEntry 1 }
+
+    
+    measureValuesOstIdx OBJECT-TYPE
+      SYNTAX IndexAB
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The index of the outputstage.
+        If you have a transmitter with one outputstage only (SingleTx, DualDrive),
+        this index is always 1."
+      ::= { measureValuesEntry 2 }
+
+    
+    measureValuesPumpUnitIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The pump unit index."
+      ::= { measureValuesEntry 3 }
+
+    
+    measureValuesBoardTemp OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Degree Celsius"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The internal (pump unit board) measured temperature (-25.0 .. 75.0)."
+      ::= { measureValuesEntry 4 }
+
+    
+    measureValuesExternalTemp OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "Degree Celsius"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The extern measured temperature (-25.0 .. 150.0)."
+      ::= { measureValuesEntry 5 }
+
+    
+    measureValuesSubDeviceIdx OBJECT-TYPE
+      SYNTAX Integer32 (1..4)
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The index for pumps or fans.
+        
+        For not 'subDevice' parameters this index is always 1."
+      ::= { measureValuesEntry 20 }
+
+    
+    measureValuesPumpRevolutions OBJECT-TYPE
+      SYNTAX Integer32
+      UNITS "Percent"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The measured revolutions of this pump."
+      ::= { measureValuesEntry 21 }
+
+    
+    measureValuesPumpFlow OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "LitresPerMinute"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The measured Flow of this pump.
+        This value is correct for the viscosity of the recommended cooling liquid Antifrogen N."
+      ::= { measureValuesEntry 22 }
+
+    
+    measureValuesFanRevolutions OBJECT-TYPE
+      SYNTAX Integer32
+      UNITS "Percent"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The measured revolutions of this fan."
+      ::= { measureValuesEntry 40 }
+
+    
+    productInformationTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ProductInformationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The table for the product information (electronic typeplate) of the pump unit."
+      ::= { detailedInfo 2 }
+
+    
+    productInformationEntry OBJECT-TYPE
+      SYNTAX ProductInformationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for a pump unit controller."
+      INDEX { prodInfoTxIdx, prodInfoOstIdx, prodInfoPumpUnitIdx }
+      ::= { productInformationTable 1 }
+
+    
+    ProductInformationEntry ::=
+      SEQUENCE { 
+        prodInfoTxIdx
+          IndexTransmitter,
+        prodInfoOstIdx
+          IndexAB,
+        prodInfoPumpUnitIdx
+          IndexPumpUnit,
+        prodInfoSerialNumber
+          ReadableString,
+        prodInfoIdentNumberSW
+          ReadableString,
+        prodInfoVersionNumberSW
+          ReadableString,
+        prodInfoIdentNumberHW
+          ReadableString,
+        prodInfoVersionNumberHW
+          ReadableString,
+        prodInfoProductDateHW
+          DateAndTime
+       }
+
+    prodInfoTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of n+1 systems.
+        If you have one transmitter only (all reserve concepts except n+1) this index is always 1."
+      ::= { productInformationEntry 1 }
+
+    
+    prodInfoOstIdx OBJECT-TYPE
+      SYNTAX IndexAB
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The index of the outputstage.
+        If you have a transmitter with one outputstage only (SingleTx, DualDrive),
+        this index is always 1."
+      ::= { productInformationEntry 2 }
+
+    
+    prodInfoPumpUnitIdx OBJECT-TYPE
+      SYNTAX IndexPumpUnit
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The pump unit index."
+      ::= { productInformationEntry 3 }
+
+    
+    prodInfoSerialNumber OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The serial number of the pump unit."
+      ::= { productInformationEntry 4 }
+
+    
+    prodInfoIdentNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "R&S part number of this firmware.
+        On problems please refer to this number."
+      ::= { productInformationEntry 5 }
+
+    
+    prodInfoVersionNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The version number of this firmware.
+        On problems please refer to this number."
+      ::= { productInformationEntry 6 }
+
+    
+    prodInfoIdentNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the hardware, 2102.3500.02."
+      ::= { productInformationEntry 7 }
+
+    
+    prodInfoVersionNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number of the hardware, e.g. 1.2.1."
+      ::= { productInformationEntry 8 }
+
+    
+    prodInfoProductDateHW OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz production date of the hardware."
+      ::= { productInformationEntry 9 }
+
+    
+-- *****************************************************************************
+-- **          event definitions
+-- *****************************************************************************
+    rsXx8000PumpUnitEvents OBJECT IDENTIFIER ::= { rsXx8000PumpUnit 3 }
+
+    
+    eventPumpUnit OBJECT IDENTIFIER ::= { rsXx8000PumpUnitEvents 1 }
+
+    
+    eventsPumpUnitV2 OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Root node for the converted TRAP-TYPEs."
+      ::= { eventPumpUnit 0 }
+
+    
+    puSummaryFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "Pump Unit Summary Fault."
+      ::= { eventsPumpUnitV2 1 }
+
+    
+    puSummaryWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "Pump Unit Summary Warning."
+      ::= { eventsPumpUnitV2 2 }
+
+    
+    puLinked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "Pump Unit Linked."
+      ::= { eventsPumpUnitV2 3 }
+
+    
+    puFan1Linked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "Fan 1 Linked."
+      ::= { eventsPumpUnitV2 4 }
+
+    
+    puFan2Linked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "Fan 2 Linked."
+      ::= { eventsPumpUnitV2 5 }
+
+    
+    puFan3Linked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "Fan 3 Linked."
+      ::= { eventsPumpUnitV2 6 }
+
+    
+    puFan4Linked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "Fan 4 Linked."
+      ::= { eventsPumpUnitV2 7 }
+
+    
+    puPump1Linked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "Pump 1 Linked."
+      ::= { eventsPumpUnitV2 8 }
+
+    
+    puPump2Linked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "Pump 2 Linked."
+      ::= { eventsPumpUnitV2 9 }
+
+    
+    puOn NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "Pump Unit On."
+      ::= { eventsPumpUnitV2 10 }
+
+    
+    puWarningFan1 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "A sum warning of fan 1 is present - fan is still working."
+      ::= { eventsPumpUnitV2 17 }
+
+    
+    puWarningFan2 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "A sum warning of fan 2 is present - fan is still working."
+      ::= { eventsPumpUnitV2 18 }
+
+    
+    puWarningFan3 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "A sum warning of fan 3 is present - fan is still working."
+      ::= { eventsPumpUnitV2 19 }
+
+    
+    puWarningFan4 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "A sum warning of fan 4 is present - fan is still working."
+      ::= { eventsPumpUnitV2 20 }
+
+    
+    puWarningPump1 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "A sum warning of pump 1 is present - pump is still working."
+      ::= { eventsPumpUnitV2 21 }
+
+    
+    puWarningPump2 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "A sum warning of pump 2 is present - pump is still working."
+      ::= { eventsPumpUnitV2 22 }
+
+    
+    puWarningPressure NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "A pressure warning of the pump unit is present
+        and the pressure of the cooling system is low."
+      ::= { eventsPumpUnitV2 23 }
+
+    
+    puServiceMode NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "The cooling system is set to service mode by operating maintenance switches of the cooling system
+        or by setting cmdPuServiceMode to 'on'.
+        In this mode all other events are suppressed."
+      ::= { eventsPumpUnitV2 24 }
+
+    
+    puFilterPolluted NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "Both pumps are running with 100% (usually because of a polluted Filter)."
+      ::= { eventsPumpUnitV2 26 }
+
+    
+    puFaultFan1 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "A sum fault of fan 1 is present - fan stopped working."
+      ::= { eventsPumpUnitV2 33 }
+
+    
+    puFaultFan2 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "A sum fault of fan 2 is present - fan stopped working."
+      ::= { eventsPumpUnitV2 34 }
+
+    
+    puFaultFan3 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "A sum fault of fan 3 is present - fan stopped working."
+      ::= { eventsPumpUnitV2 35 }
+
+    
+    puFaultFan4 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "A sum fault of fan 4 is present - fan stopped working."
+      ::= { eventsPumpUnitV2 36 }
+
+    
+    puFaultPump1 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "A sum fault of pump 1 is present - pump stopped working."
+      ::= { eventsPumpUnitV2 37 }
+
+    
+    puFaultPump2 NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "A sum fault of pump 2 is present - pump stopped working."
+      ::= { eventsPumpUnitV2 38 }
+
+    
+    puFaultPressure NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "A pressure fault of the pump unit is present and
+        the pressure of the cooling system is to low for operation."
+      ::= { eventsPumpUnitV2 39 }
+
+    
+    puOff NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexOst, 
+        indexPumpUnit }
+      STATUS current
+      DESCRIPTION 
+        "The mains to the Pump Unit is switched off for safety reasons
+        (e.g. no communication to PUC and pressure fault)."
+      ::= { eventsPumpUnitV2 40 }
+
+    
+    eventsPumpUnitTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF EventsPumpUnitEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains necessary information for handling alarms. 
+        For each alarm you have the following information: 
+        - name (get),
+        - mask to enable/disable sending out (set/get),
+        - priority (set/get) and 
+        - the current state (get only)."
+      ::= { eventPumpUnit 1 }
+
+    
+    eventsPumpUnitEntry OBJECT-TYPE
+      SYNTAX EventsPumpUnitEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An event entry always consists of 4 values:
+        - name: an enumerated list of all possible notifications
+        - mask: the corresponding mask (enable/disable)
+        - priority: the corresponding priority (value in range 0..255)
+        - event: the event itself (active/inactive)"
+      INDEX { eventPuTxIdx, eventPuOstIdx, eventPuPumpUnitIdx, eventPuIdx }
+      ::= { eventsPumpUnitTable 1 }
+
+    
+    EventsPumpUnitEntry ::=
+      SEQUENCE { 
+        eventPuTxIdx
+          IndexTransmitter,
+        eventPuOstIdx
+          IndexAB,
+        eventPuPumpUnitIdx
+          IndexPumpUnit,
+        eventPuIdx
+          EventMaxEntryNumber,
+        eventPuName
+          INTEGER,
+        eventPuMask
+          EventMask,
+        eventPuPriority
+          EventPriority,
+        eventPuEvent
+          EventState
+       }
+
+    eventPuTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of n+1 systems.
+        If you have one transmitter only (all reserve concepts except n+1) this index is always 1."
+      ::= { eventsPumpUnitEntry 1 }
+
+    
+    eventPuOstIdx OBJECT-TYPE
+      SYNTAX IndexAB
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The index of the outputstage.
+        If you have a transmitter with one outputstage only (SingleTx, DualDrive),
+        this index is always 1."
+      ::= { eventsPumpUnitEntry 2 }
+
+    
+    eventPuPumpUnitIdx OBJECT-TYPE
+      SYNTAX IndexPumpUnit
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The pump unit index."
+      ::= { eventsPumpUnitEntry 3 }
+
+    
+    eventPuIdx OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The event number as index.
+        This is a helper column and therefore not-accessible."
+      ::= { eventsPumpUnitEntry 4 }
+
+    
+    eventPuName OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        puSummaryFault(1),
+        puSummaryWarning(2),
+        puLinked(3),
+        puFan1Linked(4),
+        puFan2Linked(5),
+        puFan3Linked(6),
+        puFan4Linked(7),
+        puPump1Linked(8),
+        puPump2Linked(9),
+        puOn(10),
+        puWarningFan1(17),
+        puWarningFan2(18),
+        puWarningFan3(19),
+        puWarningFan4(20),
+        puWarningPump1(21),
+        puWarningPump2(22),
+        puWarningPressure(23),
+        puServiceMode(24),
+        puFilterPolluted(26),
+        puFaultFan1(33),
+        puFaultFan2(34),
+        puFaultFan3(35),
+        puFaultFan4(36),
+        puFaultPump1(37),
+        puFaultPump2(38),
+        puFaultPressure(39),
+        puOff(40)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The event number as integer and the value as readable text.
+        The enumeration correlates with the notifications under eventsPumpUnitV2."
+      ::= { eventsPumpUnitEntry 5 }
+
+    
+    eventPuMask OBJECT-TYPE
+      SYNTAX EventMask
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsPumpUnitEntry 6 }
+
+    
+    eventPuPriority OBJECT-TYPE
+      SYNTAX EventPriority
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsPumpUnitEntry 7 }
+
+    
+    eventPuEvent OBJECT-TYPE
+      SYNTAX EventState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsPumpUnitEntry 8 }
+
+    
+-- The following objects are ment only for internal use. 
+-- They are used to store values for notification bindings.
+    eventMapObjects OBJECT IDENTIFIER ::= { rsXx8000PumpUnitEvents 2 }
+
+    
+    eventAlarmPriority OBJECT-TYPE
+      SYNTAX EventPriority
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "This OID holds the value for the priority 
+        when sending out a notification."
+      ::= { eventMapObjects 1 }
+
+    
+    eventAlarmClass OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventMapObjects 2 }
+
+    
+    eventEvent OBJECT-TYPE
+      SYNTAX EventState
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "This OID holds the value for the event itself 
+        when sending out a notification."
+      ::= { eventMapObjects 3 }
+
+    
+    indexTransmitter OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "This OID holds the value for the transmitter index 
+        when sending out a notification."
+      ::= { eventMapObjects 4 }
+
+    
+    indexOst OBJECT-TYPE
+      SYNTAX IndexAB
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "This OID holds the index value for the module A (outputstageA) or B (outputstageB) 
+        when sending out a notification."
+      ::= { eventMapObjects 5 }
+
+    
+    indexPumpUnit OBJECT-TYPE
+      SYNTAX IndexPumpUnit
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "This OID holds the index value for the pump unit 
+        when sending out a notification."
+      ::= { eventMapObjects 6 }
+
+    
+-- *****************************************************************************
+-- **          conformance statements
+-- *****************************************************************************
+    rsXx8000PumpUnitConf OBJECT IDENTIFIER ::= { rsXx8000PumpUnit 4 }
+
+    
+    rsXx8000PumpUnitGroups OBJECT IDENTIFIER ::= { rsXx8000PumpUnitConf 1 }
+
+    
+    groupPumpUnit OBJECT-GROUP
+      OBJECTS { cmdPuNumberOfPumpUnits, cmdPuNominalTemp, cmdPuWarningTempThreshold, cmdPuFaultTempThreshold, cmdPuMaxFanSpeed, 
+        cmdPuAntiFreezeFan, cmdPuNumberOfPumps, cmdPuNumberOfFans, cmdPuLiquidFlowCorrection, cmdPuServiceMode, 
+        statusLinkOk, statusSumFaultPUC, statusSumWarningPUC, statusOpModePUC, statusLinkedRacks, 
+        measureValuesBoardTemp, measureValuesExternalTemp, measureValuesPumpRevolutions, measureValuesPumpFlow, measureValuesFanRevolutions, 
+        prodInfoSerialNumber, prodInfoIdentNumberSW, prodInfoProductDateHW, prodInfoVersionNumberHW, prodInfoIdentNumberHW, 
+        prodInfoVersionNumberSW }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all values for a pump unit ZK810 module."
+      ::= { rsXx8000PumpUnitGroups 1 }
+
+    
+    groupAlarmPumpUnit NOTIFICATION-GROUP
+      NOTIFICATIONS { puSummaryFault, puSummaryWarning, puLinked, puFan1Linked, puFan2Linked, 
+        puFan3Linked, puFan4Linked, puPump1Linked, puPump2Linked, puOn, 
+        puWarningFan1, puWarningFan2, puWarningFan3, puWarningFan4, puWarningPump1, 
+        puWarningPump2, puWarningPressure, puServiceMode, puFilterPolluted, puFaultFan1, 
+        puFaultFan2, puFaultFan3, puFaultFan4, puFaultPump1, puFaultPump2, 
+        puFaultPressure, puOff }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all notifications for a pump unit ZK810 module."
+      ::= { rsXx8000PumpUnitGroups 2 }
+
+    
+    groupEvents OBJECT-GROUP
+      OBJECTS { eventPuName, eventPuMask, eventPuPriority, eventPuEvent, eventAlarmPriority, 
+        eventAlarmClass, eventEvent, indexTransmitter, indexOst, indexPumpUnit
+         }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all OIDs for event handling."
+      ::= { rsXx8000PumpUnitGroups 5 }
+
+    
+    rsXx8000PumpUnitCompl OBJECT IDENTIFIER ::= { rsXx8000PumpUnitConf 3 }
+
+    
+    rsXx8000PumpUnitZK810 MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "A single tuner consists of groupSingleTuner and groupAlarmSingleTuner."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupPumpUnit, groupAlarmPumpUnit, groupEvents }
+      ::= { rsXx8000PumpUnitCompl 1 }
+
+    
+  
+  END

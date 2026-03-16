@@ -1,0 +1,72 @@
+mib: RS-COMMON-MIB:RS-XX8000-COMMON-MIB:RS-XX8000-FM-TX-MIB
+modules:
+    os:
+        hardware: RS-XX800-COMMON-MIB::versionNumberHW.0
+        serial: RS-XX8000-COMMON-MIB::serialNumber.0
+        version: RS-XX8000-COMMON-MIB::versionNumberSW.0
+        sysDescr_regex: "/(?<hnetccu800>.*)/"
+    sensors:
+        power:
+            data:
+                -
+                    oid: forwardPower
+                    value: forwardPower
+                    descr: 'Forward Power'
+                    num_oid: '.1.3.6.1.4.1.2566.127.1.2.167.14.1.2.5.{{ $index }}'
+                    index: 'RS-XX8000-FM-TX-MIB:forwardPower.{{ $index }}'
+                -
+                    oid: reflectedPower
+                    value: reflectedPower
+                    descr: 'Reflected Power'
+                    num_oid: '.1.3.6.1.4.1.2566.127.1.2.167.14.1.2.6.{{ $index }}'
+                    index: 'RS-XX8000-FM-TX-MIB:reflectedPower.{{ $index }}'
+
+        state:
+            data:
+                -
+                    oid: summaryFaultTx
+                    value: summaryFaultTx
+                    descr: 'Transmitter Fault'
+                    num_oid: '.1.3.6.1.4.1.2566.127.1.2.167.14.1.2.1.{{ $index }}'
+                    index: 'summaryFaultTx.{{ $index }}'
+                    state_name: summaryFaultTx
+                    states:
+                        - { value: 0, generic: 3, graph: 0, descr: Undefined }
+                        - { value: 1, generic: 1, graph: 0, descr: TRUE }
+                        - { value: 2, generic: 0, graph: 0, descr: FALSE }
+                -
+                    oid: summaryWarningTx
+                    value: summaryWarningTx
+                    descr: 'Transmitter Warning'
+                    num_oid: '.1.3.6.1.4.1.2566.127.1.2.167.14.1.2.2.{{ $index }}'
+                    index: 'summaryFaultTx.{{ $index }}'
+                    state_name: summaryWarningTx
+                    states:
+                        - { value: 0, generic: 3, graph: 0, descr: Undefined }
+                        - { value: 1, generic: 1, graph: 0, descr: TRUE }
+                        - { value: 2, generic: 0, graph: 0, descr: FALSE }
+
+                -
+                    oid: localModeTx
+                    value: localModeTx
+                    descr: 'Local Mode'
+                    num_oid: '.1.3.6.1.4.1.2566.127.1.2.167.14.1.2.3.{{ $index }}'
+                    index: 'localModeTx.{{ $index }}'
+                    state_name: localModeTx
+                    states:
+                        - { value: 0, generic: 3, graph: 0, descr: Undefined }
+                        - { value: 1, generic: 0, graph: 0, descr: TRUE }
+                        - { value: 2, generic: 1, graph: 0, descr: FALSE }
+
+                -
+                    oid: rfOnTx
+                    value: rfOnTx
+                    descr: 'RF TX ON'
+                    num_oid: '.1.3.6.1.4.1.2566.127.1.2.167.14.1.2.4.{{ $index }}'
+                    index: 'rfOnTx.{{ $index }}'
+                    state_name: rfOnTx
+                    states:
+                        - { value: 0, generic: 3, graph: 0, descr: Undefined }
+                        - { value: 1, generic: 1, graph: 0, descr: TRUE }
+                        - { value: 2, generic: 0, graph: 0, descr: FALSE }
+

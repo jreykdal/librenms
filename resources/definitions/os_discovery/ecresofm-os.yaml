@@ -29,7 +29,7 @@ modules:
                 -
                     oid: ECRESO-FM-TRANS-MIB::txGnMsForwardPower
                     num_oid: '.1.3.6.1.4.1.6404.3.1.2.7.1.3.1.{{ $index }}'
-                    descr: 'Foreward Power'
+                    descr: 'Forward Power'
                     index: 2
                 -
                     oid: ECRESO-FM-TRANS-MIB::txGnMsReflectedPower

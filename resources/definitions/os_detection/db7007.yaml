@@ -1,0 +1,14 @@
+os: db7007
+text: 'Deva FM Receiver DB7007'
+type: appliance
+icon: deva
+group: deva
+mib_dir: deva
+over:
+    - { graph: device_tv_signal, text: 'RF Signal' }
+    - { graph: device_temperature, text: 'Temperature' }
+
+discovery:
+    -
+        sysDescr_regex:
+            - '/Model: DB7007/'

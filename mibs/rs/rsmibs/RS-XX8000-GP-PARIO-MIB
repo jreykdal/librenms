@@ -1,0 +1,480 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **
+-- **  COPYRIGHT      (c) 2009 Rohde & Schwarz GmbH & Co. KG
+-- **                            Muehldorfstrasse 15
+-- **    R & S               D-81671 Muenchen
+-- **
+-- *****************************************************************************
+-- **
+-- **  MODULE         RS-XX8000-GP-PARIO-MIB
+-- **
+-- **  DESCRIPTION    Rohde & Schwarz SNMP
+-- **
+-- **  HISTORY
+-- **
+-- **  2009-01-30 ks - initial version
+-- **
+-- *****************************************************************************
+-- *****************************************************************************
+
+  RS-XX8000-GP-PARIO-MIB DEFINITIONS ::= BEGIN
+ 
+    IMPORTS
+      rsXx8000, eventAlarmPriority, eventAlarmClass, eventEvent, rsXx8000MibModule, 
+      EventPriority, EventState, SwitchOnOff, ReadableString, EventMaxEntryNumber, 
+      EventMask      
+        FROM RS-XX8000-COMMON-MIB      
+      OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP      
+        FROM SNMPv2-CONF      
+      Integer32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, NOTIFICATION-TYPE      
+        FROM SNMPv2-SMI      
+      TruthValue, DateAndTime, TEXTUAL-CONVENTION      
+        FROM SNMPv2-TC;
+  
+  
+    rsXx8000GpParIOMibModule MODULE-IDENTITY 
+      LAST-UPDATED "200901301200Z"		-- January 30, 2009 at 12:00 GMT
+      ORGANIZATION 
+        "Rohde&Schwarz GmbH & Co. "
+      CONTACT-INFO 
+        "Torsten Huebscher
+        Department 7TS2
+        Broadcasting Division
+        Muehldorfstrasse 15
+        81671 Munich, Germany
+        torsten.huebscher@rohde-schwarz.com"
+      DESCRIPTION 
+        "This MIB defines equipment for transmitting systems from Rohde & Schwarz.
+        
+        Use this MIB if your system meets the following requirements:
+        - series XX8000 (NetCCU800) with general purpose ParIO,
+        
+        The following MIBs are related to this:
+        - RS-COMMON-MIB         - mandatory for this MIB
+        - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+      REVISION "200901301200Z"		-- January 30, 2009 at 12:00 GMT
+      DESCRIPTION 
+        "initial revision"
+      ::= { rsXx8000MibModule 105 }
+
+    
+  
+--
+-- Textual conventions
+--
+  
+    IndexCU ::= TEXTUAL-CONVENTION
+      STATUS current
+      DESCRIPTION 
+        "Index of device containing the GP-ParIO:
+        1 - transmitter B
+        2, 3, ..., 9 - transmitter A1, A2, ..., A8
+        100 - NSU"
+      SYNTAX INTEGER
+        {
+        cuB(1),
+        cuA1(2),
+        cuA2(3),
+        cuA3(4),
+        cuA4(5),
+        cuA5(6),
+        cuA6(7),
+        cuA7(8),
+        cuA8(9),
+        nsu(100)
+        }
+
+  
+--
+-- Node definitions
+--
+  
+    rsXx8000GpParIO OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Xx8000 general purpose ParIO.
+        Several devices can be addressed via the cmdCUIdx."
+      ::= { rsXx8000 105 }
+
+    
+    rsXx8000GpParIOObjs OBJECT IDENTIFIER ::= { rsXx8000GpParIO 1 }
+
+    
+    commandsTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF CommandsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table provides access to the writeable pins."
+      ::= { rsXx8000GpParIOObjs 1 }
+
+    
+    commandsEntry OBJECT-TYPE
+      SYNTAX CommandsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Entry for one writeable pin."
+      INDEX { cmdCUIdx, cmdDeviceId, cmdPin }
+      ::= { commandsTable 1 }
+
+    
+    CommandsEntry ::=
+      SEQUENCE { 
+        cmdCUIdx
+          IndexCU,
+        cmdDeviceId
+          Integer32,
+        cmdPin
+          Integer32,
+        cmdValue
+          SwitchOnOff
+       }
+
+    cmdCUIdx OBJECT-TYPE
+      SYNTAX IndexCU
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Control unit index"
+      ::= { commandsEntry 1 }
+
+    
+    cmdDeviceId OBJECT-TYPE
+      SYNTAX Integer32 (1)
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Index of GP-ParIO on the control unit."
+      ::= { commandsEntry 2 }
+
+    
+    cmdPin OBJECT-TYPE
+      SYNTAX Integer32 (1..12)
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Pin number of writeable pins."
+      ::= { commandsEntry 3 }
+
+    
+    cmdValue OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Pin value."
+      ::= { commandsEntry 4 }
+
+    
+    detailedInfo OBJECT IDENTIFIER ::= { rsXx8000GpParIOObjs 3 }
+
+    
+    linkStateTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF LinkStateEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table with the link states of the GP-ParIOs."
+      ::= { detailedInfo 1 }
+
+    
+    linkStateEntry OBJECT-TYPE
+      SYNTAX LinkStateEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for a designated GP-ParIO."
+      INDEX { cmdCUIdx, cmdDeviceId }
+      ::= { linkStateTable 1 }
+
+    
+    LinkStateEntry ::=
+      SEQUENCE { 
+        link
+          TruthValue
+       }
+
+    link OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Shows the link state of the GP-ParIO."
+      ::= { linkStateEntry 1 }
+
+    
+    productInfoTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ProductInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The table for the product information (electronic typeplate) of the GP-ParIOs."
+      ::= { detailedInfo 100 }
+
+    
+    productInfoEntry OBJECT-TYPE
+      SYNTAX ProductInfoEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for a designated GP-ParIO."
+      INDEX { cmdCUIdx, cmdDeviceId }
+      ::= { productInfoTable 1 }
+
+    
+    ProductInfoEntry ::=
+      SEQUENCE { 
+        prodInfoSerialNumber
+          ReadableString,
+        prodInfoIdentNumberSW
+          ReadableString,
+        prodInfoVersionNumberSW
+          ReadableString,
+        prodInfoIdentNumberHW
+          ReadableString,
+        prodInfoVersionNumberHW
+          ReadableString,
+        productInfoProductDateHW
+          DateAndTime
+       }
+
+    prodInfoSerialNumber OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The serial number of the GP-ParIO."
+      ::= { productInfoEntry 2 }
+
+    
+    prodInfoIdentNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the software, for example 2094.2090.02."
+      ::= { productInfoEntry 3 }
+
+    
+    prodInfoVersionNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number of the software, for example 1.2.1."
+      ::= { productInfoEntry 4 }
+
+    
+    prodInfoIdentNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the hardware, for example 2095.8007.02 (NetCCU)."
+      ::= { productInfoEntry 5 }
+
+    
+    prodInfoVersionNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number (product index) of the hardware, for example 03.03."
+      ::= { productInfoEntry 6 }
+
+    
+    productInfoProductDateHW OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz production date of the hardware."
+      ::= { productInfoEntry 7 }
+
+    
+    rsXx8000GpParIOEvents OBJECT IDENTIFIER ::= { rsXx8000GpParIO 3 }
+
+    
+    eventsV2 OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Compatibility to SMIv1."
+      ::= { rsXx8000GpParIOEvents 0 }
+
+    
+    gpioMessage NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, msgCU, msgDeviceId, 
+        msgPin }
+      STATUS current
+      DESCRIPTION 
+        "Change of read-only pin."
+      ::= { eventsV2 1 }
+
+    
+    eventsTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF EventsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains necessary information for handling alarms.
+        For each alarm you have the following information:
+        - name (get),
+        - mask to enable/disable sending out (set/get),
+        - priority (set/get) and
+        - the current state (get only)."
+      ::= { rsXx8000GpParIOEvents 1 }
+
+    
+    eventsEntry OBJECT-TYPE
+      SYNTAX EventsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry (conceptual row) in the eventsTable."
+      INDEX { cmdCUIdx, cmdDeviceId, evtPin, evtNameIdx }
+      ::= { eventsTable 1 }
+
+    
+    EventsEntry ::=
+      SEQUENCE { 
+        evtPin
+          Integer32,
+        evtNameIdx
+          EventMaxEntryNumber,
+        evtName
+          INTEGER,
+        evtMask
+          EventMask,
+        evtPriority
+          EventPriority,
+        evtEvent
+          EventState
+       }
+
+    evtPin OBJECT-TYPE
+      SYNTAX Integer32 (1..9)
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Pin number of read-only pins."
+      ::= { eventsEntry 3 }
+
+    
+    evtNameIdx OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The event number as an integer.
+        This is a helper column and therefore not-accessible."
+      ::= { eventsEntry 4 }
+
+    
+    evtName OBJECT-TYPE
+      SYNTAX INTEGER { gpioMessage(1) }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The event number as integer and the value as readable text.
+        The enumeration correlates with the notifications under eventsV2."
+      ::= { eventsEntry 5 }
+
+    
+    evtMask OBJECT-TYPE
+      SYNTAX EventMask
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsEntry 6 }
+
+    
+    evtPriority OBJECT-TYPE
+      SYNTAX EventPriority
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsEntry 7 }
+
+    
+    evtEvent OBJECT-TYPE
+      SYNTAX EventState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsEntry 8 }
+
+    
+    eventGpParIoMapObjects OBJECT IDENTIFIER ::= { rsXx8000GpParIOEvents 2 }
+
+    
+    msgCU OBJECT-TYPE
+      SYNTAX IndexCU
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "The control unit information for gpioMessage."
+      ::= { eventGpParIoMapObjects 1 }
+
+    
+    msgDeviceId OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "The device information for gpioMessage."
+      ::= { eventGpParIoMapObjects 2 }
+
+    
+    msgPin OBJECT-TYPE
+      SYNTAX Integer32 (1..9)
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "The pin information for gpioMessage."
+      ::= { eventGpParIoMapObjects 3 }
+
+    
+    rsXx8000GpParIOConf OBJECT IDENTIFIER ::= { rsXx8000GpParIO 5 }
+
+    
+    groups OBJECT IDENTIFIER ::= { rsXx8000GpParIOConf 1 }
+
+    
+    objectGroup OBJECT-GROUP
+      OBJECTS { evtMask, evtPriority, msgPin, productInfoProductDateHW, prodInfoVersionNumberHW, 
+        prodInfoIdentNumberHW, prodInfoVersionNumberSW, prodInfoIdentNumberSW, prodInfoSerialNumber, msgDeviceId, 
+        msgCU, evtName, link, evtEvent, cmdValue
+         }
+      STATUS current
+      DESCRIPTION 
+        "Objects of general purpose ParIO."
+      ::= { groups 1 }
+
+    
+    notificationGroup NOTIFICATION-GROUP
+      NOTIFICATIONS { gpioMessage }
+      STATUS current
+      DESCRIPTION 
+        "Events of general purpose ParIO."
+      ::= { groups 2 }
+
+    
+    compls OBJECT IDENTIFIER ::= { rsXx8000GpParIOConf 2 }
+
+    
+    gpParIO MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "This is the only implementation variant."
+      MODULE -- this module
+        MANDATORY-GROUPS { objectGroup, notificationGroup }
+      ::= { compls 1 }
+
+    
+  
+  END

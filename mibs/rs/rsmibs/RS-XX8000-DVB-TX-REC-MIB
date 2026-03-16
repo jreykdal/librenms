@@ -1,0 +1,1477 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **
+-- **  COPYRIGHT      (c) 2005 Rohde & Schwarz GmbH & Co. KG
+-- **                          Muehldorfstrasse 15
+-- **    R & S                 D-81671 Muenchen
+-- **
+-- *****************************************************************************
+-- **
+-- **  MODULE         RS-XX8000-DVB-TX-REC-MIB
+-- **  
+-- **  DESCRIPTION    Rohde & Schwarz SNMP
+-- **
+-- **  HISTORY        
+-- **                 2006-05-16 hue - initial version
+-- **                 2008-08-29 hue - recRfOn is obsolete
+-- **
+-- **
+-- *****************************************************************************
+-- *****************************************************************************
+
+  RS-XX8000-DVB-TX-REC-MIB DEFINITIONS ::= BEGIN
+ 
+    IMPORTS
+      rsXx8000, eventAlarmPriority, eventAlarmClass, eventEvent, rsXx8000MibModule, 
+      EventPriority, EventClass, EventState, ReadableString, Trigger, 
+      EventMaxEntryNumber, LogbookEntrySlope, EventMask      
+        FROM RS-XX8000-COMMON-MIB      
+      OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP      
+        FROM SNMPv2-CONF      
+      Integer32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, NOTIFICATION-TYPE      
+        FROM SNMPv2-SMI      
+      TruthValue, DateAndTime, TEXTUAL-CONVENTION      
+        FROM SNMPv2-TC;
+  
+  
+    rsXx8000DvbTxReceiverMibModule MODULE-IDENTITY 
+      LAST-UPDATED "200808291000Z"		-- August 29, 2008 at 10:00 GMT
+      ORGANIZATION 
+        "Rohde&Schwarz GmbH & Co. KG"
+      CONTACT-INFO 
+        "Torsten Huebscher
+        Department 7TS2
+        Broadcasting Division
+        Muehldorfstrasse 15
+        81671 Munich, Germany
+        torsten.huebscher@rohde-schwarz.com"
+      DESCRIPTION 
+        "This MIB defines transmitting systems from Rohde & Schwarz.
+        
+        Use this MIB if your system meets the following requirements:
+        - series NX8000 (NetCCU800),
+        - DVB,
+        - ReceiverModule.
+        
+        The following MIBs are related to this:
+        - RS-COMMON-MIB         - mandatory for this MIB
+        - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+      REVISION "200808291000Z"		-- August 29, 2008 at 10:00 GMT
+      DESCRIPTION 
+        "Obsoleted alarm recRfOn and its settings in the events table."
+      REVISION "200805091500Z"		-- May 09, 2008 at 15:00 GMT
+      DESCRIPTION 
+        "add fault4MonitoringDevDebounceTime,
+        cmdInput1Fault4MonitoringDev, cmdInput2Fault4MonitoringDev"
+      REVISION "200705161000Z"		-- May 16, 2007 at 10:00 GMT
+      DESCRIPTION 
+        "This is the initial version."
+      ::= { rsXx8000MibModule 1 }
+
+    
+  
+--
+-- Textual conventions
+--
+  
+    LogbookEntryMessages ::= TEXTUAL-CONVENTION
+      STATUS current
+      DESCRIPTION 
+        "These are the informations which are inserted in the logbook of DVB receiver.
+        
+        There are three sections:
+          1..39  : states
+         40..79  : warnings
+         80..120 : faults
+        
+        Items named messageXX are currently not used.
+        
+        Note: RfOn(4) is obsolete!"
+      SYNTAX INTEGER
+        {
+        summaryFault(1),
+        summaryWarning(2),
+        local(3),
+        obsoleteRfOn(4),
+        noConnection(5),
+        automaticChanged(6),
+        input1AGCLocked(7),
+        input1CarrierLocked(8),
+        input1TPSLocked(9),
+        input1ViterbiLocked(10),
+        input1MPEGSyncLocked(11),
+        input1MPEGDataLocked(12),
+        input2AGCLocked(13),
+        input2CarrierLocked(14),
+        input2TPSLocked(15),
+        input2ViterbiLocked(16),
+        input2MPEGSyncLocked(17),
+        input2MPEGDataLocked(18),
+        message19(19),
+        message20(20),
+        message21(21),
+        message22(22),
+        message23(23),
+        message24(24),
+        message25(25),
+        message26(26),
+        message27(27),
+        message28(28),
+        message29(29),
+        message30(30),
+        message31(31),
+        message32(32),
+        message33(33),
+        message34(34),
+        message35(35),
+        message36(36),
+        message37(37),
+        message38(38),
+        message39(39),
+        reboot(40),
+        input1UncorrectedMPEG(41),
+        input1MERWarning(42),
+        input1BERWarning(43),
+        input2UncorrectedMPEG(44),
+        input2MERWarning(45),
+        input2BERWarning(46),
+        message48(48),
+        message49(49),
+        message50(50),
+        message51(51),
+        message52(52),
+        message53(53),
+        message54(54),
+        message55(55),
+        message56(56),
+        message57(57),
+        message58(58),
+        message59(59),
+        message60(60),
+        message61(61),
+        message62(62),
+        message63(63),
+        message64(64),
+        message65(65),
+        message66(66),
+        message67(67),
+        message68(68),
+        message69(69),
+        message70(70),
+        message71(71),
+        message72(72),
+        message73(73),
+        message74(74),
+        message75(75),
+        message76(76),
+        message77(77),
+        message78(78),
+        message79(79),
+        message80(80),
+        noConnectionFault(81),
+        hardware(82),
+        input1MERFault(83),
+        input1BERFault(84),
+        input2MERFault(85),
+        input2BERFault(86)
+        }
+
+  
+--
+-- Node definitions
+--
+  
+    rsXx8000DvbTxReceiver OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Xx8000 DVB Receiver Module."
+      ::= { rsXx8000 2 }
+
+    
+-- *****************************************************************************
+-- **          object definitions
+-- *****************************************************************************
+    rsXx8000DvbTxRecObjs OBJECT IDENTIFIER ::= { rsXx8000DvbTxReceiver 1 }
+
+    
+    productInformationRec OBJECT IDENTIFIER ::= { rsXx8000DvbTxRecObjs 1 }
+
+    
+    serialNumberRec OBJECT-TYPE
+      SYNTAX Integer32 (0..65535)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The serial number of the device."
+      ::= { productInformationRec 1 }
+
+    
+    versionNumberSWRec OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number of the software.
+        E.g. 1.2.1"
+      ::= { productInformationRec 2 }
+
+    
+    identNumberHWRec OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the software.
+        2093.2301.00 Single Tuner
+        2093.2318.00 Dual Tuner"
+      ::= { productInformationRec 3 }
+
+    
+    versionNumberHWRec OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number of the software.
+        E.g. 1.2.1"
+      ::= { productInformationRec 4 }
+
+    
+    system OBJECT IDENTIFIER ::= { rsXx8000DvbTxRecObjs 2 }
+
+    
+    isaDualTuner OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Is the DVB-Receiver a dual tuner?"
+      ::= { system 1 }
+
+    
+    isaRetransmitter OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Is this a retransmitter?"
+      ::= { system 2 }
+
+    
+    actualInput OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        input1(1),
+        input2(2)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The current active input.
+        Only available if it's a dualtuner."
+      ::= { system 3 }
+
+    
+    fault4MonitoringDevDebounceTime OBJECT-TYPE
+      SYNTAX Integer32 (0..600)
+      UNITS "s"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The detected fault must be stable during this time to signal an error."
+      ::= { system 4 }
+
+    
+    commands OBJECT IDENTIFIER ::= { rsXx8000DvbTxRecObjs 3 }
+
+    
+--  ****************************************************************************
+-- **          commands
+-- ****************************************************************************
+    cmdResetSumFault OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS obsolete
+      DESCRIPTION
+        "Reset faults
+        idle(1)    --> ready for reset
+        reset(2)   --> do reset now (set=2)"
+      ::= { commands 1 }
+
+    
+    cmdInputMode OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        dual(1),
+        redundant(2),
+        hierarchical(3),
+        diversity(4)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver input mode.
+        Only available if it's a dualtuner."
+      ::= { commands 2 }
+
+    
+    cmdSwitchingMode OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        manual(1),
+        automaticOnSyncFail(2),
+        automaticOnDRSFail(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver switching mode 
+        Only available if it's a dualtuner."
+      ::= { commands 3 }
+
+    
+    cmdSelectInput OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        input1(1),
+        input2(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver input selection (1/2) 
+        Only available if it's a dualtuner.
+        You can only set this value if you have cmdInputMode redundant(2)."
+      ::= { commands 4 }
+
+    
+    cmdInput1ChannelBandWidth OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        mHz7(1),
+        mHz8(2),
+        mHz6(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-ReceiverInput 1 channel bandwidth"
+      ::= { commands 5 }
+
+    
+    cmdInput1CenterFrequency OBJECT-TYPE
+      SYNTAX Integer32 (47000000..860000000)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-ReceiverInput 1 center frequency: 47000000..860000000 [Hz]"
+      ::= { commands 6 }
+
+    
+    cmdInput1Stream OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        lp(1),
+        hp(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-ReceiverInput 1 stream (LP/HP)"
+      ::= { commands 7 }
+
+    
+    cmdInput2ChannelBandWidth OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        mHz7(1),
+        mHz8(2),
+        mHz6(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-ReceiverInput 2 channel bandwidth 
+        Only available if it's a dualtuner."
+      ::= { commands 8 }
+
+    
+    cmdInput2CenterFrequency OBJECT-TYPE
+      SYNTAX Integer32 (47000000..860000000)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-ReceiverInput 2 center frequency: 47000000..860000000 [Hz] 
+        Only available if it's a dualtuner."
+      ::= { commands 9 }
+
+    
+    cmdInput2Stream OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        lp(1),
+        hp(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-ReceiverInput 2 stream (LP/HP) 
+        Only available if it's a dualtuner."
+      ::= { commands 10 }
+
+    
+    cmdInput1Fault4MonitoringDev OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        noDevice(1),
+        exciterA(2),
+        exciterB(3),
+        exciterActive(4),
+        exciterReserve(5)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "If a BER or MER fault is detected, a fault is signalled for the selected device."
+      ::= { commands 11 }
+
+    
+    cmdInput2Fault4MonitoringDev OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        noDevice(1),
+        exciterA(2),
+        exciterB(3),
+        exciterActive(4),
+        exciterReserve(5)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "If a BER or MER fault is detected, a fault is signalled for the selected device."
+      ::= { commands 12 }
+
+    
+    measureValues OBJECT IDENTIFIER ::= { rsXx8000DvbTxRecObjs 4 }
+
+    
+    measValInput1InputLevel OBJECT-TYPE
+      SYNTAX Integer32 (-127..127)
+      UNITS "dBm"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 input level  -127 .. 128 [dBm]"
+      ::= { measureValues 1 }
+
+    
+    measValInput1FFTLength OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        k2(1),
+        k8(2),
+        undef(3)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 DVB mode 
+        k2(1) --> 2 K  
+        k8(2) --> 8 K
+        undef(3) --> undefined"
+      ::= { measureValues 2 }
+
+    
+    measValInput1GuardInterval OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        onePer32(1),
+        onePer16(2),
+        onePer8(3),
+        onePer4(4),
+        undef(5)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 guard interval 
+        onePer32(1) --> 1/32  
+        onePer16(2) --> 1/16  
+        onePer8(3)  --> 1/8  
+        onePer4(4)  --> 1/4
+        undef(5)    --> undefined"
+      ::= { measureValues 3 }
+
+    
+    measValInput1Constellation OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        qPSK(1),
+        qAM16(2),
+        qAM64(3),
+        undef(4)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 constellation
+        qPSK(1)  --> QPSK  
+        qAM16(2) --> 16 QAM  
+        qAM64(3) --> 64 QAM    
+        undef(4) --> not defined"
+      ::= { measureValues 4 }
+
+    
+    measValInput1Hierarchie OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        none(1),
+        alphaEqu1(2),
+        alphaEqu2(3),
+        alphaEqu4(4),
+        undef(5)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 hierarchical
+        none(1)  	--> none
+        alphaEqu1(2) --> alpha = 1  
+        alphaEqu2(3) --> alpha = 2
+        alphaEqu4(4) --> alpha = 4
+        undef(5)     --> not defined"
+      ::= { measureValues 5 }
+
+    
+    measValInput1CodeRate OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        cr1div2(1),
+        cr2div3(2),
+        cr3div4(3),
+        cr5div6(4),
+        cr7div8(5),
+        undef(6)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 coderate
+        1 --> 1/2
+        2 --> 2/3
+        3 --> 3/4
+        4 --> 5/6
+        5 --> 7/8
+        6 --> undef"
+      ::= { measureValues 6 }
+
+    
+    measValInput1CellId OBJECT-TYPE
+      SYNTAX Integer32 (0..65535)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 cell id"
+      ::= { measureValues 7 }
+
+    
+    measValInput1MER OBJECT-TYPE
+      SYNTAX Integer32 (0..255)
+      UNITS "dB"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 MER"
+      ::= { measureValues 8 }
+
+    
+    measValInput1BER OBJECT-TYPE
+      SYNTAX Integer32 (0..16777215)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 BER
+        ( 0..16777215 ) * 1e-8"
+      ::= { measureValues 9 }
+
+    
+    measValInput1PER OBJECT-TYPE
+      SYNTAX Integer32 (0..65535)
+      UNITS "packets / s"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 PER "
+      ::= { measureValues 10 }
+
+    
+    measValInput2InputLevel OBJECT-TYPE
+      SYNTAX Integer32 (-127..127)
+      UNITS "dBm"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 2 input level  -127 .. 128 [dBm]
+        Only available if it's a dualtuner."
+      ::= { measureValues 11 }
+
+    
+    measValInput2FFTLength OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        k2(1),
+        k8(2),
+        undef(3)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 2 DVB mode 
+        k2(1) --> 2 K  
+        k8(2) --> 8 K
+        undef(3) --> undefined
+        Only available if it's a dualtuner."
+      ::= { measureValues 12 }
+
+    
+    measValInput2GuardInterval OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        onePer32(1),
+        onePer16(2),
+        onePer8(3),
+        onePer4(4),
+        undef(5)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 2 guard interval 
+        onePer32(1) --> 1/32  
+        onePer16(2) --> 1/16  
+        onePer8(3)  --> 1/8  
+        onePer4(4)  --> 1/4
+        5           --> undef
+        Only available if it's a dualtuner."
+      ::= { measureValues 13 }
+
+    
+    measValInput2Constellation OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        qPSK(1),
+        qAM16(2),
+        qAM64(3),
+        undef(4)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 2 constellation
+        qPSK(1)  --> QPSK  
+        qAM16(2) --> 16 QAM  
+        qAM64(3) --> 64 QAM    
+        undef(4) --> not defined
+        Only available if it's a dualtuner."
+      ::= { measureValues 14 }
+
+    
+    measValInput2Hierarchie OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        none(1),
+        alphaEqu1(2),
+        alphaEqu2(3),
+        alphaEqu4(4),
+        undef(5)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 2 hierarchie
+        none(1)  	--> none
+        alphaEqu1(2) --> alpha = 1  
+        alphaEqu2(3) --> alpha = 2
+        alphaEqu4(4) --> alpha = 4
+        undef(5)     --> not defined
+        Only available if it's a dualtuner."
+      ::= { measureValues 15 }
+
+    
+    measValInput2CodeRate OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        cr1div2(1),
+        cr2div3(2),
+        cr3div4(3),
+        cr5div6(4),
+        cr7div8(5),
+        undef(6)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 2 coderate
+        1 --> 1/2
+        2 --> 2/3
+        3 --> 3/4
+        4 --> 5/6
+        5 --> 7/8
+        6 --> undef
+        Only available if it's a dualtuner."
+      ::= { measureValues 16 }
+
+    
+    measValInput2CellId OBJECT-TYPE
+      SYNTAX Integer32 (0..65535)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 2 cell id
+        Only available if it's a dualtuner."
+      ::= { measureValues 17 }
+
+    
+    measValInput2MER OBJECT-TYPE
+      SYNTAX Integer32 (0..255)
+      UNITS "dB"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 2 MER
+        Only available if it's a dualtuner."
+      ::= { measureValues 18 }
+
+    
+    measValInput2BER OBJECT-TYPE
+      SYNTAX Integer32 (0..16777215)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 2 BER        
+        ( 0..16777215 ) * 1e-8
+        Only available if it's a dualtuner."
+      ::= { measureValues 19 }
+
+    
+    measValInput2PER OBJECT-TYPE
+      SYNTAX Integer32 (0..65535)
+      UNITS "packets / s"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 2 PER
+        Only available if it's a dualtuner."
+      ::= { measureValues 20 }
+
+    
+    thresholds OBJECT IDENTIFIER ::= { rsXx8000DvbTxRecObjs 5 }
+
+    
+    thresholdInput1MERWarning OBJECT-TYPE
+      SYNTAX Integer32 (0..40)
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 
+        threshold for MER Warning  (0 .. 40)"
+      ::= { thresholds 1 }
+
+    
+    thresholdInput1BERWarning OBJECT-TYPE
+      SYNTAX Integer32 (0..16777215)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 
+        threshold for BER Warning  (0 .. 16777215) * 1e-8"
+      ::= { thresholds 2 }
+
+    
+    thresholdInput1MERFault OBJECT-TYPE
+      SYNTAX Integer32 (0..40)
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 
+        threshold for MER Fault  (0 .. 40)"
+      ::= { thresholds 3 }
+
+    
+    thresholdInput1BERFault OBJECT-TYPE
+      SYNTAX Integer32 (0..16777215)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 
+        threshold for BER Fault  (0 .. 16777215)* 1e-8"
+      ::= { thresholds 4 }
+
+    
+    thresholdInput2MERWarning OBJECT-TYPE
+      SYNTAX Integer32 (0..40)
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 2 
+        threshold for MER Warning  (0 .. 40)
+        Only available if it's a dualtuner."
+      ::= { thresholds 5 }
+
+    
+    thresholdInput2BERWarning OBJECT-TYPE
+      SYNTAX Integer32 (0..16777215)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 2 
+        threshold for BER Warning  (0 .. 16777215) * 1e-8
+        Only available if it's a dualtuner."
+      ::= { thresholds 6 }
+
+    
+    thresholdInput2MERFault OBJECT-TYPE
+      SYNTAX Integer32 (0..40)
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 2 
+        threshold for MER Fault  (0 .. 40)
+        Only available if it's a dualtuner."
+      ::= { thresholds 7 }
+
+    
+    thresholdInput2BERFault OBJECT-TYPE
+      SYNTAX Integer32 (0..16777215)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 2 
+        threshold for BER Fault  (0 .. 16777215) * 1e-8
+        Only available if it's a dualtuner."
+      ::= { thresholds 8 }
+
+    
+    logbook OBJECT IDENTIFIER ::= { rsXx8000DvbTxRecObjs 6 }
+
+    
+    recNumberOfEntries OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in logbook."
+      ::= { logbook 1 }
+
+    
+    recLogbookClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear the logbook.
+        idle(1)    --> ready
+        clear(2)   --> do clear now
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+      ::= { logbook 2 }
+
+    
+    recLogbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table"
+      ::= { logbook 3 }
+
+    
+    recLogbookEntry OBJECT-TYPE
+      SYNTAX RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table entry"
+      INDEX { recLogbookEntryIdx }
+      ::= { recLogbookTable 1 }
+
+    
+    RecLogbookEntry ::=
+      SEQUENCE { 
+        recLogbookEntryIdx
+          LogbookEntryMessages,
+        recLogbookEntryNbr
+          EventMaxEntryNumber,
+        recLogbookType
+          EventClass,
+        recLogbookSlope
+          LogbookEntrySlope,
+        recLogbookMessage
+          LogbookEntryMessages,
+        recLogbookDateTime
+          DateAndTime
+       }
+
+    recLogbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookEntryMessages
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to 128. It is used as an index column for SNMP."
+      ::= { recLogbookEntry 1 }
+
+    
+    recLogbookEntryNbr OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from max 128 down to 1."
+      ::= { recLogbookEntry 2 }
+
+    
+    recLogbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { recLogbookEntry 3 }
+
+    
+    recLogbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry slope"
+      ::= { recLogbookEntry 4 }
+
+    
+    recLogbookMessage OBJECT-TYPE
+      SYNTAX LogbookEntryMessages
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry message."
+      ::= { recLogbookEntry 5 }
+
+    
+    recLogbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry time"
+      ::= { recLogbookEntry 6 }
+
+    
+-- *****************************************************************************
+-- **          event definitions
+-- *****************************************************************************
+    rsXx8000DvbTxRecEvents OBJECT IDENTIFIER ::= { rsXx8000DvbTxReceiver 3 }
+
+    
+    eventReceiver OBJECT IDENTIFIER ::= { rsXx8000DvbTxRecEvents 1 }
+
+    
+    eventsReceiverV2 OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Root node for the converted TRAP-TYPEs."
+      ::= { eventReceiver 0 }
+
+    
+    recSummaryFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Receiver Summary Fault"
+      ::= { eventsReceiverV2 1 }
+
+    
+    recSummaryWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Receiver Summary Warning"
+      ::= { eventsReceiverV2 2 }
+
+    
+    recLocal NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "LocalMode of the DVB-Receiver"
+      ::= { eventsReceiverV2 3 }
+
+    
+    recRfOn NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS obsolete
+      DESCRIPTION 
+        "RF is on.
+        
+        This alarm is obsolete:
+        The receiver module itself cannot ensure if the RF is on or not.
+        If you want to know, if the transmitter is generating RF, use the alarms in the RS-XX8000-DVB-TX-MIB.
+        "
+      ::= { eventsReceiverV2 4 }
+
+    
+    recNoConnection NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "No connection to DVB-Receiver.
+        In difference to recNoConnectionFault, this indicates only a warning."
+      ::= { eventsReceiverV2 5 }
+
+    
+    recInputAutoChanged NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "The inputs were switched automatically.
+        Only available if it's a dualtuner."
+      ::= { eventsReceiverV2 6 }
+
+    
+    recInput1AGCLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Input1 AGC is locked"
+      ::= { eventsReceiverV2 7 }
+
+    
+    recInput1CarrierLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Input1 Carrier is locked"
+      ::= { eventsReceiverV2 8 }
+
+    
+    recInput1TPSLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Input1 TPS is locked"
+      ::= { eventsReceiverV2 9 }
+
+    
+    recInput1ViterbiLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Input1 Viterbi is locked"
+      ::= { eventsReceiverV2 10 }
+
+    
+    recInput1MPEGSyncLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Input1 MPEGSync is locked"
+      ::= { eventsReceiverV2 11 }
+
+    
+    recInput1MPEGDataLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Input1 MPEGData is locked"
+      ::= { eventsReceiverV2 12 }
+
+    
+    recInput2AGCLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Input2 AGC is locked
+        Only available if it's a dualtuner."
+      ::= { eventsReceiverV2 13 }
+
+    
+    recInput2CarrierLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Input2 Carrier is locked
+        Only available if it's a dualtuner."
+      ::= { eventsReceiverV2 14 }
+
+    
+    recInput2TPSLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Input2 TPS is locked
+        Only available if it's a dualtuner."
+      ::= { eventsReceiverV2 15 }
+
+    
+    recInput2ViterbiLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Input2 Viterbi is locked
+        Only available if it's a dualtuner."
+      ::= { eventsReceiverV2 16 }
+
+    
+    recInput2MPEGSyncLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Input2 MPEGSync is locked
+        Only available if it's a dualtuner."
+      ::= { eventsReceiverV2 17 }
+
+    
+    recInput2MPEGDataLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Input2 MPEGData is locked
+        Only available if it's a dualtuner."
+      ::= { eventsReceiverV2 18 }
+
+    
+    recInput1UncorrectedMPEG NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Warning Uncorrected MPEG from Input1"
+      ::= { eventsReceiverV2 19 }
+
+    
+    recInput1MERWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Warning MER from Input1"
+      ::= { eventsReceiverV2 20 }
+
+    
+    recInput1BERWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Warning BER from Input1"
+      ::= { eventsReceiverV2 21 }
+
+    
+    recInput2UncorrectedMPEG NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Warning MER from Input1
+        Only available if it's a dualtuner."
+      ::= { eventsReceiverV2 22 }
+
+    
+    recInput2MERWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Warning MER from Input2
+        Only available if it's a dualtuner."
+      ::= { eventsReceiverV2 23 }
+
+    
+    recInput2BERWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Warning BER from Input2
+        Only available if it's a dualtuner."
+      ::= { eventsReceiverV2 24 }
+
+    
+    recNoConnectionFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "No Connection to DVB-Receiver.
+        In difference to recNoConnection, this indicates a fault.
+        If you have a retransmitter, the receiver module is an essential part of the signal processing.
+        If this alarm is active, there is a summary fault at the NetCCU pending, which may lead to a 
+        switchover in case of N+1 systems."
+      ::= { eventsReceiverV2 25 }
+
+    
+    recHardwareFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Hardware Fault of DVB-Receiver"
+      ::= { eventsReceiverV2 26 }
+
+    
+    recInput1MERFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Fault MER from Input1"
+      ::= { eventsReceiverV2 27 }
+
+    
+    recInput1BERFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Fault BER from Input1"
+      ::= { eventsReceiverV2 28 }
+
+    
+    recInput2MERFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Warning MER from Input2
+        Only available if it's a dualtuner."
+      ::= { eventsReceiverV2 29 }
+
+    
+    recInput2BERFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "Fault BER from Input2"
+      ::= { eventsReceiverV2 30 }
+
+    
+    eventsReceiverTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF EventsReceiverEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains necessary informations for handling alarms. 
+        For each alarm you have the following informations: 
+        - name (get),
+        - mask to enable/disable sending out (set/get),
+        - priority (set/get) and 
+        - the current state (get only)."
+      ::= { eventReceiver 1 }
+
+    
+    eventsReceiverEntry OBJECT-TYPE
+      SYNTAX EventsReceiverEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An event entry always consists of 4 values:
+        - name: an enumerated list of all possible notifications
+        - mask: the corresponding mask (enable/disable)
+        - priority: the corresponding priority (value in range 0..255)
+        - event: the event itself (active/inactive)"
+      INDEX { eventRecIdx }
+      ::= { eventsReceiverTable 1 }
+
+    
+    EventsReceiverEntry ::=
+      SEQUENCE { 
+        eventRecIdx
+          EventMaxEntryNumber,
+        eventRecName
+          INTEGER,
+        eventRecMask
+          EventMask,
+        eventRecPriority
+          EventPriority,
+        eventRecEvent
+          EventState
+       }
+
+    eventRecIdx OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The event number as integer."
+      ::= { eventsReceiverEntry 1 }
+
+    
+    eventRecName OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        recSummaryFault(1),
+        recSummaryWarning(2),
+        recLocal(3),
+        obsoleteRecRfOn(4),
+        recNoConnection(5),
+        recInputAutoChanged(6),
+        recInput1AGCLocked(7),
+        recInput1CarrierLocked(8),
+        recInput1TPSLocked(9),
+        recInput1ViterbiLocked(10),
+        recInput1MPEGSyncLocked(11),
+        recInput1MPEGDataLocked(12),
+        recInput2AGCLocked(13),
+        recInput2CarrierLocked(14),
+        recInput2TPSLocked(15),
+        recInput2ViterbiLocked(16),
+        recInput2MPEGSyncLocked(17),
+        recInput2MPEGDataLocked(18),
+        recInput1UncorrectedMPEG(19),
+        recInput1MERWarning(20),
+        recInput1BERWarning(21),
+        recInput2UncorrectedMPEG(22),
+        recInput2MERWarning(23),
+        recInput2BERWarning(24),
+        recNoConnectionFault(25),
+        recHardwareFault(26),
+        recInput1MERFault(27),
+        recInput1BERFault(28),
+        recInput2MERFault(29),
+        recInput2BERFault(30)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The event number as integer and the value as readable text.
+        The enumeration correlates with the notifications under eventsTxV2.
+        
+        Note: RfOn is obsolete!"
+      ::= { eventsReceiverEntry 2 }
+
+    
+    eventRecMask OBJECT-TYPE
+      SYNTAX EventMask
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsReceiverEntry 3 }
+
+    
+    eventRecPriority OBJECT-TYPE
+      SYNTAX EventPriority
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsReceiverEntry 4 }
+
+    
+    eventRecEvent OBJECT-TYPE
+      SYNTAX EventState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsReceiverEntry 5 }
+
+    
+-- *****************************************************************************
+-- **          conformance statements
+-- *****************************************************************************
+    rsXx8000DvbTxRecConf OBJECT IDENTIFIER ::= { rsXx8000DvbTxReceiver 5 }
+
+    
+    rsXx8000DvbTxRecGroups OBJECT IDENTIFIER ::= { rsXx8000DvbTxRecConf 1 }
+
+    
+    groupSingleTuner OBJECT-GROUP
+      OBJECTS { serialNumberRec, versionNumberSWRec, identNumberHWRec, versionNumberHWRec, isaDualTuner, 
+        isaRetransmitter, cmdInput1ChannelBandWidth, cmdInput1CenterFrequency, cmdInput1Stream, measValInput1InputLevel, 
+        measValInput1FFTLength, measValInput1GuardInterval, measValInput1Constellation, measValInput1Hierarchie, measValInput1CodeRate, 
+        measValInput1CellId, measValInput1MER, measValInput1BER, measValInput1PER, thresholdInput1MERWarning, 
+        thresholdInput1BERWarning, thresholdInput1MERFault, thresholdInput1BERFault, eventRecName, eventRecMask, 
+        eventRecPriority, eventRecEvent, cmdInput1Fault4MonitoringDev, recLogbookDateTime, recNumberOfEntries, 
+        recLogbookClear, recLogbookEntryNbr, recLogbookType, recLogbookSlope, recLogbookMessage, 
+        fault4MonitoringDevDebounceTime }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all values for a single-tuner receiver module."
+      ::= { rsXx8000DvbTxRecGroups 1 }
+
+    
+    groupAlarmSingleTuner NOTIFICATION-GROUP
+      NOTIFICATIONS { recSummaryFault, recSummaryWarning, recLocal, recNoConnection, recInput1AGCLocked, 
+        recInput1CarrierLocked, recInput1TPSLocked, recInput1ViterbiLocked, recInput1MPEGSyncLocked, recInput1MPEGDataLocked, 
+        recInput1UncorrectedMPEG, recInput1MERWarning, recInput1BERWarning, recNoConnectionFault, recHardwareFault, 
+        recInput1MERFault, recInput1BERFault }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all notifications for a single-tuner receiver module."
+      ::= { rsXx8000DvbTxRecGroups 2 }
+
+    
+    groupDualTuner OBJECT-GROUP
+      OBJECTS { serialNumberRec, versionNumberSWRec, identNumberHWRec, versionNumberHWRec, isaDualTuner, 
+        isaRetransmitter, actualInput, cmdInputMode, cmdSwitchingMode, cmdSelectInput, 
+        cmdInput1ChannelBandWidth, cmdInput1CenterFrequency, cmdInput1Stream, cmdInput2ChannelBandWidth, cmdInput2CenterFrequency, 
+        cmdInput2Stream, measValInput1InputLevel, measValInput1FFTLength, measValInput1GuardInterval, measValInput1Constellation, 
+        measValInput1Hierarchie, measValInput1CodeRate, measValInput1CellId, measValInput1MER, measValInput1BER, 
+        measValInput1PER, measValInput2InputLevel, measValInput2FFTLength, measValInput2GuardInterval, measValInput2Constellation, 
+        measValInput2Hierarchie, measValInput2CodeRate, measValInput2CellId, measValInput2MER, measValInput2BER, 
+        measValInput2PER, thresholdInput1MERWarning, thresholdInput1BERWarning, thresholdInput1MERFault, thresholdInput1BERFault, 
+        thresholdInput2MERWarning, thresholdInput2BERWarning, thresholdInput2MERFault, thresholdInput2BERFault, recNumberOfEntries, 
+        recLogbookClear, recLogbookEntryNbr, recLogbookType, recLogbookSlope, recLogbookMessage, 
+        recLogbookDateTime, eventRecName, eventRecMask, eventRecPriority, eventRecEvent, 
+        cmdInput1Fault4MonitoringDev, cmdInput2Fault4MonitoringDev, fault4MonitoringDevDebounceTime }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all additional values for a dual-tuner receiver module."
+      ::= { rsXx8000DvbTxRecGroups 3 }
+
+    
+    groupAlarmDualTuner NOTIFICATION-GROUP
+      NOTIFICATIONS { recSummaryFault, recSummaryWarning, recLocal, recNoConnection, recInputAutoChanged, 
+        recInput1AGCLocked, recInput1CarrierLocked, recInput1TPSLocked, recInput1ViterbiLocked, recInput1MPEGSyncLocked, 
+        recInput1MPEGDataLocked, recInput2AGCLocked, recInput2CarrierLocked, recInput2TPSLocked, recInput2ViterbiLocked, 
+        recInput2MPEGSyncLocked, recInput2MPEGDataLocked, recInput1UncorrectedMPEG, recInput1MERWarning, recInput1BERWarning, 
+        recInput2UncorrectedMPEG, recInput2MERWarning, recInput2BERWarning, recNoConnectionFault, recHardwareFault, 
+        recInput1MERFault, recInput1BERFault, recInput2MERFault, recInput2BERFault }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all notifications for a dual-tuner receiver module."
+      ::= { rsXx8000DvbTxRecGroups 5 }
+
+    
+    groupObjectObsoleted OBJECT-GROUP
+      OBJECTS { cmdResetSumFault }
+      STATUS obsolete
+      DESCRIPTION 
+        "This group includes all deprecated and obsoleted object OIDs."
+      ::= { rsXx8000DvbTxRecGroups 101 }
+
+    
+    groupAlarmObsoleted NOTIFICATION-GROUP
+      NOTIFICATIONS { recRfOn }
+      STATUS obsolete
+      DESCRIPTION 
+        "This group includes all deprecated and obsoleted alarm OIDs."
+      ::= { rsXx8000DvbTxRecGroups 102 }
+
+    
+    rsXx8000DvbTxRecCompl OBJECT IDENTIFIER ::= { rsXx8000DvbTxRecConf 2 }
+
+    
+    rsXx8000DvbTxRecSingleTuner MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "A single tuner consists of groupSingleTuner and groupAlarmSingleTuner."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupSingleTuner, groupAlarmSingleTuner }
+      ::= { rsXx8000DvbTxRecCompl 1 }
+
+    
+    rsXx8000DvbTxRecDualTuner MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "A dual tuner consists of groupDualTuner and groupAlarmDualTuner."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupDualTuner, groupAlarmDualTuner }
+      ::= { rsXx8000DvbTxRecCompl 2 }
+
+    
+  
+  END

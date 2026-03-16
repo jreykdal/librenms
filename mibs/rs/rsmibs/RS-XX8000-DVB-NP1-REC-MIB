@@ -1,0 +1,2323 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **
+-- **  COPYRIGHT      (c) 2005 Rohde & Schwarz GmbH & Co. KG
+-- **                          Muehldorfstrasse 15
+-- **    R & S                 D-81671 Muenchen
+-- **
+-- *****************************************************************************
+-- **
+-- **  MODULE         RS-XX8000-DVB-NP1-REC-MIB
+-- **  
+-- **  DESCRIPTION    Rohde & Schwarz SNMP
+-- **
+-- **  HISTORY        
+-- **                 2007-05-07 hue - initial version
+-- **                 2008-08-29 hue - recRfOn is obsolete
+-- **
+-- **
+-- *****************************************************************************
+-- *****************************************************************************
+
+  RS-XX8000-DVB-NP1-REC-MIB DEFINITIONS ::= BEGIN
+ 
+    IMPORTS
+      rsXx8000, eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, 
+      indexAB, rsXx8000MibModule, EventPriority, EventClass, EventState, 
+      IndexTransmitter, ReadableString, EventMaxEntryNumber, Trigger, LogbookMaxEntryNumber, 
+      LogbookEntrySlope, EventMask      
+        FROM RS-XX8000-COMMON-MIB      
+      OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP      
+        FROM SNMPv2-CONF      
+      Integer32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, NOTIFICATION-TYPE      
+        FROM SNMPv2-SMI      
+      TruthValue, DateAndTime, TEXTUAL-CONVENTION      
+        FROM SNMPv2-TC;
+  
+  
+    rsXx8000DvbNp1ReceiverMibModule MODULE-IDENTITY 
+      LAST-UPDATED "200808291000Z"		-- August 29, 2008 at 10:00 GMT
+      ORGANIZATION 
+        "Rohde&Schwarz GmbH & Co. KG"
+      CONTACT-INFO 
+        "Torsten Huebscher
+        Department 7TS2
+        Broadcasting Division
+        Muehldorfstrasse 15
+        81671 Munich, Germany
+        torsten.huebscher@rohde-schwarz.com"
+      DESCRIPTION 
+        "This MIB defines transmitting systems from Rohde & Schwarz.
+        
+        Use this MIB if your system meets the following requirements:
+        - series XX8000 (NetCCU800),
+        - DVB,
+        - ReceiverModule in one of the transmitters of the N+1 system.
+        
+        The following MIBs are related to this:
+        - RS-COMMON-MIB         - mandatory for this MIB
+        - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+      REVISION "200808291000Z"		-- August 29, 2008 at 10:00 GMT
+      DESCRIPTION 
+        "Obsoleted alarm recRfOn and its settings in the events table."
+      REVISION "200805091500Z"		-- May 09, 2008 at 15:00 GMT
+      DESCRIPTION 
+        "add systemFault4MonitDevDebounceTime,
+        cmdInputFault4MonitoringDev"
+      REVISION "200705071000Z"		-- May 07, 2007 at 10:00 GMT
+      DESCRIPTION 
+        "This is the initial version."
+      ::= { rsXx8000MibModule 2 }
+
+    
+  
+--
+-- Textual conventions
+--
+  
+    LogbookEntryMessages ::= TEXTUAL-CONVENTION
+      STATUS current
+      DESCRIPTION 
+        "These are the informations which are inserted in the logbook of DVB receiver.
+        
+        There are three sections:
+          1..39  : states
+         40..79  : warnings
+         80..120 : faults
+        
+        Items named messageXX are currently not used.
+        
+        Note: RfOn(4) is obsolete!"
+      SYNTAX INTEGER
+        {
+        summaryFault(1),
+        summaryWarning(2),
+        local(3),
+        obsoleteRfOn(4),
+        noConnection(5),
+        automaticChanged(6),
+        input1AGCLocked(7),
+        input1CarrierLocked(8),
+        input1TPSLocked(9),
+        input1ViterbiLocked(10),
+        input1MPEGSyncLocked(11),
+        input1MPEGDataLocked(12),
+        input2AGCLocked(13),
+        input2CarrierLocked(14),
+        input2TPSLocked(15),
+        input2ViterbiLocked(16),
+        input2MPEGSyncLocked(17),
+        input2MPEGDataLocked(18),
+        message19(19),
+        message20(20),
+        message21(21),
+        message22(22),
+        message23(23),
+        message24(24),
+        message25(25),
+        message26(26),
+        message27(27),
+        message28(28),
+        message29(29),
+        message30(30),
+        message31(31),
+        message32(32),
+        message33(33),
+        message34(34),
+        message35(35),
+        message36(36),
+        message37(37),
+        message38(38),
+        message39(39),
+        reboot(40),
+        input1UncorrectedMPEG(41),
+        input1MERWarning(42),
+        input1BERWarning(43),
+        input2UncorrectedMPEG(44),
+        input2MERWarning(45),
+        input2BERWarning(46),
+        message48(48),
+        message49(49),
+        message50(50),
+        message51(51),
+        message52(52),
+        message53(53),
+        message54(54),
+        message55(55),
+        message56(56),
+        message57(57),
+        message58(58),
+        message59(59),
+        message60(60),
+        message61(61),
+        message62(62),
+        message63(63),
+        message64(64),
+        message65(65),
+        message66(66),
+        message67(67),
+        message68(68),
+        message69(69),
+        message70(70),
+        message71(71),
+        message72(72),
+        message73(73),
+        message74(74),
+        message75(75),
+        message76(76),
+        message77(77),
+        message78(78),
+        message79(79),
+        message80(80),
+        noConnectionFault(81),
+        hardware(82),
+        input1MERFault(83),
+        input1BERFault(84),
+        input2MERFault(85),
+        input2BERFault(86)
+        }
+
+  
+--
+-- Node definitions
+--
+  
+    rsXx8000DvbNp1Receiver OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Xx8000 DVB Receiver Module."
+      ::= { rsXx8000 3 }
+
+    
+-- *****************************************************************************
+-- **          object definitions
+-- *****************************************************************************
+    rsXx8000DvbNp1RecObjs OBJECT IDENTIFIER ::= { rsXx8000DvbNp1Receiver 1 }
+
+    
+    productInformationTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ProductInformationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The table for the product information (electronic typeplate) of the receiver modules."
+      ::= { rsXx8000DvbNp1RecObjs 1 }
+
+    
+    productInformationEntry OBJECT-TYPE
+      SYNTAX ProductInformationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for a transmitter with receiver module."
+      INDEX { prodInfoTxIdx }
+      ::= { productInformationTable 1 }
+
+    
+    ProductInformationEntry ::=
+      SEQUENCE { 
+        prodInfoTxIdx
+          IndexTransmitter,
+        prodInfoSerialNumber
+          Integer32,
+        prodInfoVersionNumberSW
+          ReadableString,
+        prodInfoIdentNumberHW
+          ReadableString,
+        prodInfoVersionNumberHW
+          ReadableString
+       }
+
+    prodInfoTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index.
+        This value indicates the transmitter number, where the receiver module is built in."
+      ::= { productInformationEntry 1 }
+
+    
+    prodInfoSerialNumber OBJECT-TYPE
+      SYNTAX Integer32 (0..65535)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The serial number of the device."
+      ::= { productInformationEntry 2 }
+
+    
+    prodInfoVersionNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number of the software.
+        E.g. 1.2.1"
+      ::= { productInformationEntry 3 }
+
+    
+    prodInfoIdentNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the software.
+        2093.2301.00 Single Tuner
+        2093.2318.00 Dual Tuner"
+      ::= { productInformationEntry 4 }
+
+    
+    prodInfoVersionNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number of the hardware.
+        E.g. 1.2.1"
+      ::= { productInformationEntry 5 }
+
+    
+    systemTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF SystemEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The table with system properties of the receiver modules."
+      ::= { rsXx8000DvbNp1RecObjs 2 }
+
+    
+    systemEntry OBJECT-TYPE
+      SYNTAX SystemEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for a transmitter with receiver module."
+      INDEX { systemTxIdx }
+      ::= { systemTable 1 }
+
+    
+    SystemEntry ::=
+      SEQUENCE { 
+        systemTxIdx
+          IndexTransmitter,
+        systemIsaDualTuner
+          TruthValue,
+        systemIsaRetransmitter
+          TruthValue,
+        systemActualInput
+          INTEGER,
+        systemFault4MonitDevDebounceTime
+          Integer32
+       }
+
+    systemTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index.
+        This value indicates the transmitter number, where the receiver module is built in."
+      ::= { systemEntry 1 }
+
+    
+    systemIsaDualTuner OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Is the DVB-Receiver a dual tuner?"
+      ::= { systemEntry 2 }
+
+    
+    systemIsaRetransmitter OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Is this a retransmitter?
+        If so, the receiver module will act as a mandatory part of the transmitter
+        (faults may lead to switchover)."
+      ::= { systemEntry 3 }
+
+    
+    systemActualInput OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        input1(1),
+        input2(2)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The current active input.
+        Only available if it's a dualtuner."
+      ::= { systemEntry 4 }
+
+    
+    systemFault4MonitDevDebounceTime OBJECT-TYPE
+      SYNTAX Integer32 (0..600)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Debounce time: The detected fault must be stable during this time to signal an error."
+      ::= { systemEntry 5 }
+
+    
+    commandsTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF CommandsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains important commands for the receiver modules."
+      ::= { rsXx8000DvbNp1RecObjs 3 }
+
+    
+    commandsEntry OBJECT-TYPE
+      SYNTAX CommandsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for a transmitter with receiver module."
+      INDEX { cmdTxIdx, cmdInputIdx }
+      ::= { commandsTable 1 }
+
+    
+    CommandsEntry ::=
+      SEQUENCE { 
+        cmdTxIdx
+          IndexTransmitter,
+        cmdInputMode
+          INTEGER,
+        cmdSwitchingMode
+          INTEGER,
+        cmdSelectInput
+          INTEGER,
+        cmdInputIdx
+          INTEGER,
+        cmdInputChannelBandWidth
+          INTEGER,
+        cmdInputCenterFrequency
+          Integer32,
+        cmdInputStream
+          INTEGER,
+        cmdInputFault4MonitoringDev
+          INTEGER
+       }
+
+    cmdTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index.
+        This value indicates the transmitter number, where the receiver module is built in."
+      ::= { commandsEntry 1 }
+
+    
+    cmdInputMode OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        dual(1),
+        redundant(2),
+        hierarchical(3),
+        diversity(4)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver input mode.
+        Only available if it's a dualtuner."
+      ::= { commandsEntry 3 }
+
+    
+    cmdSwitchingMode OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        manual(1),
+        automaticOnSyncFail(2),
+        automaticOnDRSFail(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver switching mode 
+        Only available if it's a dualtuner."
+      ::= { commandsEntry 4 }
+
+    
+    cmdSelectInput OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        input1(1),
+        input2(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver input selection (1/2).
+        Only available if it's a dualtuner.
+        You can only set this value if you have cmdInputMode redundant(2)."
+      ::= { commandsEntry 5 }
+
+    
+    cmdInputIdx OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        input1(1),
+        input2(2)
+        }
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The designated input."
+      ::= { commandsEntry 6 }
+
+    
+    cmdInputChannelBandWidth OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        mHz7(1),
+        mHz8(2),
+        mHz6(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input channel bandwidth"
+      ::= { commandsEntry 7 }
+
+    
+    cmdInputCenterFrequency OBJECT-TYPE
+      SYNTAX Integer32 (47000000..860000000)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input center frequency: 47000000..860000000 [Hz]"
+      ::= { commandsEntry 8 }
+
+    
+    cmdInputStream OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        lp(1),
+        hp(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input stream (LP/HP)"
+      ::= { commandsEntry 9 }
+
+    
+    cmdInputFault4MonitoringDev OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        noDevice(1),
+        exciterA(2),
+        exciterB(3),
+        exciterActive(4),
+        exciterReserve(5)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "If a BER or MER fault is detected, a fault is signalled for the selected device."
+      ::= { commandsEntry 10 }
+
+    
+    measureValuesTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF MeasureValuesEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains measured values for the inputs of the receiver modules."
+      ::= { rsXx8000DvbNp1RecObjs 4 }
+
+    
+    measureValuesEntry OBJECT-TYPE
+      SYNTAX MeasureValuesEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for an input of a transmitter with receiver module."
+      INDEX { measureValuesTxIdx, measureValuesInputIdx }
+      ::= { measureValuesTable 1 }
+
+    
+    MeasureValuesEntry ::=
+      SEQUENCE { 
+        measureValuesTxIdx
+          IndexTransmitter,
+        measureValuesInputIdx
+          INTEGER,
+        measureValuesInputLevel
+          Integer32,
+        measureValuesFFTLength
+          INTEGER,
+        measureValuesGuardInterval
+          INTEGER,
+        measureValuesConstellation
+          INTEGER,
+        measureValuesHierarchy
+          INTEGER,
+        measureValuesCodeRate
+          INTEGER,
+        measureValuesCellID
+          Integer32,
+        measureValuesMER
+          Integer32,
+        measureValuesBER
+          Integer32,
+        measureValuesPER
+          Integer32
+       }
+
+    measureValuesTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index.
+        This value indicates the transmitter number, where the receiver module is built in."
+      ::= { measureValuesEntry 1 }
+
+    
+    measureValuesInputIdx OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        input1(1),
+        input2(2)
+        }
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The designated input."
+      ::= { measureValuesEntry 2 }
+
+    
+    measureValuesInputLevel OBJECT-TYPE
+      SYNTAX Integer32 (-127..127)
+      UNITS "dBm"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver input level."
+      ::= { measureValuesEntry 3 }
+
+    
+    measureValuesFFTLength OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        k2(1),
+        k8(2),
+        undef(3)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 DVB mode 
+        k2(1) --> 2 K  
+        k8(2) --> 8 K
+        undef(3) --> undefined"
+      ::= { measureValuesEntry 4 }
+
+    
+    measureValuesGuardInterval OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        onePer32(1),
+        onePer16(2),
+        onePer8(3),
+        onePer4(4),
+        undef(5)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input guard interval 
+        onePer32(1) --> 1/32  
+        onePer16(2) --> 1/16  
+        onePer8(3)  --> 1/8  
+        onePer4(4)  --> 1/4
+        undef(5)    --> undefined"
+      ::= { measureValuesEntry 5 }
+
+    
+    measureValuesConstellation OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        qpsk(1),
+        qam16(2),
+        qam64(3),
+        undef(4)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input constellation
+        qpsk(1)  --> QPSK  
+        qam16(2) --> 16 QAM  
+        qam64(3) --> 64 QAM    
+        undef(4) --> not defined"
+      ::= { measureValuesEntry 6 }
+
+    
+    measureValuesHierarchy OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        none(1),
+        alpha1(2),
+        alpha2(3),
+        alpha4(4),
+        undef(5)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input hierarchy
+        none(1)   --> no hierarchy
+        alpha1(2) --> alpha = 1 (hierarchy)
+        alpha2(3) --> alpha = 2 (hierarchy)
+        alpha4(4) --> alpha = 4 (hierarchy)
+        undef(5)  --> not defined"
+      ::= { measureValuesEntry 7 }
+
+    
+    measureValuesCodeRate OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        oneHalf(1),
+        twoThird(2),
+        threeQuater(3),
+        fiveSixth(4),
+        sevenEighth(5),
+        undef(6)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input coderate
+        1 --> 1/2
+        2 --> 2/3
+        3 --> 3/4
+        4 --> 5/6
+        5 --> 7/8
+        6 --> undef"
+      ::= { measureValuesEntry 8 }
+
+    
+    measureValuesCellID OBJECT-TYPE
+      SYNTAX Integer32
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input cell id"
+      ::= { measureValuesEntry 9 }
+
+    
+    measureValuesMER OBJECT-TYPE
+      SYNTAX Integer32 (0..255)
+      UNITS "dB"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input MER"
+      ::= { measureValuesEntry 10 }
+
+    
+    measureValuesBER OBJECT-TYPE
+      SYNTAX Integer32 (0..16777215)
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input 1 BER
+        ( 0..16777215 ) * 1e-8"
+      ::= { measureValuesEntry 11 }
+
+    
+    measureValuesPER OBJECT-TYPE
+      SYNTAX Integer32 (0..65535)
+      UNITS "packets / s"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver Input PER (Packet Error Rate)."
+      ::= { measureValuesEntry 12 }
+
+    
+    thresholdsTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ThresholdsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains thresholds for the inputs of the receiver modules."
+      ::= { rsXx8000DvbNp1RecObjs 5 }
+
+    
+    thresholdsEntry OBJECT-TYPE
+      SYNTAX ThresholdsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for an input of a transmitter with receiver module."
+      INDEX { thresholdsTxIdx, thresholdsInputIdx }
+      ::= { thresholdsTable 1 }
+
+    
+    ThresholdsEntry ::=
+      SEQUENCE { 
+        thresholdsTxIdx
+          IndexTransmitter,
+        thresholdsInputIdx
+          INTEGER,
+        thresholdsWarningMER
+          Integer32,
+        thresholdsWarningBER
+          Integer32,
+        thresholdsFaultMER
+          Integer32,
+        thresholdsFaultBER
+          Integer32
+       }
+
+    thresholdsTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index.
+        This value indicates the transmitter number, where the receiver module is built in."
+      ::= { thresholdsEntry 1 }
+
+    
+    thresholdsInputIdx OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        input1(1),
+        input2(2)
+        }
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The designated input."
+      ::= { thresholdsEntry 2 }
+
+    
+    thresholdsWarningMER OBJECT-TYPE
+      SYNTAX Integer32 (0..40)
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Threshold for MER Warning (0 .. 40).
+        If the measured MER value is less than this threshold, a warning is generated."
+      ::= { thresholdsEntry 3 }
+
+    
+    thresholdsWarningBER OBJECT-TYPE
+      SYNTAX Integer32 (0..16777215)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Threshold for BER Warning (0 .. 16777215) * 1e-8.
+        If the measured BER value is greater than this threshold, a warning is generated."
+      ::= { thresholdsEntry 4 }
+
+    
+    thresholdsFaultMER OBJECT-TYPE
+      SYNTAX Integer32 (0..40)
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Threshold for MER Fault (0 .. 40).
+        If the measured MER value is less than this threshold, a fault is generated."
+      ::= { thresholdsEntry 5 }
+
+    
+    thresholdsFaultBER OBJECT-TYPE
+      SYNTAX Integer32 (0..16777215)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Threshold for BER Fault (0 .. 16777215) * 1e-8.
+        If the measured BER value is greater than this threshold, a fault is generated."
+      ::= { thresholdsEntry 6 }
+
+    
+    logbooks OBJECT IDENTIFIER ::= { rsXx8000DvbNp1RecObjs 6 }
+
+    
+    txB OBJECT IDENTIFIER ::= { logbooks 1 }
+
+    
+    txBRecNumberOfEntries OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in logbook."
+      ::= { txB 1 }
+
+    
+    txBRecLogbookClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear the logbook.
+        idle(1)    --> ready
+        clear(2)   --> do clear now
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+      ::= { txB 2 }
+
+    
+    txBRecLogbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF TxBRecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table"
+      ::= { txB 3 }
+
+    
+    txBRecLogbookEntry OBJECT-TYPE
+      SYNTAX TxBRecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table entry"
+      INDEX { txBRecLogbookEntryIdx }
+      ::= { txBRecLogbookTable 1 }
+
+    
+    TxBRecLogbookEntry ::=
+      SEQUENCE { 
+        txBRecLogbookEntryIdx
+          LogbookMaxEntryNumber,
+        txBRecLogbookEntryNbr
+          LogbookMaxEntryNumber,
+        txBRecLogbookType
+          EventClass,
+        txBRecLogbookSlope
+          LogbookEntrySlope,
+        txBRecLogbookMessage
+          LogbookEntryMessages,
+        txBRecLogbookDateTime
+          DateAndTime
+       }
+
+    txBRecLogbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to [max size]. It is used as an index column for SNMP."
+      ::= { txBRecLogbookEntry 1 }
+
+    
+    txBRecLogbookEntryNbr OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from [max size] down to 1."
+      ::= { txBRecLogbookEntry 2 }
+
+    
+    txBRecLogbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { txBRecLogbookEntry 3 }
+
+    
+    txBRecLogbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry slope"
+      ::= { txBRecLogbookEntry 4 }
+
+    
+    txBRecLogbookMessage OBJECT-TYPE
+      SYNTAX LogbookEntryMessages
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry message."
+      ::= { txBRecLogbookEntry 5 }
+
+    
+    txBRecLogbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry time"
+      ::= { txBRecLogbookEntry 6 }
+
+    
+    txA1 OBJECT IDENTIFIER ::= { logbooks 2 }
+
+    
+    txA1RecNumberOfEntries OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in logbook."
+      ::= { txA1 1 }
+
+    
+    txA1RecLogbookClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear the logbook.
+        idle(1)    --> ready
+        clear(2)   --> do clear now
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+      ::= { txA1 2 }
+
+    
+    txA1RecLogbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF TxA1RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table"
+      ::= { txA1 3 }
+
+    
+    txA1RecLogbookEntry OBJECT-TYPE
+      SYNTAX TxA1RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table entry"
+      INDEX { txA1RecLogbookEntryIdx }
+      ::= { txA1RecLogbookTable 1 }
+
+    
+    TxA1RecLogbookEntry ::=
+      SEQUENCE { 
+        txA1RecLogbookEntryIdx
+          LogbookMaxEntryNumber,
+        txA1RecLogbookEntryNbr
+          LogbookMaxEntryNumber,
+        txA1RecLogbookType
+          EventClass,
+        txA1RecLogbookSlope
+          LogbookEntrySlope,
+        txA1RecLogbookMessage
+          LogbookEntryMessages,
+        txA1RecLogbookDateTime
+          DateAndTime
+       }
+
+    txA1RecLogbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to [max size]. It is used as an index column for SNMP."
+      ::= { txA1RecLogbookEntry 1 }
+
+    
+    txA1RecLogbookEntryNbr OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from [max size] down to 1."
+      ::= { txA1RecLogbookEntry 2 }
+
+    
+    txA1RecLogbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { txA1RecLogbookEntry 3 }
+
+    
+    txA1RecLogbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry slope"
+      ::= { txA1RecLogbookEntry 4 }
+
+    
+    txA1RecLogbookMessage OBJECT-TYPE
+      SYNTAX LogbookEntryMessages
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry message."
+      ::= { txA1RecLogbookEntry 5 }
+
+    
+    txA1RecLogbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry time"
+      ::= { txA1RecLogbookEntry 6 }
+
+    
+    txA2 OBJECT IDENTIFIER ::= { logbooks 3 }
+
+    
+    txA2RecNumberOfEntries OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in logbook."
+      ::= { txA2 1 }
+
+    
+    txA2RecLogbookClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear the logbook.
+        idle(1)    --> ready
+        clear(2)   --> do clear now
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+      ::= { txA2 2 }
+
+    
+    txA2RecLogbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF TxA2RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table"
+      ::= { txA2 3 }
+
+    
+    txA2RecLogbookEntry OBJECT-TYPE
+      SYNTAX TxA2RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table entry"
+      INDEX { txA2RecLogbookEntryIdx }
+      ::= { txA2RecLogbookTable 1 }
+
+    
+    TxA2RecLogbookEntry ::=
+      SEQUENCE { 
+        txA2RecLogbookEntryIdx
+          LogbookMaxEntryNumber,
+        txA2RecLogbookEntryNbr
+          LogbookMaxEntryNumber,
+        txA2RecLogbookType
+          EventClass,
+        txA2RecLogbookSlope
+          LogbookEntrySlope,
+        txA2RecLogbookMessage
+          LogbookEntryMessages,
+        txA2RecLogbookDateTime
+          DateAndTime
+       }
+
+    txA2RecLogbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to [max size]. It is used as an index column for SNMP."
+      ::= { txA2RecLogbookEntry 1 }
+
+    
+    txA2RecLogbookEntryNbr OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from [max size] down to 1."
+      ::= { txA2RecLogbookEntry 2 }
+
+    
+    txA2RecLogbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { txA2RecLogbookEntry 3 }
+
+    
+    txA2RecLogbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry slope"
+      ::= { txA2RecLogbookEntry 4 }
+
+    
+    txA2RecLogbookMessage OBJECT-TYPE
+      SYNTAX LogbookEntryMessages
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry message."
+      ::= { txA2RecLogbookEntry 5 }
+
+    
+    txA2RecLogbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry time"
+      ::= { txA2RecLogbookEntry 6 }
+
+    
+    txA3 OBJECT IDENTIFIER ::= { logbooks 4 }
+
+    
+    txA3RecNumberOfEntries OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in logbook."
+      ::= { txA3 2 }
+
+    
+    txA3RecLogbookClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear the logbook.
+        idle(1)    --> ready
+        clear(2)   --> do clear now
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+      ::= { txA3 3 }
+
+    
+    txA3RecLogbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF TxA3RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table"
+      ::= { txA3 4 }
+
+    
+    txA3RecLogbookEntry OBJECT-TYPE
+      SYNTAX TxA3RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table entry"
+      INDEX { txA3RecLogbookEntryIdx }
+      ::= { txA3RecLogbookTable 1 }
+
+    
+    TxA3RecLogbookEntry ::=
+      SEQUENCE { 
+        txA3RecLogbookEntryIdx
+          LogbookMaxEntryNumber,
+        txA3RecLogbookEntryNbr
+          LogbookMaxEntryNumber,
+        txA3RecLogbookType
+          EventClass,
+        txA3RecLogbookSlope
+          LogbookEntrySlope,
+        txA3RecLogbookMessage
+          LogbookEntryMessages,
+        txA3RecLogbookDateTime
+          DateAndTime
+       }
+
+    txA3RecLogbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to [max size]. It is used as an index column for SNMP."
+      ::= { txA3RecLogbookEntry 1 }
+
+    
+    txA3RecLogbookEntryNbr OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from [max size] down to 1."
+      ::= { txA3RecLogbookEntry 2 }
+
+    
+    txA3RecLogbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { txA3RecLogbookEntry 3 }
+
+    
+    txA3RecLogbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry slope"
+      ::= { txA3RecLogbookEntry 4 }
+
+    
+    txA3RecLogbookMessage OBJECT-TYPE
+      SYNTAX LogbookEntryMessages
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry message."
+      ::= { txA3RecLogbookEntry 5 }
+
+    
+    txA3RecLogbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry time"
+      ::= { txA3RecLogbookEntry 6 }
+
+    
+    txA4 OBJECT IDENTIFIER ::= { logbooks 5 }
+
+    
+    txA4RecNumberOfEntries OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in logbook."
+      ::= { txA4 2 }
+
+    
+    txA4RecLogbookClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear the logbook.
+        idle(1)    --> ready
+        clear(2)   --> do clear now
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+      ::= { txA4 3 }
+
+    
+    txA4RecLogbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF TxA4RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table"
+      ::= { txA4 4 }
+
+    
+    txA4RecLogbookEntry OBJECT-TYPE
+      SYNTAX TxA4RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table entry"
+      INDEX { txA4RecLogbookEntryIdx }
+      ::= { txA4RecLogbookTable 1 }
+
+    
+    TxA4RecLogbookEntry ::=
+      SEQUENCE { 
+        txA4RecLogbookEntryIdx
+          LogbookMaxEntryNumber,
+        txA4RecLogbookEntryNbr
+          LogbookMaxEntryNumber,
+        txA4RecLogbookType
+          EventClass,
+        txA4RecLogbookSlope
+          LogbookEntrySlope,
+        txA4RecLogbookMessage
+          LogbookEntryMessages,
+        txA4RecLogbookDateTime
+          DateAndTime
+       }
+
+    txA4RecLogbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to [max size]. It is used as an index column for SNMP."
+      ::= { txA4RecLogbookEntry 1 }
+
+    
+    txA4RecLogbookEntryNbr OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from [max size] down to 1."
+      ::= { txA4RecLogbookEntry 2 }
+
+    
+    txA4RecLogbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { txA4RecLogbookEntry 3 }
+
+    
+    txA4RecLogbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry slope"
+      ::= { txA4RecLogbookEntry 4 }
+
+    
+    txA4RecLogbookMessage OBJECT-TYPE
+      SYNTAX LogbookEntryMessages
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry message."
+      ::= { txA4RecLogbookEntry 5 }
+
+    
+    txA4RecLogbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry time"
+      ::= { txA4RecLogbookEntry 6 }
+
+    
+    txA5 OBJECT IDENTIFIER ::= { logbooks 6 }
+
+    
+    txA5RecNumberOfEntries OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in logbook."
+      ::= { txA5 2 }
+
+    
+    txA5RecLogbookClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear the logbook.
+        idle(1)    --> ready
+        clear(2)   --> do clear now
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+      ::= { txA5 3 }
+
+    
+    txA5RecLogbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF TxA5RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table"
+      ::= { txA5 4 }
+
+    
+    txA5RecLogbookEntry OBJECT-TYPE
+      SYNTAX TxA5RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table entry"
+      INDEX { txA5RecLogbookEntryIdx }
+      ::= { txA5RecLogbookTable 1 }
+
+    
+    TxA5RecLogbookEntry ::=
+      SEQUENCE { 
+        txA5RecLogbookEntryIdx
+          LogbookMaxEntryNumber,
+        txA5RecLogbookEntryNbr
+          LogbookMaxEntryNumber,
+        txA5RecLogbookType
+          EventClass,
+        txA5RecLogbookSlope
+          LogbookEntrySlope,
+        txA5RecLogbookMessage
+          LogbookEntryMessages,
+        txA5RecLogbookDateTime
+          DateAndTime
+       }
+
+    txA5RecLogbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to [max size]. It is used as an index column for SNMP."
+      ::= { txA5RecLogbookEntry 1 }
+
+    
+    txA5RecLogbookEntryNbr OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from [max size] down to 1."
+      ::= { txA5RecLogbookEntry 2 }
+
+    
+    txA5RecLogbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { txA5RecLogbookEntry 3 }
+
+    
+    txA5RecLogbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry slope"
+      ::= { txA5RecLogbookEntry 4 }
+
+    
+    txA5RecLogbookMessage OBJECT-TYPE
+      SYNTAX LogbookEntryMessages
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry message."
+      ::= { txA5RecLogbookEntry 5 }
+
+    
+    txA5RecLogbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry time"
+      ::= { txA5RecLogbookEntry 6 }
+
+    
+    txA6 OBJECT IDENTIFIER ::= { logbooks 7 }
+
+    
+    txA6RecNumberOfEntries OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in logbook."
+      ::= { txA6 2 }
+
+    
+    txA6RecLogbookClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear the logbook.
+        idle(1)    --> ready
+        clear(2)   --> do clear now
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+      ::= { txA6 3 }
+
+    
+    txA6RecLogbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF TxA6RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table"
+      ::= { txA6 4 }
+
+    
+    txA6RecLogbookEntry OBJECT-TYPE
+      SYNTAX TxA6RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table entry"
+      INDEX { txA6RecLogbookEntryIdx }
+      ::= { txA6RecLogbookTable 1 }
+
+    
+    TxA6RecLogbookEntry ::=
+      SEQUENCE { 
+        txA6RecLogbookEntryIdx
+          LogbookMaxEntryNumber,
+        txA6RecLogbookEntryNbr
+          LogbookMaxEntryNumber,
+        txA6RecLogbookType
+          EventClass,
+        txA6RecLogbookSlope
+          LogbookEntrySlope,
+        txA6RecLogbookMessage
+          LogbookEntryMessages,
+        txA6RecLogbookDateTime
+          DateAndTime
+       }
+
+    txA6RecLogbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to [max size]. It is used as an index column for SNMP."
+      ::= { txA6RecLogbookEntry 1 }
+
+    
+    txA6RecLogbookEntryNbr OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from [max size] down to 1."
+      ::= { txA6RecLogbookEntry 2 }
+
+    
+    txA6RecLogbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { txA6RecLogbookEntry 3 }
+
+    
+    txA6RecLogbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry slope"
+      ::= { txA6RecLogbookEntry 4 }
+
+    
+    txA6RecLogbookMessage OBJECT-TYPE
+      SYNTAX LogbookEntryMessages
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry message."
+      ::= { txA6RecLogbookEntry 5 }
+
+    
+    txA6RecLogbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry time"
+      ::= { txA6RecLogbookEntry 6 }
+
+    
+    txA7 OBJECT IDENTIFIER ::= { logbooks 8 }
+
+    
+    txA7RecNumberOfEntries OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in logbook."
+      ::= { txA7 2 }
+
+    
+    txA7RecLogbookClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear the logbook.
+        idle(1)    --> ready
+        clear(2)   --> do clear now
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+      ::= { txA7 3 }
+
+    
+    txA7RecLogbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF TxA7RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table"
+      ::= { txA7 4 }
+
+    
+    txA7RecLogbookEntry OBJECT-TYPE
+      SYNTAX TxA7RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table entry"
+      INDEX { txA7RecLogbookEntryIdx }
+      ::= { txA7RecLogbookTable 1 }
+
+    
+    TxA7RecLogbookEntry ::=
+      SEQUENCE { 
+        txA7RecLogbookEntryIdx
+          LogbookMaxEntryNumber,
+        txA7RecLogbookEntryNbr
+          LogbookMaxEntryNumber,
+        txA7RecLogbookType
+          EventClass,
+        txA7RecLogbookSlope
+          LogbookEntrySlope,
+        txA7RecLogbookMessage
+          LogbookEntryMessages,
+        txA7RecLogbookDateTime
+          DateAndTime
+       }
+
+    txA7RecLogbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to [max size]. It is used as an index column for SNMP."
+      ::= { txA7RecLogbookEntry 1 }
+
+    
+    txA7RecLogbookEntryNbr OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from [max size] down to 1."
+      ::= { txA7RecLogbookEntry 2 }
+
+    
+    txA7RecLogbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { txA7RecLogbookEntry 3 }
+
+    
+    txA7RecLogbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry slope"
+      ::= { txA7RecLogbookEntry 4 }
+
+    
+    txA7RecLogbookMessage OBJECT-TYPE
+      SYNTAX LogbookEntryMessages
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry message."
+      ::= { txA7RecLogbookEntry 5 }
+
+    
+    txA7RecLogbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry time"
+      ::= { txA7RecLogbookEntry 6 }
+
+    
+    txA8 OBJECT IDENTIFIER ::= { logbooks 9 }
+
+    
+    txA8RecNumberOfEntries OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in logbook."
+      ::= { txA8 2 }
+
+    
+    txA8RecLogbookClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear the logbook.
+        idle(1)    --> ready
+        clear(2)   --> do clear now
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+      ::= { txA8 3 }
+
+    
+    txA8RecLogbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF TxA8RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table"
+      ::= { txA8 4 }
+
+    
+    txA8RecLogbookEntry OBJECT-TYPE
+      SYNTAX TxA8RecLogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook table entry"
+      INDEX { txA8RecLogbookEntryIdx }
+      ::= { txA8RecLogbookTable 1 }
+
+    
+    TxA8RecLogbookEntry ::=
+      SEQUENCE { 
+        txA8RecLogbookEntryIdx
+          LogbookMaxEntryNumber,
+        txA8RecLogbookEntryNbr
+          LogbookMaxEntryNumber,
+        txA8RecLogbookType
+          EventClass,
+        txA8RecLogbookSlope
+          LogbookEntrySlope,
+        txA8RecLogbookMessage
+          LogbookEntryMessages,
+        txA8RecLogbookDateTime
+          DateAndTime
+       }
+
+    txA8RecLogbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to [max size]. It is used as an index column for SNMP."
+      ::= { txA8RecLogbookEntry 1 }
+
+    
+    txA8RecLogbookEntryNbr OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from [max size] down to 1."
+      ::= { txA8RecLogbookEntry 2 }
+
+    
+    txA8RecLogbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { txA8RecLogbookEntry 3 }
+
+    
+    txA8RecLogbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry slope"
+      ::= { txA8RecLogbookEntry 4 }
+
+    
+    txA8RecLogbookMessage OBJECT-TYPE
+      SYNTAX LogbookEntryMessages
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry message."
+      ::= { txA8RecLogbookEntry 5 }
+
+    
+    txA8RecLogbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-Receiver logbook entry time"
+      ::= { txA8RecLogbookEntry 6 }
+
+    
+-- *****************************************************************************
+-- **          event definitions
+-- *****************************************************************************
+    rsXx8000DvbNp1RecEvents OBJECT IDENTIFIER ::= { rsXx8000DvbNp1Receiver 3 }
+
+    
+    eventReceiver OBJECT IDENTIFIER ::= { rsXx8000DvbNp1RecEvents 1 }
+
+    
+    eventsReceiverV2 OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Root node for the converted TRAP-TYPEs."
+      ::= { eventReceiver 0 }
+
+    
+    recSummaryFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Receiver Summary Fault"
+      ::= { eventsReceiverV2 1 }
+
+    
+    recSummaryWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Receiver Summary Warning"
+      ::= { eventsReceiverV2 2 }
+
+    
+    recLocal NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "LocalMode of the DVB-Receiver"
+      ::= { eventsReceiverV2 3 }
+
+    
+    recRfOn NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS obsolete
+      DESCRIPTION 
+        "RF is on.
+        
+        This alarm is obsolete:
+        The receiver module itself cannot ensure if the RF is on or not.
+        If you want to know, if the transmitter is generating RF, use the alarms in the RS-XX8000-DVB-NP1-MIB.
+        "
+      ::= { eventsReceiverV2 4 }
+
+    
+    recNoConnection NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "No connection to DVB-Receiver.
+        In difference to recNoConnectionFault, this indicates only a warning."
+      ::= { eventsReceiverV2 5 }
+
+    
+    recInputAutoChanged NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "The inputs were switched automatically.
+        Only available if it's a dualtuner."
+      ::= { eventsReceiverV2 6 }
+
+    
+    recNoConnectionFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "No Connection to DVB-Receiver.
+        In difference to recNoConnection, this indicates a fault.
+        If you have a retransmitter, the receiver module is an essential part of the signal processing.
+        If this alarm is active, there is a summary fault at the NetCCU pending, which may lead to a 
+        switchover in case of N+1 systems."
+      ::= { eventsReceiverV2 7 }
+
+    
+    recHardwareFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Hardware Fault of DVB-Receiver"
+      ::= { eventsReceiverV2 8 }
+
+    
+    recInputAGCLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Input AGC is locked"
+      ::= { eventsReceiverV2 9 }
+
+    
+    recInputCarrierLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Input Carrier is locked"
+      ::= { eventsReceiverV2 10 }
+
+    
+    recInputTPSLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Input TPS is locked"
+      ::= { eventsReceiverV2 11 }
+
+    
+    recInputViterbiLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Input Viterbi is locked"
+      ::= { eventsReceiverV2 12 }
+
+    
+    recInputMPEGSyncLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Input MPEGSync is locked"
+      ::= { eventsReceiverV2 13 }
+
+    
+    recInputMPEGDataLocked NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Input MPEGData is locked"
+      ::= { eventsReceiverV2 14 }
+
+    
+    recInputMPEGUncorrect NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Warning Uncorrected MPEG from Input"
+      ::= { eventsReceiverV2 15 }
+
+    
+    recInputMERWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Warning MER from Input"
+      ::= { eventsReceiverV2 16 }
+
+    
+    recInputBERWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Warning BER from Input"
+      ::= { eventsReceiverV2 17 }
+
+    
+    recInputMERFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Fault MER from Input"
+      ::= { eventsReceiverV2 18 }
+
+    
+    recInputBERFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+         }
+      STATUS current
+      DESCRIPTION 
+        "Fault BER from Input"
+      ::= { eventsReceiverV2 19 }
+
+    
+    eventsReceiverTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF EventsReceiverEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains necessary informations for handling alarms. 
+        For each alarm you have the following informations: 
+        - name (get),
+        - mask to enable/disable sending out (set/get),
+        - priority (set/get) and 
+        - the current state (get only)."
+      ::= { eventReceiver 1 }
+
+    
+    eventsReceiverEntry OBJECT-TYPE
+      SYNTAX EventsReceiverEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An event entry always consists of 4 values:
+        - name: an enumerated list of all possible notifications
+        - mask: the corresponding mask (enable/disable)
+        - priority: the corresponding priority (value in range 0..255)
+        - event: the event itself (active/inactive)"
+      INDEX { eventRecTxIdx, eventRecInputIdx, eventRecNameIdx }
+      ::= { eventsReceiverTable 1 }
+
+    
+    EventsReceiverEntry ::=
+      SEQUENCE { 
+        eventRecTxIdx
+          IndexTransmitter,
+        eventRecInputIdx
+          INTEGER,
+        eventRecNameIdx
+          EventMaxEntryNumber,
+        eventRecName
+          INTEGER,
+        eventRecMask
+          EventMask,
+        eventRecPriority
+          EventPriority,
+        eventRecEvent
+          EventState
+       }
+
+    eventRecTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index.
+        This is a helper column and therefore not-accessible.."
+      ::= { eventsReceiverEntry 1 }
+
+    
+    eventRecInputIdx OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        input1(1),
+        input2(2)
+        }
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The input index.
+        This is a helper column and therefore not-accessible.."
+      ::= { eventsReceiverEntry 2 }
+
+    
+    eventRecNameIdx OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The event number as integer.
+        This is a helper column and therefore not-accessible."
+      ::= { eventsReceiverEntry 3 }
+
+    
+    eventRecName OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        recSummaryFault(1),
+        recSummaryWarning(2),
+        recLocal(3),
+        obsoleteRecRfOn(4),
+        recNoConnection(5),
+        recInputAutoChanged(6),
+        recNoConnectionFault(7),
+        recHardwareFault(8),
+        recInputAGCLocked(9),
+        recInputCarrierLocked(10),
+        recInputTPSLocked(11),
+        recInputViterbiLocked(12),
+        recInputMPEGSyncLocked(13),
+        recInputMPEGDataLocked(14),
+        recInputMPEGUncorrect(15),
+        recInputMERWarning(16),
+        recInputBERWarning(17),
+        recInputMERFault(18),
+        recInputBERFault(19)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The event number as integer and the value as readable text.
+        The enumeration correlates with the notifications under eventsTxV2.
+        
+        Note: RfOn is obsolete!"
+      ::= { eventsReceiverEntry 4 }
+
+    
+    eventRecMask OBJECT-TYPE
+      SYNTAX EventMask
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsReceiverEntry 5 }
+
+    
+    eventRecPriority OBJECT-TYPE
+      SYNTAX EventPriority
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsReceiverEntry 6 }
+
+    
+    eventRecEvent OBJECT-TYPE
+      SYNTAX EventState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsReceiverEntry 7 }
+
+    
+-- *****************************************************************************
+-- **          conformance statements
+-- *****************************************************************************
+    rsXx8000DvbNp1RecConf OBJECT IDENTIFIER ::= { rsXx8000DvbNp1Receiver 5 }
+
+    
+    rsXx8000DvbNp1RecGroups OBJECT IDENTIFIER ::= { rsXx8000DvbNp1RecConf 1 }
+
+    
+    groupSingleTuner OBJECT-GROUP
+      OBJECTS { prodInfoSerialNumber, prodInfoVersionNumberSW, prodInfoIdentNumberHW, prodInfoVersionNumberHW, systemIsaDualTuner, 
+        systemIsaRetransmitter, cmdInputChannelBandWidth, cmdInputCenterFrequency, cmdInputStream, measureValuesInputLevel, 
+        measureValuesFFTLength, measureValuesGuardInterval, measureValuesConstellation, measureValuesHierarchy, measureValuesCodeRate, 
+        measureValuesCellID, measureValuesMER, measureValuesBER, measureValuesPER, thresholdsWarningMER, 
+        thresholdsWarningBER, thresholdsFaultMER, thresholdsFaultBER, cmdInputFault4MonitoringDev, systemFault4MonitDevDebounceTime
+         }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all values for a single-tuner receiver module."
+      ::= { rsXx8000DvbNp1RecGroups 1 }
+
+    
+    groupAlarmSingleTuner NOTIFICATION-GROUP
+      NOTIFICATIONS { recSummaryFault, recSummaryWarning, recLocal, recNoConnection, recNoConnectionFault, 
+        recHardwareFault, recInputAGCLocked, recInputCarrierLocked, recInputTPSLocked, recInputViterbiLocked, 
+        recInputMPEGSyncLocked, recInputMPEGDataLocked, recInputMPEGUncorrect, recInputMERWarning, recInputBERWarning, 
+        recInputMERFault, recInputBERFault }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all notifications for a single-tuner receiver module."
+      ::= { rsXx8000DvbNp1RecGroups 2 }
+
+    
+    groupDualTuner OBJECT-GROUP
+      OBJECTS { prodInfoSerialNumber, prodInfoVersionNumberSW, prodInfoIdentNumberHW, prodInfoVersionNumberHW, systemIsaDualTuner, 
+        systemIsaRetransmitter, systemActualInput, cmdInputMode, cmdSwitchingMode, cmdSelectInput, 
+        cmdInputChannelBandWidth, cmdInputCenterFrequency, cmdInputStream, measureValuesInputLevel, measureValuesFFTLength, 
+        measureValuesGuardInterval, measureValuesConstellation, measureValuesHierarchy, measureValuesCodeRate, measureValuesCellID, 
+        measureValuesMER, measureValuesBER, measureValuesPER, thresholdsWarningMER, thresholdsWarningBER, 
+        thresholdsFaultMER, thresholdsFaultBER, cmdInputFault4MonitoringDev, systemFault4MonitDevDebounceTime }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all additional values for a dual-tuner receiver module."
+      ::= { rsXx8000DvbNp1RecGroups 3 }
+
+    
+    groupAlarmDualTuner NOTIFICATION-GROUP
+      NOTIFICATIONS { recSummaryFault, recSummaryWarning, recLocal, recNoConnection, recInputAutoChanged, 
+        recNoConnectionFault, recHardwareFault, recInputAGCLocked, recInputCarrierLocked, recInputTPSLocked, 
+        recInputViterbiLocked, recInputMPEGSyncLocked, recInputMPEGDataLocked, recInputMPEGUncorrect, recInputMERWarning, 
+        recInputBERWarning, recInputMERFault, recInputBERFault }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all notifications for a dual-tuner receiver module."
+      ::= { rsXx8000DvbNp1RecGroups 4 }
+
+    
+    groupEvents OBJECT-GROUP
+      OBJECTS { eventRecName, eventRecMask, eventRecPriority, eventRecEvent }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all OIDs for event handling."
+      ::= { rsXx8000DvbNp1RecGroups 5 }
+
+    
+    groupLogbooks OBJECT-GROUP
+      OBJECTS { txBRecNumberOfEntries, txBRecLogbookClear, txBRecLogbookEntryNbr, txBRecLogbookType, txBRecLogbookSlope, 
+        txBRecLogbookMessage, txBRecLogbookDateTime, txA1RecNumberOfEntries, txA1RecLogbookClear, txA1RecLogbookEntryNbr, 
+        txA1RecLogbookType, txA1RecLogbookSlope, txA1RecLogbookMessage, txA1RecLogbookDateTime, txA2RecNumberOfEntries, 
+        txA2RecLogbookClear, txA2RecLogbookEntryNbr, txA2RecLogbookType, txA2RecLogbookSlope, txA2RecLogbookMessage, 
+        txA2RecLogbookDateTime, txA3RecNumberOfEntries, txA3RecLogbookClear, txA3RecLogbookEntryNbr, txA3RecLogbookType, 
+        txA3RecLogbookSlope, txA3RecLogbookMessage, txA3RecLogbookDateTime, txA4RecNumberOfEntries, txA4RecLogbookClear, 
+        txA4RecLogbookEntryNbr, txA4RecLogbookType, txA4RecLogbookSlope, txA4RecLogbookMessage, txA4RecLogbookDateTime, 
+        txA5RecNumberOfEntries, txA5RecLogbookClear, txA5RecLogbookEntryNbr, txA5RecLogbookType, txA5RecLogbookSlope, 
+        txA5RecLogbookMessage, txA5RecLogbookDateTime, txA6RecNumberOfEntries, txA6RecLogbookClear, txA6RecLogbookEntryNbr, 
+        txA6RecLogbookType, txA6RecLogbookSlope, txA6RecLogbookMessage, txA6RecLogbookDateTime, txA7RecNumberOfEntries, 
+        txA7RecLogbookClear, txA7RecLogbookEntryNbr, txA7RecLogbookType, txA7RecLogbookSlope, txA7RecLogbookMessage, 
+        txA7RecLogbookDateTime, txA8RecNumberOfEntries, txA8RecLogbookClear, txA8RecLogbookEntryNbr, txA8RecLogbookType, 
+        txA8RecLogbookSlope, txA8RecLogbookMessage, txA8RecLogbookDateTime }
+      STATUS current
+      DESCRIPTION 
+        "This group includes all values for the logbooks of the receiver modules."
+      ::= { rsXx8000DvbNp1RecGroups 6 }
+
+    
+    groupAlarmObsoleted NOTIFICATION-GROUP
+      NOTIFICATIONS { recRfOn }
+      STATUS obsolete
+      DESCRIPTION 
+        "This group includes all deprecated and obsoleted alarm OIDs."
+      ::= { rsXx8000DvbNp1RecGroups 102 }
+
+    
+    rsXx8000DvbNp1RecCompl OBJECT IDENTIFIER ::= { rsXx8000DvbNp1RecConf 3 }
+
+    
+    rsXx8000DvbNp1RecSingleTuner MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "A single tuner consists of groupSingleTuner and groupAlarmSingleTuner."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupSingleTuner, groupAlarmSingleTuner, groupLogbooks, groupEvents }
+      ::= { rsXx8000DvbNp1RecCompl 1 }
+
+    
+    rsXx8000DvbNp1RecDualTuner MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "A dual tuner consists of groupDualTuner and groupAlarmDualTuner."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupDualTuner, groupAlarmDualTuner, groupLogbooks, groupEvents }
+      ::= { rsXx8000DvbNp1RecCompl 2 }
+
+    
+  
+  END

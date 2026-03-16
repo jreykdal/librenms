@@ -1,0 +1,17 @@
+os: ecreso-aio
+text: 'Ecreso AIO FM transmitter'
+type: appliance
+icon: worldcast
+group: worldcast
+mib_dir: ecreso
+over:
+    - { graph: device_power, text: 'Forward Power' }
+    - { graph: device_dbm, text: 'VSWR' }
+discovery:
+    -
+        sysObjectID: .1.3.6.1.4.1.8072.3.2.10
+        snmpget:
+            oid: .1.3.6.1.4.1.6404.3.1.2.9.1.8.0
+            op: starts
+            value: 'EA'
+              

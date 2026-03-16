@@ -1,0 +1,3560 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **                                                                           
+-- **  COPYRIGHT      (c) 2010 Rohde & Schwarz GmbH & Co. KG                    
+-- **                          Muehldorfstrasse 15                              
+-- **    R & S                 D-81671 Muenchen                                 
+-- **                                                                           
+-- *****************************************************************************
+-- **                                                                           
+-- **  MODULE         RS-XX8000-DVBT2-EXC-MIB                                      
+-- **                                                                           
+-- **  DESCRIPTION    Rohde & Schwarz SNMP                                      
+-- **                                                                           
+-- *****************************************************************************
+-- *****************************************************************************
+
+    RS-XX8000-DVBT2-EXC-MIB DEFINITIONS ::= BEGIN
+ 
+        IMPORTS
+            rsXx8000, eventAlarmClass, rsXx8000MibModule, IndexTransmitter, IndexAB, 
+            SwitchOnOff, FloatingPoint, InputSource, EventMaxEntryNumber, EventMask, 
+            EventPriority, EventState, EventClass, LogbookMaxEntryNumber, Trigger, 
+            LogbookEntrySlope, LogbookEntryMessagesExcTv, EqualizerCalibrationState, ProdInfoModuleNameTv, ReadableString, 
+            FailDelayMode, FailDelayStatus            
+                FROM RS-XX8000-COMMON-MIB            
+            OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP            
+                FROM SNMPv2-CONF            
+            Integer32, Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, 
+            NOTIFICATION-TYPE            
+                FROM SNMPv2-SMI            
+            TruthValue, DateAndTime, TEXTUAL-CONVENTION            
+                FROM SNMPv2-TC;
+    
+    
+        rsXx8000DvbT2ExcMibModule MODULE-IDENTITY 
+            LAST-UPDATED "201509020900Z"		-- September 02, 2015 at 09:00 GMT
+            ORGANIZATION 
+                "Rohde&Schwarz GmbH & Co."
+            CONTACT-INFO 
+                "Torsten Huebscher
+                Department 7TS2
+                Broadcasting Division
+                Muehldorfstrasse 15
+                81671 Munich, Germany
+                torsten.huebscher@rohde-schwarz.com"
+            DESCRIPTION 
+                "This MIB defines transmitting systems from Rohde & Schwarz.
+                
+                Use this MIB if your system meets the following requirements:
+                - series XX8000 (NetCCU800),
+                - DVB-T2
+                - transmitter reserve concept SingleTx, DualDrive,
+                  Active Reserve or Passive Reserve.
+                
+                The following MIBs are related to this:
+                - RS-COMMON-MIB         - mandatory for this MIB
+                - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+            REVISION "201509020900Z"		-- September 02, 2015 at 09:00 GMT
+            DESCRIPTION 
+                "changed range of idTxID to 0..65535"
+            REVISION "201402051300Z"		-- February 05, 2014 at 13:00 GMT
+            DESCRIPTION 
+                "cfgT2MiDejitterBuffer added
+                cfgT2MiStaticSinglePLP added
+                sfnDelayDejitterBuffer added
+                sfnDelayResidualTiming added"
+            REVISION "201308210900Z"		-- August 21, 2013 at 09:00 GMT
+            DESCRIPTION 
+                "cmdExcExpectInputReserve added"
+            REVISION "201303210900Z"		-- March 21, 2013 at 09:00 GMT
+            DESCRIPTION 
+                "Support for individual addressing"
+            REVISION "201206210900Z"		-- June 21, 2012 at 09:00 GMT
+            DESCRIPTION 
+                "cfgT2MiInterface, cfgT2MiPID added"
+            REVISION "201205250900Z"		-- May 25, 2012 at 09:00 GMT
+            DESCRIPTION 
+                "added
+                txExcConfigurationMismatched, txExcConfigurationUnsupported,
+                txExcConfigurationInvalid, txExcEncoderTest
+                added for TSE800 only:
+                chTransmissionFormat miso(2),
+                idStateActualIdSource,
+                statusRequiredInput, statusDetectedInput, statusInputMatched"
+            REVISION "201203220900Z"		-- March 22, 2012 at 09:00 GMT
+            DESCRIPTION 
+                "frT2Version added"
+            REVISION "201203210900Z"		-- March 21, 2012 at 09:00 GMT
+            DESCRIPTION 
+                "chMisoGroup, cfgMisoGroupSource,
+                idStateActualMisoGroupSource added"
+            REVISION "201111220900Z"		-- November 22, 2011 at 09:00 GMT
+            DESCRIPTION 
+                "cfgL1FreqSource, cfgL1Frequency,
+                idStateActualL1FreqSource, idStateActualL1Frequency added"
+            REVISION "201108080900Z"		-- August 08, 2011 at 09:00 GMT
+            DESCRIPTION 
+                "frDataSymbolsPerT2Frame added"
+            REVISION "201106060900Z"		-- June 06, 2011 at 09:00 GMT
+            DESCRIPTION 
+                "iqInput, rsXx8000DvbT2ExcIq added"
+            REVISION "201105271300Z"		-- May 27, 2011 at 13:00 GMT
+            DESCRIPTION 
+                "plp1ID added,
+                plpTable added"
+            REVISION "201105121300Z"		-- May 12, 2011 at 13:00 GMT
+            DESCRIPTION 
+                "cmdExcFailDelayMode, statusFailDelay added
+                "
+            REVISION "201103251300Z"		-- March 25, 2011 at 13:00 GMT
+            DESCRIPTION 
+                "added the following:
+                cmdExcInputCheckTimeForward, cmdExcInputCheckTimeSwitchback,
+                cmdExcInputMuteOnFail, cmdExcFrequency,
+                cmdExcReferenceSource, cmdExcMuteOnPPSFail,
+                cmdExcMuteOnReferenceFail, cmdExcRefFailDelayTime,
+                cmdExcTypeLossOfInput, cmdExcRfOutput,
+                cmdExcRfOutputAttenuation, cmdExcRfOutputRfSlope,
+                cmdExcRfOutputModulationSlope, cmdExcRfIqAdjustTestsignal,
+                cmdExcRfIqAdjustBiasCoarseI, cmdExcRfIqAdjustBiasCoarseQ,
+                cmdExcRfIqAdjustBiasFineI, cmdExcRfIqAdjustBiasFineQ,
+                cmdExcRfIqAdjustGainI, cmdExcRfIqAdjustGainQ,
+                cmdExcRfIqAdjustPhase, cmdExcInpAutoReadyAfterChangeOv,
+                cmdExcInputFailDelayTime, cmdExcMonitoringOutput,
+                cmdExcOcxoAdjust,
+                statusTable, precorrectionTable, logbook,
+                productInfoTable,
+                txExcRfLoop, txExcSelfTest, txExcOutputOpen,
+                txExcFifoWarning, txExcWrongDatarate"
+            REVISION "201102211300Z"		-- February 21, 2011 at 13:00 GMT
+            DESCRIPTION 
+                "commandsTable added,
+                notifications added"
+            REVISION "201010141300Z"		-- October 14, 2010 at 13:00 GMT
+            DESCRIPTION 
+                "identificationStateTable,
+                inputTable, cfgSource, plp1FECblocks added"
+            REVISION "201006291300Z"		-- June 29, 2010 at 13:00 GMT
+            DESCRIPTION 
+                "SFN for Sx801 added"
+            REVISION "201004261300Z"		-- April 26, 2010 at 13:00 GMT
+            DESCRIPTION 
+                "initial version"
+            REVISION "201003171300Z"		-- March 17, 2010 at 13:00 GMT
+            DESCRIPTION 
+                "preliminary version"
+            ::= { rsXx8000MibModule 212 }
+
+        
+    
+--
+-- Textual conventions
+--
+    
+        ValueTypeIndex ::= TEXTUAL-CONVENTION
+            STATUS current
+            DESCRIPTION 
+                "This textual convention is for distinguishing instances
+                of a configuration object:
+                granted(1)
+                - The instance shows the accepted value.
+                  This instance is read-only.
+                customerSpecified(2)
+                - The instance is for changing the value.
+                  The exciter software checks whether the new value is admissible
+                  with respect to the other customer specified values.
+                  If not, the granted value will not change.
+                active(3)
+                - The instance shows the currently active value.
+                  This instance is read-only."
+            SYNTAX INTEGER
+                {
+                granted(1),
+                customerSpecified(2),
+                active(3)
+                }
+
+    
+--
+-- Node definitions
+--
+    
+        rsXx8000DvbT2Exc OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION 
+                "Xx8000 DVB-T2 exciter."
+            ::= { rsXx8000 212 }
+
+        
+        rsXx8000DvbT2ExcObjs OBJECT IDENTIFIER ::= { rsXx8000DvbT2Exc 1 }
+
+        
+        identificationTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IdentificationEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Settings for transmitter identification."
+            ::= { rsXx8000DvbT2ExcObjs 1 }
+
+        
+        identificationEntry OBJECT-TYPE
+            SYNTAX IdentificationEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated device."
+            INDEX { idTxIdx, idExcIdx }
+            ::= { identificationTable 1 }
+
+        
+        IdentificationEntry ::=
+            SEQUENCE { 
+                idTxIdx
+                    IndexTransmitter,
+                idExcIdx
+                    IndexAB,
+                idTxID
+                    Integer32,
+                idCellID
+                    Integer32,
+                idNetworkID
+                    Integer32,
+                idT2SystemID
+                    Integer32
+             }
+
+        idTxIdx OBJECT-TYPE
+            SYNTAX IndexTransmitter
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The transmitter index. "
+            ::= { identificationEntry 1 }
+
+        
+        idExcIdx OBJECT-TYPE
+            SYNTAX IndexAB
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This index distinguishes the exiters.
+                Necessary if you have dual drive transmitters."
+            ::= { identificationEntry 2 }
+
+        
+        idTxID OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Availability of transmitter identification signals within the current geographic cell.
+                When no transmitter identification signals are used this field is set to 0.
+                All other bit combinations are reserved for future use."
+            ::= { identificationEntry 3 }
+
+        
+        idCellID OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This ID uniquely identifies a geographic cell in a DVB-T2 network.
+                A DVB-T2 cell coverage area may consist of one or more frequencies,
+                depending on the number of frequencies used per T2 system.
+                If the provision of the cell ID is not foreseen, this field shall be set to 0."
+            ::= { identificationEntry 4 }
+
+        
+        idNetworkID OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This ID uniquely identifies the current DVB-T2 network."
+            ::= { identificationEntry 5 }
+
+        
+        idT2SystemID OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This ID uniquely identifies a T2 system within the DVB-T2 network."
+            ::= { identificationEntry 6 }
+
+        
+        configTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF ConfigEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "General configuration."
+            ::= { rsXx8000DvbT2ExcObjs 2 }
+
+        
+        configEntry OBJECT-TYPE
+            SYNTAX ConfigEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated device."
+            AUGMENTS { identificationEntry }
+            ::= { configTable 1 }
+
+        
+        ConfigEntry ::=
+            SEQUENCE { 
+                cfgNetworkMode
+                    INTEGER,
+                cfgSource
+                    INTEGER,
+                cfgIdSource
+                    INTEGER,
+                cfgL1FreqSource
+                    INTEGER,
+                cfgL1Frequency
+                    Unsigned32,
+                cfgMisoGroupSource
+                    INTEGER,
+                cfgT2MiInterface
+                    SwitchOnOff,
+                cfgT2MiPID
+                    Unsigned32,
+                cfgTxTimeOffsetSource
+                    INTEGER,
+                cfgT2MiDejitterBuffer
+                    Unsigned32,
+                cfgT2MiStaticSinglePLP
+                    SwitchOnOff
+             }
+
+        cfgNetworkMode OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                mfn(1),
+                sfn(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Network Mode."
+            ::= { configEntry 3 }
+
+        
+        cfgSource OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                manual(1),
+                l1(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Selects the configuration mode:
+                manual or automatic from the L1 data.
+                
+                For TSE800 devices this value is read-only.
+                The configuration mode is then selected with cfgT2MiInterface:
+                on(1)  - configuration source L1 data
+                off(2) - configuration source manual"
+            ::= { configEntry 4 }
+
+        
+        cfgIdSource OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                manual(1),
+                l1(2),
+                ia(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "cell ID Source:
+                manual(1) - taken from idCellID
+                l1(2)     - taken from L1 frame information
+                ia(3)     - individual addressing (only for TSE800)"
+            ::= { configEntry 5 }
+
+        
+        cfgL1FreqSource OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                manual(1),
+                l1(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Selects the source of the L1 frequency:
+                manual (from cfgL1Frequency) or automatic from the L1 data."
+            ::= { configEntry 6 }
+
+        
+        cfgL1Frequency OBJECT-TYPE
+            SYNTAX Unsigned32
+            UNITS "Hz"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Defines the L1 frequency if cfgL1FreqSource is manual(1)."
+            ::= { configEntry 7 }
+
+        
+        cfgMisoGroupSource OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                manual(2),
+                ia(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The MISO group can be configured either manually directly
+                on the transmitter or automatically using the
+                'Individual Addressing' (IA) data via the DVB_T2 gateway.
+                The group can be switched at any time without signal interruption."
+            ::= { configEntry 8 }
+
+        
+        cfgT2MiInterface OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "on(1) - Uses the incoming T2-MI stream from a DVB-T2 gateway
+                         to configure the Modulator.
+                off(2) - Uses the incoming MPEG transport stream directly
+                         as payload for single PLP."
+            ::= { configEntry 9 }
+
+        
+        cfgT2MiPID OBJECT-TYPE
+            SYNTAX Unsigned32 (0..8191)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Only if cfgT2MiInterface is on(1):
+                the packet ID of the T2-MI elementary stream."
+            ::= { configEntry 10 }
+
+        
+        cfgTxTimeOffsetSource OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                ia(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Source for transmitter specific transmitting delay.
+                If a T2-MI interface is used, you may choose:
+                ia(2)  - take from IA parameters
+                off(1) - deactivated
+                If TS feed is used, no choice is possible."
+            ::= { configEntry 11 }
+
+        
+        cfgT2MiDejitterBuffer OBJECT-TYPE
+            SYNTAX Unsigned32 (0..1000)
+            UNITS "ms"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Only if cfgT2MiInterface is on(1):
+                the de-jitter buffer delay."
+            ::= { configEntry 12 }
+
+        
+        cfgT2MiStaticSinglePLP OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Only if cfgT2MiInterface is on(1):
+                This allows to adapt the internal processing to the configuration in the T2MI stream. 
+                None: This is suitable for all configurations. Static Single PLP: A shorter processing 
+                delay is achieved by assuming, that there is only one PLP with PLP_NUM_BLOCKS 
+                equal to PLP_NUM_BLOCKS_MAX. "
+            ::= { configEntry 13 }
+
+        
+-- Configuration possibilities for manual configuration.
+        configSourceManual OBJECT IDENTIFIER ::= { rsXx8000DvbT2ExcObjs 3 }
+
+        
+        channelTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF ChannelEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Channel Configuration."
+            ::= { configSourceManual 1 }
+
+        
+        channelEntry OBJECT-TYPE
+            SYNTAX ChannelEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated device and value type."
+            INDEX { idTxIdx, idExcIdx, chValueTypeIdx }
+            ::= { channelTable 1 }
+
+        
+        ChannelEntry ::=
+            SEQUENCE { 
+                chValueTypeIdx
+                    ValueTypeIndex,
+                chTransmissionFormat
+                    INTEGER,
+                chBandwidth
+                    INTEGER,
+                chFFTsize
+                    INTEGER,
+                chFFTextend
+                    SwitchOnOff,
+                chGuardIntervall
+                    INTEGER,
+                chPilotPattern
+                    INTEGER,
+                chPAPR
+                    INTEGER,
+                chMisoGroup
+                    INTEGER
+             }
+
+        chValueTypeIdx OBJECT-TYPE
+            SYNTAX ValueTypeIndex
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "see description of ValueTypeIndex"
+            ::= { channelEntry 3 }
+
+        
+        chTransmissionFormat OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                siso(1),
+                miso(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Transmission format.
+                miso(2) for TSE800 only."
+            ::= { channelEntry 4 }
+
+        
+        chBandwidth OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                mhz5(1),
+                mhz6(2),
+                mhz7(3),
+                mhz8(4)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Channel bandwidth.
+                mhz5(1) - 5 MHz
+                mhz6(2) - 6 MHz
+                mhz7(3) - 7 MHz
+                mhz8(4) - 8 MHz"
+            ::= { channelEntry 5 }
+
+        
+        chFFTsize OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                k2(1),
+                k4(2),
+                k8(3),
+                k1(4),
+                k16(5),
+                k32(6)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "FFT Size.
+                k2(1)  ->  2 K
+                k4(2)  ->  4 K
+                k8(3)  ->  8 K
+                k1(4)  ->  1 K
+                k16(5) -> 16 K
+                k32(6) -> 32 K"
+            ::= { channelEntry 6 }
+
+        
+        chFFTextend OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "When this field is set to on(1), the extended carrier mode is used.
+                If this field is set to off(2), the normal carrier mode is used.
+                Only for 8K, 16K or 32K FFT size."
+            ::= { channelEntry 7 }
+
+        
+        chGuardIntervall OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                oneDiv32(1),
+                oneDiv16(2),
+                oneDiv8(3),
+                oneDiv4(4),
+                oneDiv128(5),
+                nineteenDiv128(6),
+                nineteenDiv256(7)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Guard interval of the super-frame.
+                oneDiv32(1)       -> 1/32
+                oneDiv16(2)       -> 1/16
+                oneDiv8(3)        -> 1/8
+                oneDiv4(4)        -> 1/4
+                oneDiv128(5)      -> 1/128
+                nineteenDiv128(6) -> 19/128
+                nineteenDiv256(7) -> 19/256"
+            ::= { channelEntry 8 }
+
+        
+        chPilotPattern OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                pp1(1),
+                pp2(2),
+                pp3(3),
+                pp4(4),
+                pp5(5),
+                pp6(6),
+                pp7(7),
+                pp8(8)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The scattered pilot pattern used for the data OFDM symbols."
+            ::= { channelEntry 9 }
+
+        
+        chPAPR OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                none(1),
+                ace(2),
+                tr(3),
+                aceTr(4)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "PAPR reduction used, if any.
+                
+                If the corresponding frT2Version
+                (customerSpecified or active instance)
+                is equal v111(1)
+                the enumerated values denote the following:
+                none(1)  - no PAPR reduction method used
+                ace(2)   - Active Constellation Extension (ACE)
+                tr(3)    - Tone Reservation (TR)
+                aceTr(4) - ACE & TR
+                
+                If the corresponding frT2Version is v121(2) or higher
+                the enumerated values denote the following:
+                none(1)  - L1-ACE & P2-TR
+                ace(2)   - L1-ACE & ACE
+                tr(3)    - L1-ACE & TR
+                aceTr(4) - L1-ACE & ACE & TR
+                "
+            ::= { channelEntry 10 }
+
+        
+        chMisoGroup OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                group1(2),
+                group2(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Here you can assign one of two MISO groups to the transmitter manually.
+                This setting has an effect only if chMisoGroupSource is set to manual(2).
+                The value off(1) must not be set."
+            ::= { channelEntry 11 }
+
+        
+        frameStructureTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF FrameStructureEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Frame structure configuration."
+            ::= { configSourceManual 2 }
+
+        
+        frameStructureEntry OBJECT-TYPE
+            SYNTAX FrameStructureEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated device and value type."
+            INDEX { idTxIdx, idExcIdx, frValueTypeIdx }
+            ::= { frameStructureTable 1 }
+
+        
+        FrameStructureEntry ::=
+            SEQUENCE { 
+                frValueTypeIdx
+                    ValueTypeIndex,
+                frSymbolsPerT2Frame
+                    Integer32,
+                frT2FramesPerSuperFrame
+                    Integer32,
+                frDataSymbolsPerT2Frame
+                    Integer32,
+                frT2Version
+                    INTEGER
+             }
+
+        frValueTypeIdx OBJECT-TYPE
+            SYNTAX ValueTypeIndex
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "see description of ValueTypeIndex"
+            ::= { frameStructureEntry 3 }
+
+        
+        frSymbolsPerT2Frame OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The total number of symbols in a frame (excluding P1)."
+            ::= { frameStructureEntry 4 }
+
+        
+        frT2FramesPerSuperFrame OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The number of T2-frames in a super-frame is a configurable parameter."
+            ::= { frameStructureEntry 5 }
+
+        
+        frDataSymbolsPerT2Frame OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "OFDM Data Symbols per T2 Frame (excluding P1 and P2)."
+            ::= { frameStructureEntry 6 }
+
+        
+        frT2Version OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                v111(1),
+                v121(2),
+                v131(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "v111(1) - version 1.1.1
+                v121(2) - version 1.2.1
+                v131(3) - version 1.3.1"
+            ::= { frameStructureEntry 7 }
+
+        
+        layer1SignallingTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF Layer1SignallingEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Layer 1 signalling configuration."
+            ::= { configSourceManual 3 }
+
+        
+        layer1SignallingEntry OBJECT-TYPE
+            SYNTAX Layer1SignallingEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated device and value type."
+            INDEX { idTxIdx, idExcIdx, l1ValueTypeIdx }
+            ::= { layer1SignallingTable 1 }
+
+        
+        Layer1SignallingEntry ::=
+            SEQUENCE { 
+                l1ValueTypeIdx
+                    ValueTypeIndex,
+                l1NumberOfAuxStreams
+                    Integer32,
+                l1Modulation
+                    INTEGER,
+                l1CodeRate
+                    INTEGER,
+                l1FECtype
+                    INTEGER,
+                l1Repetition
+                    SwitchOnOff
+             }
+
+        l1ValueTypeIdx OBJECT-TYPE
+            SYNTAX ValueTypeIndex
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "see description of ValueTypeIndex"
+            ::= { layer1SignallingEntry 3 }
+
+        
+        l1NumberOfAuxStreams OBJECT-TYPE
+            SYNTAX Integer32 (0)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The number of auxiliary streams.
+                Zero means no auxiliary streams are used.
+                
+                Currently not implemented."
+            ::= { layer1SignallingEntry 4 }
+
+        
+        l1Modulation OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                bpsk(1),
+                qpsk(2),
+                qam16(3),
+                qam64(4)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The constellation of the L1-post signalling data block."
+            ::= { layer1SignallingEntry 5 }
+
+        
+        l1CodeRate OBJECT-TYPE
+            SYNTAX INTEGER { oneHalf(1) }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The coding of the L1-post signalling data block."
+            ::= { layer1SignallingEntry 6 }
+
+        
+        l1FECtype OBJECT-TYPE
+            SYNTAX INTEGER { ldpc16K(1) }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The type of the L1 FEC used for the L1-post signalling data block."
+            ::= { layer1SignallingEntry 7 }
+
+        
+        l1Repetition OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Repetition of L1-post dynamic data."
+            ::= { layer1SignallingEntry 8 }
+
+        
+        plp1Table OBJECT-TYPE
+            SYNTAX SEQUENCE OF Plp1Entry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Configuration of the only physical layer pipe."
+            ::= { configSourceManual 4 }
+
+        
+        plp1Entry OBJECT-TYPE
+            SYNTAX Plp1Entry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated device and value type."
+            INDEX { idTxIdx, idExcIdx, plp1ValueTypeIdx }
+            ::= { plp1Table 1 }
+
+        
+        Plp1Entry ::=
+            SEQUENCE { 
+                plp1ValueTypeIdx
+                    ValueTypeIndex,
+                plp1GroupID
+                    Integer32,
+                plp1Type
+                    INTEGER,
+                plp1Modulation
+                    INTEGER,
+                plp1Rotation
+                    SwitchOnOff,
+                plp1CodeRate
+                    INTEGER,
+                plp1FECtype
+                    INTEGER,
+                plp1TimeInterleaverType
+                    INTEGER,
+                plp1TimeInterleaverLength
+                    Integer32,
+                plp1BasebandMode
+                    INTEGER,
+                plp1FECblocks
+                    Unsigned32,
+                plp1ID
+                    Integer32
+             }
+
+        plp1ValueTypeIdx OBJECT-TYPE
+            SYNTAX ValueTypeIndex
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "see description of ValueTypeIndex"
+            ::= { plp1Entry 3 }
+
+        
+        plp1GroupID OBJECT-TYPE
+            SYNTAX Integer32 (0..255)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "identifies with which PLP group within the T2 system the current PLP is
+                associated."
+            ::= { plp1Entry 4 }
+
+        
+        plp1Type OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                common(1),
+                dataType1(2),
+                dataType2(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "PLP type."
+            ::= { plp1Entry 5 }
+
+        
+        plp1Modulation OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                qpsk(1),
+                qam16(2),
+                qam64(3),
+                qam256(4)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "modulation used by the PLP."
+            ::= { plp1Entry 6 }
+
+        
+        plp1Rotation OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Constellation rotation."
+            ::= { plp1Entry 7 }
+
+        
+        plp1CodeRate OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                oneHalf(1),
+                threeFifth(2),
+                twoThird(3),
+                threeFourth(4),
+                fourFifth(5),
+                fiveSixth(6)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "code rate used by the PLP."
+            ::= { plp1Entry 8 }
+
+        
+        plp1FECtype OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                ldpc16K(1),
+                ldpc64K(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "FEC type used by the PLP."
+            ::= { plp1Entry 9 }
+
+        
+        plp1TimeInterleaverType OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                single(1),
+                multi(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "type of time-interleaving"
+            ::= { plp1Entry 10 }
+
+        
+        plp1TimeInterleaverLength OBJECT-TYPE
+            SYNTAX Integer32 (0..255)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Interpretation depends on the value of plp1TimeInterleaverType."
+            ::= { plp1Entry 11 }
+
+        
+        plp1BasebandMode OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                highEfficiency(1),
+                normal(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Baseband mode."
+            ::= { plp1Entry 12 }
+
+        
+        plp1FECblocks OBJECT-TYPE
+            SYNTAX Unsigned32 (0..65535)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "number of FEC blocks
+                
+                There is no customerSpecified(2) instance of this object."
+            ::= { plp1Entry 13 }
+
+        
+        plp1ID OBJECT-TYPE
+            SYNTAX Integer32 (0..255)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "identifies uniquely a PLP within a T2 system"
+            ::= { plp1Entry 14 }
+
+        
+        identificationStateTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IdentificationStateEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Current transmitter identification values."
+            ::= { rsXx8000DvbT2ExcObjs 4 }
+
+        
+        identificationStateEntry OBJECT-TYPE
+            SYNTAX IdentificationStateEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated device."
+            AUGMENTS { identificationEntry }
+            ::= { identificationStateTable 1 }
+
+        
+        IdentificationStateEntry ::=
+            SEQUENCE { 
+                idStateCellID
+                    Integer32,
+                idStateNetworkID
+                    Integer32,
+                idStateT2SystemID
+                    Integer32,
+                idStateActualL1FreqSource
+                    INTEGER,
+                idStateActualL1Frequency
+                    Unsigned32,
+                idStateActualMisoGroupSource
+                    INTEGER,
+                idStateActualIdSource
+                    INTEGER,
+                idStateActualTxTimeOffsetSource
+                    INTEGER
+             }
+
+        idStateCellID OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This ID uniquely identifies a geographic cell in a DVB-T2 network.
+                A DVB-T2 cell coverage area may consist of one or more frequencies,
+                depending on the number of frequencies used per T2 system."
+            ::= { identificationStateEntry 4 }
+
+        
+        idStateNetworkID OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This ID uniquely identifies the current DVB-T2 network."
+            ::= { identificationStateEntry 5 }
+
+        
+        idStateT2SystemID OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This ID uniquely identifies a T2 system within the DVB-T2 network."
+            ::= { identificationStateEntry 6 }
+
+        
+        idStateActualL1FreqSource OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                manual(1),
+                l1(2)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The actual L1 frequency source."
+            ::= { identificationStateEntry 7 }
+
+        
+        idStateActualL1Frequency OBJECT-TYPE
+            SYNTAX Unsigned32
+            UNITS "Hz"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The actual L1 frequency."
+            ::= { identificationStateEntry 8 }
+
+        
+        idStateActualMisoGroupSource OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                manual(2),
+                ia(3)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "off(1) - transmission system not in MISO
+                "
+            ::= { identificationStateEntry 9 }
+
+        
+        idStateActualIdSource OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                manual(1),
+                l1(2),
+                ia(3)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Actual cell ID source."
+            ::= { identificationStateEntry 10 }
+
+        
+        idStateActualTxTimeOffsetSource OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                ia(2)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Actual source for transmitter specific transmitting delay.
+                off(1) - deactivated
+                ia(2)  - take from IA parameters"
+            ::= { identificationStateEntry 11 }
+
+        
+        commandsTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF CommandsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This table contains important commands for the device."
+            ::= { rsXx8000DvbT2ExcObjs 5 }
+
+        
+        commandsEntry OBJECT-TYPE
+            SYNTAX CommandsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated device."
+            AUGMENTS { identificationEntry }
+            ::= { commandsTable 1 }
+
+        
+        CommandsEntry ::=
+            SEQUENCE { 
+                cmdExcOpModeInputAutomatic
+                    SwitchOnOff,
+                cmdExcPreselectInput
+                    INTEGER,
+                cmdExcInputPriority
+                    INTEGER,
+                cmdExcInputCheckTimeForward
+                    Integer32,
+                cmdExcInputCheckTimeSwitchback
+                    Integer32,
+                cmdExcInputMuteOnFail
+                    INTEGER,
+                cmdExcFrequency
+                    Integer32,
+                cmdExcReferenceSource
+                    INTEGER,
+                cmdExcMuteOnPPSFail
+                    INTEGER,
+                cmdExcMuteOnReferenceFail
+                    INTEGER,
+                cmdExcRefFailDelayTime
+                    Integer32,
+                cmdExcTypeLossOfInput
+                    INTEGER,
+                cmdExcRfOutput
+                    SwitchOnOff,
+                cmdExcRfOutputAttenuation
+                    Integer32,
+                cmdExcRfOutputRfSlope
+                    FloatingPoint,
+                cmdExcRfOutputModulationSlope
+                    FloatingPoint,
+                cmdExcRfIqAdjustTestsignal
+                    SwitchOnOff,
+                cmdExcRfIqAdjustBiasCoarseI
+                    Integer32,
+                cmdExcRfIqAdjustBiasCoarseQ
+                    Integer32,
+                cmdExcRfIqAdjustBiasFineI
+                    Integer32,
+                cmdExcRfIqAdjustBiasFineQ
+                    Integer32,
+                cmdExcRfIqAdjustGainI
+                    Integer32,
+                cmdExcRfIqAdjustGainQ
+                    Integer32,
+                cmdExcRfIqAdjustPhase
+                    FloatingPoint,
+                cmdExcInput1Source
+                    InputSource,
+                cmdExcInput2Source
+                    InputSource,
+                cmdExcInpAutoReadyAfterChangeOv
+                    SwitchOnOff,
+                cmdExcInputFailDelayTime
+                    Integer32,
+                cmdExcTransmitterType
+                    INTEGER,
+                cmdExcRfWarningLimit
+                    FloatingPoint,
+                cmdExcRfFailLimit
+                    FloatingPoint,
+                cmdExcOutputPower
+                    FloatingPoint,
+                cmdExcMonitoringOutput
+                    INTEGER,
+                cmdExcOcxoAdjust
+                    Integer32,
+                cmdExcExpectInputReserve
+                    SwitchOnOff,
+                cmdExcFailDelayMode
+                    FailDelayMode
+             }
+
+        cmdExcOpModeInputAutomatic OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Activates/deactivates the input automatic.
+                If input automatic is active 
+                and a loss of input signal is detected on the current input
+                the reserve input will be used instead."
+            ::= { commandsEntry 31 }
+
+        
+        cmdExcPreselectInput OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                input1(1),
+                input2(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the preselection of a transmitters input."
+            ::= { commandsEntry 32 }
+
+        
+        cmdExcInputPriority OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                equal(1),
+                prior(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Equal: There are no differences between both inputs. 
+                       If a failure on the current input is detected it will be switched to the reserve input. 
+                       It stays there until the reserve shows a failure. 
+                Prior: Whenever possible a certain input shall be used. 
+                       If a failure is detected the reserve will be used as short as possible."
+            ::= { commandsEntry 41 }
+
+        
+        cmdExcInputCheckTimeForward OBJECT-TYPE
+            SYNTAX Integer32 (0..600)
+            UNITS "seconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This time has to elapse before the current input switches 
+                to the reserve input."
+            ::= { commandsEntry 42 }
+
+        
+        cmdExcInputCheckTimeSwitchback OBJECT-TYPE
+            SYNTAX Integer32 (0..600)
+            UNITS "seconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This time has to elapse before the automatic switches back 
+                from the reserve to a preselected input. 
+                This value has no effect if the priority is set to equal."
+            ::= { commandsEntry 43 }
+
+        
+        cmdExcInputMuteOnFail OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                mute(1),
+                noMute(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "If a loss of input signal is detected, the exciter mutes."
+            ::= { commandsEntry 44 }
+
+        
+        cmdExcFrequency OBJECT-TYPE
+            SYNTAX Integer32 (47000000..1500000000)
+            UNITS "Hertz"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This is the RF frequency."
+            ::= { commandsEntry 64 }
+
+        
+        cmdExcReferenceSource OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                intern(1),
+                extern5Mhz(2),
+                extern10Mhz(3),
+                extern1PPS(4),
+                internGPS(5)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The Source of the reference signal.
+                The value internGPS is not valid for SX800."
+            ::= { commandsEntry 65 }
+
+        
+        cmdExcMuteOnPPSFail OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                onlyAtStartup(2),
+                afterFailDelayTime(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Select the behaviour if the external second pulse is not available."
+            ::= { commandsEntry 66 }
+
+        
+        cmdExcMuteOnReferenceFail OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                onlyAtStartup(2),
+                afterFailDelayTime(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Select the behaviour if the external reference is not available."
+            ::= { commandsEntry 67 }
+
+        
+        cmdExcRefFailDelayTime OBJECT-TYPE
+            SYNTAX Integer32 (0..24)
+            UNITS "Hours"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the time after the RF will be muted in case of a reference problem.
+                Zero hours means react immediately."
+            ::= { commandsEntry 68 }
+
+        
+        cmdExcTypeLossOfInput OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                warning(1),
+                fault(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "If the input signal is lost, either a warning or a fault can be generated.
+                If you select fault here, a switchover to the reserve exciter will be executed 
+                when input signal is lost."
+            ::= { commandsEntry 69 }
+
+        
+        cmdExcRfOutput OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Turns on/switches off the output signal. This switch takes the same effect as the switch on the frontpanel of the exciter."
+            ::= { commandsEntry 70 }
+
+        
+        cmdExcRfOutputAttenuation OBJECT-TYPE
+            SYNTAX Integer32 (0..9)
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Activates internal attenuators to reduce the output level of the exciter.
+                Adjustable in steps of 3 dB only."
+            ::= { commandsEntry 73 }
+
+        
+        cmdExcRfOutputRfSlope OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Percent"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts a slope in the RF signal (-50.0 ... 50.0)."
+            ::= { commandsEntry 74 }
+
+        
+        cmdExcRfOutputModulationSlope OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Percent"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Modulation slope (-50.0 ... 50.0)."
+            ::= { commandsEntry 75 }
+
+        
+        cmdExcRfIqAdjustTestsignal OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Generates a test signal to adjust the IQ modulation. It is necessary to disconnect the rf-cable to the output stages."
+            ::= { commandsEntry 78 }
+
+        
+        cmdExcRfIqAdjustBiasCoarseI OBJECT-TYPE
+            SYNTAX Integer32 (-1023..1023)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the offset for I in huge steps."
+            ::= { commandsEntry 79 }
+
+        
+        cmdExcRfIqAdjustBiasCoarseQ OBJECT-TYPE
+            SYNTAX Integer32 (-1023..1023)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the offset for Q in huge steps."
+            ::= { commandsEntry 80 }
+
+        
+        cmdExcRfIqAdjustBiasFineI OBJECT-TYPE
+            SYNTAX Integer32 (-32767..32767)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the offset for I in small steps."
+            ::= { commandsEntry 81 }
+
+        
+        cmdExcRfIqAdjustBiasFineQ OBJECT-TYPE
+            SYNTAX Integer32 (-32767..32767)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the offset for Q in small steps."
+            ::= { commandsEntry 82 }
+
+        
+        cmdExcRfIqAdjustGainI OBJECT-TYPE
+            SYNTAX Integer32 (0..255)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the gain for I in small steps."
+            ::= { commandsEntry 83 }
+
+        
+        cmdExcRfIqAdjustGainQ OBJECT-TYPE
+            SYNTAX Integer32 (0..255)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the gain for Q in small steps."
+            ::= { commandsEntry 84 }
+
+        
+        cmdExcRfIqAdjustPhase OBJECT-TYPE
+            SYNTAX FloatingPoint
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the phase between I and Q (-14.000 ... 14.000)."
+            ::= { commandsEntry 85 }
+
+        
+        cmdExcInput1Source OBJECT-TYPE
+            SYNTAX InputSource
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Source for input 1."
+            ::= { commandsEntry 86 }
+
+        
+        cmdExcInput2Source OBJECT-TYPE
+            SYNTAX InputSource
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Source for input 2."
+            ::= { commandsEntry 87 }
+
+        
+        cmdExcInpAutoReadyAfterChangeOv OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Input automatic ready after change over."
+            ::= { commandsEntry 88 }
+
+        
+        cmdExcInputFailDelayTime OBJECT-TYPE
+            SYNTAX Integer32 (0..600)
+            UNITS "Seconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The time between detecting a loss of input signal and displaying a failure."
+            ::= { commandsEntry 89 }
+
+        
+        cmdExcTransmitterType OBJECT-TYPE
+            SYNTAX INTEGER { dvbT2(9) }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "the TV standard of the transmitter"
+            ::= { commandsEntry 90 }
+
+        
+        cmdExcRfWarningLimit OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Warning limit for the RF control.
+                min: -15.0, max: 0.0"
+            ::= { commandsEntry 97 }
+
+        
+        cmdExcRfFailLimit OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Fault limit for the RF control.
+                min: -15.0, max: 0.0"
+            ::= { commandsEntry 98 }
+
+        
+        cmdExcOutputPower OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "W"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "amplifier output power
+                0 ... 400 W"
+            ::= { commandsEntry 99 }
+
+        
+        cmdExcMonitoringOutput OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                reference10MHz(2),
+                generated1PPS(3),
+                kHz1(4),
+                pulse1PPS(5)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Selects which signal appears at the monitoring output."
+            ::= { commandsEntry 110 }
+
+        
+        cmdExcOcxoAdjust OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the frequency of the internal 10 MHz reference.
+                This value only takes effect if the reference source 'internal' is selected."
+            ::= { commandsEntry 111 }
+
+        
+        cmdExcExpectInputReserve OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "If on(1) a warning will be generated in case second input is missing."
+            ::= { commandsEntry 112 }
+
+        
+        cmdExcFailDelayMode OBJECT-TYPE
+            SYNTAX FailDelayMode
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Condition when the fail delay time is used."
+            ::= { commandsEntry 115 }
+
+        
+        statusTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF StatusEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Exciter status values."
+            ::= { rsXx8000DvbT2ExcObjs 6 }
+
+        
+        statusEntry OBJECT-TYPE
+            SYNTAX StatusEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A row (an entry) for one exciter."
+            AUGMENTS { identificationEntry }
+            ::= { statusTable 1 }
+
+        
+        StatusEntry ::=
+            SEQUENCE { 
+                statusRfOutputAgcRegulation
+                    FloatingPoint,
+                statusRfIqAdjustLO1Frequency
+                    FloatingPoint,
+                statusNominalPower
+                    Integer32,
+                statusVSWR
+                    FloatingPoint,
+                statusAmplifierControl
+                    INTEGER,
+                statusFailDelay
+                    FailDelayStatus,
+                statusRequiredInput
+                    INTEGER,
+                statusDetectedInput
+                    INTEGER,
+                statusInputMatched
+                    INTEGER,
+                statusTxTimeOffset
+                    FloatingPoint,
+                statusIaState
+                    INTEGER
+             }
+
+        statusRfOutputAgcRegulation OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Percent"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows the operating point of the RF regulator.
+                The shown value should be around 50 per cent."
+            ::= { statusEntry 4 }
+
+        
+        statusRfIqAdjustLO1Frequency OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "MHz"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Modulator LO1."
+            ::= { statusEntry 6 }
+
+        
+        statusNominalPower OBJECT-TYPE
+            SYNTAX Integer32
+            UNITS "W"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Description."
+            ::= { statusEntry 7 }
+
+        
+        statusVSWR OBJECT-TYPE
+            SYNTAX FloatingPoint
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Voltage Standing Wave Ratio"
+            ::= { statusEntry 9 }
+
+        
+        statusAmplifierControl OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                on(1),
+                off(2)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Amplifier control status"
+            ::= { statusEntry 20 }
+
+        
+        statusFailDelay OBJECT-TYPE
+            SYNTAX FailDelayStatus
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows whether the fail delay time is qualified."
+            ::= { statusEntry 40 }
+
+        
+        statusRequiredInput OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                internal(3),
+                mpeg(4),
+                t2mi(5)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The current required input state.
+                off(1) - startup value, only
+                internal(3) - test generator
+                mpeg(4), t2mi(5) - requirement towards an active input"
+            ::= { statusEntry 60 }
+
+        
+        statusDetectedInput OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                unlocked(2),
+                internal(3),
+                mpeg(4),
+                t2mi(5)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The current input state.
+                internal(3) - test generator
+                unlocked(2), mpeg(4), t2mi(5) - status of the active input"
+            ::= { statusEntry 61 }
+
+        
+        statusInputMatched OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                unchecked(1),
+                warning(2),
+                ok(3)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Result of comparison of statusRequiredInput and statusDetectedInput.
+                Warning only possible with T2-MI."
+            ::= { statusEntry 62 }
+
+        
+        statusTxTimeOffset OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "micro second"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Transmitter specific transmitting delay."
+            ::= { statusEntry 63 }
+
+        
+        statusIaState OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                warning(2),
+                ok(3)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Individual addressing state."
+            ::= { statusEntry 64 }
+
+        
+        precorrectionTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF PrecorrectionEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Exciter precorrection values and commands."
+            ::= { rsXx8000DvbT2ExcObjs 7 }
+
+        
+        precorrectionEntry OBJECT-TYPE
+            SYNTAX PrecorrectionEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A row (an entry) for one exciter."
+            AUGMENTS { identificationEntry }
+            ::= { precorrectionTable 1 }
+
+        
+        PrecorrectionEntry ::=
+            SEQUENCE { 
+                precLinCorrection
+                    SwitchOnOff,
+                precLinAutomaticADE
+                    INTEGER,
+                precLinMaxAmplitudeRipple
+                    FloatingPoint,
+                precLinMaxGroupDelayRipple
+                    Integer32,
+                precLinAmplitudeRipple
+                    FloatingPoint,
+                precLinGroupDelayRipple
+                    Integer32,
+                precLinInputLevel
+                    INTEGER,
+                precLinAutomatic
+                    INTEGER,
+                precNonlinCorrection
+                    SwitchOnOff,
+                precNonlinAutomaticADE
+                    INTEGER,
+                precNonlinThresholdShoulders
+                    FloatingPoint,
+                precNonlinShoulderLeft
+                    FloatingPoint,
+                precNonlinShoulderRight
+                    FloatingPoint,
+                precNonlinInputLevel
+                    INTEGER,
+                precNonlinAutomatic
+                    INTEGER,
+                precUserState
+                    EqualizerCalibrationState,
+                precFactoryState
+                    EqualizerCalibrationState,
+                precRestoreCurrentSettings
+                    INTEGER,
+                precRestoreAllSettings
+                    INTEGER
+             }
+
+        precLinCorrection OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Switches on/turns off the linear precorrector."
+            ::= { precorrectionEntry 4 }
+
+        
+        precLinAutomaticADE OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                manual(1),
+                automatic(2),
+                adaptive(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Enables /disables the automatic precorrector. To get the ADE in work linear precorrection has to be switched on."
+            ::= { precorrectionEntry 5 }
+
+        
+        precLinMaxAmplitudeRipple OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Sets te maximum ripple for automatic amplitude correction (0.0 ... 2.0)."
+            ::= { precorrectionEntry 6 }
+
+        
+        precLinMaxGroupDelayRipple OBJECT-TYPE
+            SYNTAX Integer32 (0..500)
+            UNITS "Nanoseconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Sets the maximum ripple for automatic group delay correction."
+            ::= { precorrectionEntry 7 }
+
+        
+        precLinAmplitudeRipple OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows the current amplitude ripple."
+            ::= { precorrectionEntry 8 }
+
+        
+        precLinGroupDelayRipple OBJECT-TYPE
+            SYNTAX Integer32
+            UNITS "Nanoseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows the current group delay ripple."
+            ::= { precorrectionEntry 9 }
+
+        
+        precLinInputLevel OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                tooHigh(1),
+                ok(2),
+                tooLow(3),
+                failure(4)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows the state of the feedback signal from the measurement point between output stage and antenna."
+            ::= { precorrectionEntry 10 }
+
+        
+        precLinAutomatic OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                disabled(1),
+                active(2),
+                calculate(3),
+                measure(4)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows if the automatic precorrector works properly."
+            ::= { precorrectionEntry 11 }
+
+        
+        precNonlinCorrection OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Switches on/turns off the nonlinear precorrector."
+            ::= { precorrectionEntry 12 }
+
+        
+        precNonlinAutomaticADE OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                manual(1),
+                automatic(2),
+                adaptive(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Enables /disables the automatic precorrector. To get the ADE in work nonlinear precorrection has to be switched on."
+            ::= { precorrectionEntry 13 }
+
+        
+        precNonlinThresholdShoulders OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The target shoulder distance for ADE (0.0 ... 40.0)."
+            ::= { precorrectionEntry 14 }
+
+        
+        precNonlinShoulderLeft OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Displays the current measurement for the left handed shoulder distance."
+            ::= { precorrectionEntry 15 }
+
+        
+        precNonlinShoulderRight OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Displays the current measurement of the right handed shoulder."
+            ::= { precorrectionEntry 16 }
+
+        
+        precNonlinInputLevel OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                tooHigh(1),
+                ok(2),
+                tooLow(3),
+                failure(4)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows the state of the feedback signal from the measurement point between output stage and antenna."
+            ::= { precorrectionEntry 17 }
+
+        
+        precNonlinAutomatic OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                disabled(1),
+                active(2),
+                calculate(3),
+                measure(4)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows if the automatic precorrector works properly."
+            ::= { precorrectionEntry 18 }
+
+        
+        precUserState OBJECT-TYPE
+            SYNTAX EqualizerCalibrationState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "status of the user precorrection settings"
+            ::= { precorrectionEntry 100 }
+
+        
+        precFactoryState OBJECT-TYPE
+            SYNTAX EqualizerCalibrationState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "status of the factory precorrection settings"
+            ::= { precorrectionEntry 101 }
+
+        
+        precRestoreCurrentSettings OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                stop(1),
+                start(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "restores current factory precorrection setting"
+            ::= { precorrectionEntry 102 }
+
+        
+        precRestoreAllSettings OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                stop(1),
+                start(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "restores all factory precorrection settings"
+            ::= { precorrectionEntry 103 }
+
+        
+        plpTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF PlpEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "available PLP information in case of multi PLP"
+            ::= { rsXx8000DvbT2ExcObjs 8 }
+
+        
+        plpEntry OBJECT-TYPE
+            SYNTAX PlpEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated device and PLP."
+            INDEX { idTxIdx, idExcIdx, plpIdx }
+            ::= { plpTable 1 }
+
+        
+        PlpEntry ::=
+            SEQUENCE { 
+                plpIdx
+                    Integer32,
+                plpGroupID
+                    Integer32,
+                plpType
+                    INTEGER,
+                plpModulation
+                    INTEGER,
+                plpRotation
+                    TruthValue,
+                plpCodeRate
+                    INTEGER,
+                plpFECtype
+                    INTEGER,
+                plpTimeInterleaverType
+                    INTEGER,
+                plpTimeInterleaverLength
+                    Integer32,
+                plpBasebandMode
+                    INTEGER,
+                plpFECblocks
+                    Unsigned32,
+                plpID
+                    Integer32
+             }
+
+        plpIdx OBJECT-TYPE
+            SYNTAX Integer32 (1..255)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Description."
+            ::= { plpEntry 3 }
+
+        
+        plpGroupID OBJECT-TYPE
+            SYNTAX Integer32 (0..255)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "identifies with which PLP group within the T2 system the current PLP is
+                associated."
+            ::= { plpEntry 4 }
+
+        
+        plpType OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                common(1),
+                dataType1(2),
+                dataType2(3)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "PLP type."
+            ::= { plpEntry 5 }
+
+        
+        plpModulation OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                qpsk(1),
+                qam16(2),
+                qam64(3),
+                qam256(4)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "modulation used by the PLP."
+            ::= { plpEntry 6 }
+
+        
+        plpRotation OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Constellation rotation."
+            ::= { plpEntry 7 }
+
+        
+        plpCodeRate OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                oneHalf(1),
+                threeFifth(2),
+                twoThird(3),
+                threeFourth(4),
+                fourFifth(5),
+                fiveSixth(6)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "code rate used by the PLP."
+            ::= { plpEntry 8 }
+
+        
+        plpFECtype OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                ldpc16K(1),
+                ldpc64K(2)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "FEC type used by the PLP."
+            ::= { plpEntry 9 }
+
+        
+        plpTimeInterleaverType OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                single(1),
+                multi(2)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "type of time-interleaving"
+            ::= { plpEntry 10 }
+
+        
+        plpTimeInterleaverLength OBJECT-TYPE
+            SYNTAX Integer32 (0..255)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Interpretation depends on the value of plp1TimeInterleaverType."
+            ::= { plpEntry 11 }
+
+        
+        plpBasebandMode OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                highEfficiency(1),
+                normal(2)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Baseband mode."
+            ::= { plpEntry 12 }
+
+        
+        plpFECblocks OBJECT-TYPE
+            SYNTAX Unsigned32 (0..65535)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "number of FEC blocks
+                
+                There is no customerSpecified(2) instance of this object."
+            ::= { plpEntry 13 }
+
+        
+        plpID OBJECT-TYPE
+            SYNTAX Integer32 (0..255)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "identifies uniquely a PLP within a T2 system"
+            ::= { plpEntry 14 }
+
+        
+        sfnDelayTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF SfnDelayEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Various SFN delay parameters."
+            ::= { rsXx8000DvbT2ExcObjs 10 }
+
+        
+        sfnDelayEntry OBJECT-TYPE
+            SYNTAX SfnDelayEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated device."
+            AUGMENTS { identificationEntry }
+            ::= { sfnDelayTable 1 }
+
+        
+        SfnDelayEntry ::=
+            SEQUENCE { 
+                sfnDelayProcessing
+                    FloatingPoint,
+                sfnDelayStatic
+                    FloatingPoint,
+                sfnDelayDynamic
+                    FloatingPoint,
+                sfnDelayTotal
+                    FloatingPoint,
+                sfnDeviationTime
+                    FloatingPoint,
+                sfnDelayDejitterBuffer
+                    FloatingPoint,
+                sfnDelayResidualTiming
+                    FloatingPoint
+             }
+
+        sfnDelayProcessing OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Microseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The minimum signal transmit time through the exciter.
+                This delay depends on the DVB transmission parameters."
+            ::= { sfnDelayEntry 3 }
+
+        
+        sfnDelayStatic OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Microseconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "A constant adjustable delay for tuning a SFN (-999999.9 ... 999999.9)."
+            ::= { sfnDelayEntry 4 }
+
+        
+        sfnDelayDynamic OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Microseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The period of time by which signal processing is artificially delayed
+                so that the desired time of transmission is obtained."
+            ::= { sfnDelayEntry 5 }
+
+        
+        sfnDelayTotal OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Microseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The actual signal transit time through the exciter.
+                This is derived from the sum of static-, dynamic-, 
+                and processing delay."
+            ::= { sfnDelayEntry 6 }
+
+        
+        sfnDeviationTime OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Microseconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Leap In Time.
+                This parameter sets the deviation in time when a readjustment 
+                of the dynamic delay is necessary."
+            ::= { sfnDelayEntry 7 }
+
+        
+        sfnDelayDejitterBuffer OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Microseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Delay of the T2MI stream within the dejitter buffer. 
+                The value varies after the transmission has started 
+                due to conditions on the input network. 
+                This value should be positive. 
+                A negative value may impose tranmission interrupts.
+                "
+            ::= { sfnDelayEntry 8 }
+
+        
+        sfnDelayResidualTiming OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Microseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Delay of the signal controlled by the SFN Synchronization 
+                to meet the desired transmission time. 
+                The value is fix after transmission has started. 
+                To achieve a higher robustness against input jitter, 
+                this value can be reduced by increasing the dejitter buffer delay.
+                "
+            ::= { sfnDelayEntry 9 }
+
+        
+        testSignalTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF TestSignalEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Test signal configuration."
+            ::= { rsXx8000DvbT2ExcObjs 20 }
+
+        
+        testSignalEntry OBJECT-TYPE
+            SYNTAX TestSignalEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated device."
+            AUGMENTS { identificationEntry }
+            ::= { testSignalTable 1 }
+
+        
+        TestSignalEntry ::=
+            SEQUENCE { 
+                testGeneration
+                    SwitchOnOff,
+                testPayloadContent
+                    INTEGER,
+                testPayloadLength
+                    INTEGER,
+                testPRBS
+                    INTEGER
+             }
+
+        testGeneration OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "When set to on(1), then the test signal with the adjusted parameters will be set.
+                At the Logbook you will get a Test Mode Warning."
+            ::= { testSignalEntry 3 }
+
+        
+        testPayloadContent OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                hex00(1),
+                hexFF(2),
+                prbs(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "For the Payload you can choose 00 (Hex), FF (Hex) or PRBS."
+            ::= { testSignalEntry 4 }
+
+        
+        testPayloadLength OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                sync187(1),
+                head184(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The payload length can be 188 byte with one sync byte
+                or 188 byte with 4 byte header and 184 byte payload. "
+            ::= { testSignalEntry 5 }
+
+        
+        testPRBS OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                x15(1),
+                x23(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "When testPayloadContent is prbs(3) then you can choose
+                the polynomial
+                x15(1) -> 2^15-1
+                x23(2) -> 2^23-1"
+            ::= { testSignalEntry 6 }
+
+        
+        inputTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF InputEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Input table."
+            ::= { rsXx8000DvbT2ExcObjs 30 }
+
+        
+        inputEntry OBJECT-TYPE
+            SYNTAX InputEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated device and input channel."
+            INDEX { idTxIdx, idExcIdx, inputChannelIdx }
+            ::= { inputTable 1 }
+
+        
+        InputEntry ::=
+            SEQUENCE { 
+                inputChannelIdx
+                    Integer32,
+                inputPacketLength
+                    Unsigned32,
+                inputMeasuredDataRate
+                    Unsigned32,
+                inputRequiredDataRate
+                    Unsigned32,
+                inputFrameState
+                    INTEGER,
+                inputConnected
+                    TruthValue,
+                inputSeamless
+                    TruthValue,
+                inputPreselected
+                    TruthValue,
+                inputActive
+                    TruthValue,
+                inputNoL1
+                    TruthValue
+             }
+
+        inputChannelIdx OBJECT-TYPE
+            SYNTAX Integer32 (1..2)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The input channel index."
+            ::= { inputEntry 3 }
+
+        
+        inputPacketLength OBJECT-TYPE
+            SYNTAX Unsigned32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Packet length."
+            ::= { inputEntry 4 }
+
+        
+        inputMeasuredDataRate OBJECT-TYPE
+            SYNTAX Unsigned32
+            UNITS "bit per second"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Measured data rate."
+            ::= { inputEntry 5 }
+
+        
+        inputRequiredDataRate OBJECT-TYPE
+            SYNTAX Unsigned32
+            UNITS "bit per second"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Required data rate."
+            ::= { inputEntry 6 }
+
+        
+        inputFrameState OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                unlocked(1),
+                pidLocked(2),
+                t2miLocked(3)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Frame state."
+            ::= { inputEntry 7 }
+
+        
+        inputConnected OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The input channel is connected."
+            ::= { inputEntry 20 }
+
+        
+        inputSeamless OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The input channel is in seamless mode."
+            ::= { inputEntry 21 }
+
+        
+        inputPreselected OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The input channel is the preselected."
+            ::= { inputEntry 22 }
+
+        
+        inputActive OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The input channel is active."
+            ::= { inputEntry 23 }
+
+        
+        inputNoL1 OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "No layer 1 detected in input data."
+            ::= { inputEntry 24 }
+
+        
+        iqInput OBJECT IDENTIFIER ::= { rsXx8000DvbT2ExcObjs 31 }
+
+        
+        iqInputIConnected OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Input I ASI connected."
+            ::= { iqInput 1 }
+
+        
+        iqInputQConnected OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Input Q ASI connected."
+            ::= { iqInput 2 }
+
+        
+        iqInputIHeaderIntegrity OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                warning(2),
+                ok(3)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Input I IQ header integrity."
+            ::= { iqInput 3 }
+
+        
+        iqInputQHeaderIntegrity OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                warning(2),
+                ok(3)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Input Q IQ header integrity."
+            ::= { iqInput 4 }
+
+        
+        iqInputOrder OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                warning(2),
+                ok(3)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "IQ input order."
+            ::= { iqInput 5 }
+
+        
+        iqInputRegulation OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                warning(2),
+                ok(3)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "IQ input regulation."
+            ::= { iqInput 6 }
+
+        
+        iqConfiguration OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                warning(2),
+                ok(3)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "IQ configuration."
+            ::= { iqInput 7 }
+
+        
+        logbook OBJECT IDENTIFIER ::= { rsXx8000DvbT2ExcObjs 90 }
+
+        
+        logbookConfigTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF LogbookConfigEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Configuration for exciter logbook table."
+            ::= { logbook 1 }
+
+        
+        logbookConfigEntry OBJECT-TYPE
+            SYNTAX LogbookConfigEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the logbookConfigTable."
+            AUGMENTS { identificationEntry }
+            ::= { logbookConfigTable 1 }
+
+        
+        LogbookConfigEntry ::=
+            SEQUENCE { 
+                lbCfgNumberOfEntries
+                    LogbookMaxEntryNumber,
+                lbCfgClear
+                    Trigger
+             }
+
+        lbCfgNumberOfEntries OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The number of entries in logbook."
+            ::= { logbookConfigEntry 1 }
+
+        
+        lbCfgClear OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Clear the logbook.
+                idle(1)    --> ready
+                clear(2)   --> do clear now
+                
+                A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+            ::= { logbookConfigEntry 2 }
+
+        
+        logbookTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF LogbookEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "exciter logbook table."
+            ::= { logbook 2 }
+
+        
+        logbookEntry OBJECT-TYPE
+            SYNTAX LogbookEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This is a entry in the logbook."
+            INDEX { idTxIdx, idExcIdx, logbookEntryIdx }
+            ::= { logbookTable 1 }
+
+        
+        LogbookEntry ::=
+            SEQUENCE { 
+                logbookEntryIdx
+                    LogbookMaxEntryNumber,
+                logbookEntryNbr
+                    LogbookMaxEntryNumber,
+                logbookType
+                    EventClass,
+                logbookSlope
+                    LogbookEntrySlope,
+                logbookMessage
+                    LogbookEntryMessagesExcTv,
+                logbookDateTime
+                    DateAndTime
+             }
+
+        logbookEntryIdx OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This is an increasing number from 1 to 128. It is used as an index column for SNMP."
+            ::= { logbookEntry 1 }
+
+        
+        logbookEntryNbr OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This is the number of the logbook entry. It is an decreasing number from max 128 down to 1."
+            ::= { logbookEntry 2 }
+
+        
+        logbookType OBJECT-TYPE
+            SYNTAX EventClass
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Can either be Fault, Warning or State."
+            ::= { logbookEntry 3 }
+
+        
+        logbookSlope OBJECT-TYPE
+            SYNTAX LogbookEntrySlope
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Either set (event raises) or reset (event disappears)"
+            ::= { logbookEntry 4 }
+
+        
+        logbookMessage OBJECT-TYPE
+            SYNTAX LogbookEntryMessagesExcTv
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "See RS-XX8000-COMMON-MIB - TextualConvention - LogbookEntryMessagesExcTv for details."
+            ::= { logbookEntry 5 }
+
+        
+        logbookDateTime OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The time of the logbook entry."
+            ::= { logbookEntry 6 }
+
+        
+        productInfoTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF ProductInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The table for product typeplates."
+            ::= { rsXx8000DvbT2ExcObjs 100 }
+
+        
+        productInfoEntry OBJECT-TYPE
+            SYNTAX ProductInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the productInfoTable."
+            INDEX { prodInfoModuleIdx, idTxIdx, idExcIdx }
+            ::= { productInfoTable 1 }
+
+        
+        ProductInfoEntry ::=
+            SEQUENCE { 
+                prodInfoModuleIdx
+                    ProdInfoModuleNameTv,
+                prodInfoModuleName
+                    ProdInfoModuleNameTv,
+                prodInfoSerialNumber
+                    ReadableString,
+                prodInfoIdentNumberSW
+                    ReadableString,
+                prodInfoVersionNumberSW
+                    ReadableString,
+                prodInfoIdentNumberHW
+                    ReadableString,
+                prodInfoVersionNumberHW
+                    ReadableString,
+                productInfoProductDateHW
+                    DateAndTime
+             }
+
+        prodInfoModuleIdx OBJECT-TYPE
+            SYNTAX ProdInfoModuleNameTv
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The module index."
+            ::= { productInfoEntry 1 }
+
+        
+        prodInfoModuleName OBJECT-TYPE
+            SYNTAX ProdInfoModuleNameTv
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The readable module type."
+            ::= { productInfoEntry 6 }
+
+        
+        prodInfoSerialNumber OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The serial number of the subdevice."
+            ::= { productInfoEntry 7 }
+
+        
+        prodInfoIdentNumberSW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz identification number of the software, for example 
+                2094.2090.02."
+            ::= { productInfoEntry 8 }
+
+        
+        prodInfoVersionNumberSW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz revision number of the software, for example 1.2.1."
+            ::= { productInfoEntry 9 }
+
+        
+        prodInfoIdentNumberHW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz identification number of the hardware, for example 
+                2095.8007.02 (NetCCU)."
+            ::= { productInfoEntry 10 }
+
+        
+        prodInfoVersionNumberHW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz revision number (product index) of the hardware, for example 
+                03.03."
+            ::= { productInfoEntry 11 }
+
+        
+        productInfoProductDateHW OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz production date of the hardware,"
+            ::= { productInfoEntry 12 }
+
+        
+        rsXx8000DvbT2ExcEvents OBJECT IDENTIFIER ::= { rsXx8000DvbT2Exc 3 }
+
+        
+        eventsV2 OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION 
+                "Compatibility to SMIv1."
+            ::= { rsXx8000DvbT2ExcEvents 0 }
+
+        
+        txExcSummaryFault NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Summary Fault"
+            ::= { eventsV2 1 }
+
+        
+        txExcSummaryWarning NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Summary Warning"
+            ::= { eventsV2 2 }
+
+        
+        txExcInput1NoConnect NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Input HP1 has no connected input signal"
+            ::= { eventsV2 3 }
+
+        
+        txExcInput2NoConnect NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Input HP2 has no connected input signal"
+            ::= { eventsV2 4 }
+
+        
+        txExcInput1Active NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Input HP1 is active"
+            ::= { eventsV2 5 }
+
+        
+        txExcInput2Active NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Input HP2 is active"
+            ::= { eventsV2 6 }
+
+        
+        txExcOn NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter On"
+            ::= { eventsV2 7 }
+
+        
+        txExcRfOn NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter RF On"
+            ::= { eventsV2 8 }
+
+        
+        txExcNoInput NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter has no valid input signal."
+            ::= { eventsV2 9 }
+
+        
+        txExcRfLoop NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter RF loop"
+            ::= { eventsV2 10 }
+
+        
+        txExcRfFail NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter RF Fail"
+            ::= { eventsV2 11 }
+
+        
+        txExcSelfTest NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter hardware self test"
+            ::= { eventsV2 12 }
+
+        
+        txExcOutputOpen NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter output open"
+            ::= { eventsV2 13 }
+
+        
+        txExcBoardTemperatureWarning NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Board Temperature"
+            ::= { eventsV2 14 }
+
+        
+        txExcFanWarning NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter has one faulty fan"
+            ::= { eventsV2 15 }
+
+        
+        txExcFanFault NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Both exciter fans are faulty."
+            ::= { eventsV2 16 }
+
+        
+        txExcFifoWarning NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Fifo"
+            ::= { eventsV2 17 }
+
+        
+        txExcSFNDelay NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter SFN Delay Fault"
+            ::= { eventsV2 18 }
+
+        
+        txExcWrongDatarate NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Wrong Datarate"
+            ::= { eventsV2 19 }
+
+        
+        txExcMute NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Mute"
+            ::= { eventsV2 20 }
+
+        
+        txExcPPSFail NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter PPS Fail"
+            ::= { eventsV2 21 }
+
+        
+        txExcReferenceFail NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Reference Fail"
+            ::= { eventsV2 22 }
+
+        
+        txExcNoL1 NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "No layer 1 detected in input data."
+            ::= { eventsV2 23 }
+
+        
+        txExcConfigurationMismatched NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Configuration of channel bandwidth is inconsistent."
+            ::= { eventsV2 24 }
+
+        
+        txExcConfigurationUnsupported NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Selected modulation mode not supported."
+            ::= { eventsV2 25 }
+
+        
+        txExcConfigurationInvalid NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Configuration of DVB-T2 parameters is inconsistent."
+            ::= { eventsV2 26 }
+
+        
+        txExcEncoderTest NOTIFICATION-TYPE
+            OBJECTS { eventExcPriority, eventAlarmClass, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Encoder test."
+            ::= { eventsV2 27 }
+
+        
+        eventsTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF EventsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This table contains necessary information for handling alarms.
+                For each alarm you have the following information:
+                - name (get),
+                - mask to enable/disable sending out (set/get),
+                - priority (set/get) and
+                - the current state (get only)."
+            ::= { rsXx8000DvbT2ExcEvents 1 }
+
+        
+        eventsEntry OBJECT-TYPE
+            SYNTAX EventsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the eventsTable."
+            INDEX { idTxIdx, idExcIdx, eventExcNameIdx }
+            ::= { eventsTable 1 }
+
+        
+        EventsEntry ::=
+            SEQUENCE { 
+                eventExcNameIdx
+                    EventMaxEntryNumber,
+                eventExcName
+                    INTEGER,
+                eventExcMask
+                    EventMask,
+                eventExcPriority
+                    EventPriority,
+                eventExcEvent
+                    EventState
+             }
+
+        eventExcNameIdx OBJECT-TYPE
+            SYNTAX EventMaxEntryNumber
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The event number as integer.
+                This is a helper column and therefore not-accessible."
+            ::= { eventsEntry 3 }
+
+        
+        eventExcName OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                txExcSummaryFault(1),
+                txExcSummaryWarning(2),
+                txExcInput1NoConnect(3),
+                txExcInput2NoConnect(4),
+                txExcInput1Active(5),
+                txExcInput2Active(6),
+                txExcOn(7),
+                txExcRfOn(8),
+                txExcNoInput(9),
+                txExcRfLoop(10),
+                txExcRfFail(11),
+                txExcSelfTest(12),
+                txExcOutputOpen(13),
+                txExcBoardTemperatureWarning(14),
+                txExcFanWarning(15),
+                txExcFanFault(16),
+                txExcFifoWarning(17),
+                txExcSFNDelay(18),
+                txExcWrongDatarate(19),
+                txExcMute(20),
+                txExcPPSFail(21),
+                txExcReferenceFail(22),
+                txExcNoL1(23),
+                txExcConfigurationMismatched(24),
+                txExcConfigurationUnsupported(25),
+                txExcConfigurationInvalid(26),
+                txExcEncoderTest(27)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The event name as readable integer.
+                The enumeration correlates with the notifications under eventsTxV2."
+            ::= { eventsEntry 4 }
+
+        
+        eventExcMask OBJECT-TYPE
+            SYNTAX EventMask
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsEntry 5 }
+
+        
+        eventExcPriority OBJECT-TYPE
+            SYNTAX EventPriority
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsEntry 6 }
+
+        
+        eventExcEvent OBJECT-TYPE
+            SYNTAX EventState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsEntry 7 }
+
+        
+        rsXx8000DvbT2ExcConf OBJECT IDENTIFIER ::= { rsXx8000DvbT2Exc 5 }
+
+        
+        rsXx8000DvbT2ExcGroups OBJECT IDENTIFIER ::= { rsXx8000DvbT2ExcConf 1 }
+
+        
+        groupObjectsCommon OBJECT-GROUP
+            OBJECTS { idTxID, idCellID, idNetworkID, idT2SystemID, testGeneration, 
+                testPayloadContent, testPayloadLength, idStateT2SystemID, idStateNetworkID, idStateCellID, 
+                inputFrameState, inputRequiredDataRate, inputMeasuredDataRate, inputPacketLength, cfgSource, 
+                cmdExcTransmitterType, cmdExcInput2Source, cmdExcInput1Source, cmdExcInputPriority, cmdExcPreselectInput, 
+                cmdExcOpModeInputAutomatic, inputActive, inputPreselected, inputSeamless, inputConnected, 
+                inputNoL1, cmdExcOcxoAdjust, cmdExcMonitoringOutput, cmdExcInputFailDelayTime, cmdExcInpAutoReadyAfterChangeOv, 
+                cmdExcRfIqAdjustPhase, cmdExcRfIqAdjustGainQ, cmdExcRfIqAdjustGainI, cmdExcRfIqAdjustBiasFineQ, cmdExcRfIqAdjustBiasFineI, 
+                cmdExcRfIqAdjustBiasCoarseQ, cmdExcRfIqAdjustBiasCoarseI, cmdExcRfIqAdjustTestsignal, cmdExcRfOutputModulationSlope, cmdExcRfOutputRfSlope, 
+                cmdExcRfOutputAttenuation, cmdExcRfOutput, cmdExcTypeLossOfInput, cmdExcRefFailDelayTime, cmdExcMuteOnReferenceFail, 
+                cmdExcMuteOnPPSFail, cmdExcReferenceSource, cmdExcFrequency, cmdExcInputMuteOnFail, cmdExcInputCheckTimeSwitchback, 
+                cmdExcInputCheckTimeForward, precNonlinAutomatic, precNonlinInputLevel, precNonlinShoulderRight, precNonlinShoulderLeft, 
+                precNonlinThresholdShoulders, precNonlinAutomaticADE, precNonlinCorrection, precLinAutomatic, precLinInputLevel, 
+                precLinGroupDelayRipple, precLinAmplitudeRipple, precLinMaxGroupDelayRipple, precLinMaxAmplitudeRipple, precLinAutomaticADE, 
+                precLinCorrection, statusNominalPower, statusRfIqAdjustLO1Frequency, statusRfOutputAgcRegulation, statusAmplifierControl, 
+                cmdExcFailDelayMode, statusFailDelay, cfgIdSource, idStateActualL1Frequency, cfgL1Frequency, 
+                cfgL1FreqSource, idStateActualIdSource, idStateActualL1FreqSource, testPRBS, cfgNetworkMode
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Objects used in all configurations."
+            ::= { rsXx8000DvbT2ExcGroups 1 }
+
+        
+        groupObjectsConfigSourceManual OBJECT-GROUP
+            OBJECTS { chTransmissionFormat, chBandwidth, chFFTsize, chFFTextend, chGuardIntervall, 
+                chPilotPattern, chPAPR, frSymbolsPerT2Frame, frT2FramesPerSuperFrame, l1NumberOfAuxStreams, 
+                l1Modulation, l1CodeRate, l1FECtype, l1Repetition, plp1GroupID, 
+                plp1Type, plp1Modulation, plp1Rotation, plp1CodeRate, plp1FECtype, 
+                plp1TimeInterleaverType, plp1TimeInterleaverLength, plp1BasebandMode, plp1FECblocks, frT2Version, 
+                plp1ID, frDataSymbolsPerT2Frame }
+            STATUS current
+            DESCRIPTION 
+                "Objects used when cfgSource is manual(1)."
+            ::= { rsXx8000DvbT2ExcGroups 2 }
+
+        
+        groupObjectsSFN OBJECT-GROUP
+            OBJECTS { sfnDelayProcessing, sfnDelayStatic, sfnDelayDynamic, sfnDelayTotal, sfnDeviationTime, 
+                sfnDelayDejitterBuffer, sfnDelayResidualTiming }
+            STATUS current
+            DESCRIPTION 
+                "Objects implemented when cfgNetworkMode is sfn(2)."
+            ::= { rsXx8000DvbT2ExcGroups 3 }
+
+        
+        groupObjectsACU OBJECT-GROUP
+            OBJECTS { cmdExcRfWarningLimit, cmdExcRfFailLimit, cmdExcOutputPower }
+            STATUS current
+            DESCRIPTION 
+                "objects from ACU"
+            ::= { rsXx8000DvbT2ExcGroups 4 }
+
+        
+        groupEventsTable OBJECT-GROUP
+            OBJECTS { eventExcName, eventExcMask, eventExcPriority, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Group for all objects of the eventsTable."
+            ::= { rsXx8000DvbT2ExcGroups 5 }
+
+        
+        groupEventsGeneral NOTIFICATION-GROUP
+            NOTIFICATIONS { txExcSummaryFault, txExcSummaryWarning, txExcInput1NoConnect, txExcInput2NoConnect, txExcInput1Active, 
+                txExcInput2Active, txExcOn, txExcRfOn, txExcNoInput, txExcRfFail, 
+                txExcBoardTemperatureWarning, txExcFanWarning, txExcFanFault, txExcSFNDelay, txExcMute, 
+                txExcPPSFail, txExcReferenceFail, txExcConfigurationMismatched, txExcConfigurationUnsupported, txExcConfigurationInvalid, 
+                txExcEncoderTest, txExcNoL1, txExcRfLoop, txExcSelfTest, txExcOutputOpen, 
+                txExcFifoWarning, txExcWrongDatarate }
+            STATUS current
+            DESCRIPTION 
+                "group for common events of DVB-T2exciters"
+            ::= { rsXx8000DvbT2ExcGroups 6 }
+
+        
+        groupObjectsLogbook OBJECT-GROUP
+            OBJECTS { lbCfgNumberOfEntries, lbCfgClear, logbookEntryNbr, logbookType, logbookSlope, 
+                logbookMessage, logbookDateTime }
+            STATUS current
+            DESCRIPTION 
+                "Group for objects of the logbook"
+            ::= { rsXx8000DvbT2ExcGroups 7 }
+
+        
+        groupObjectsProductInfo OBJECT-GROUP
+            OBJECTS { prodInfoModuleName, prodInfoSerialNumber, prodInfoIdentNumberSW, prodInfoVersionNumberSW, prodInfoIdentNumberHW, 
+                prodInfoVersionNumberHW, productInfoProductDateHW }
+            STATUS current
+            DESCRIPTION 
+                "Group for objects of the productInfoTable"
+            ::= { rsXx8000DvbT2ExcGroups 8 }
+
+        
+        groupObjectsSLx OBJECT-GROUP
+            OBJECTS { precUserState, precFactoryState, precRestoreCurrentSettings, cmdExcExpectInputReserve, precRestoreAllSettings, 
+                statusVSWR }
+            STATUS current
+            DESCRIPTION 
+                "Objects for SLX devices only."
+            ::= { rsXx8000DvbT2ExcGroups 9 }
+
+        
+        groupObjectsTSE OBJECT-GROUP
+            OBJECTS { plpGroupID, plpType, plpModulation, plpRotation, plpCodeRate, 
+                plpFECtype, plpTimeInterleaverType, plpTimeInterleaverLength, plpBasebandMode, plpFECblocks, 
+                chMisoGroup, plpID, idStateActualMisoGroupSource, cfgMisoGroupSource, statusRequiredInput, 
+                cfgT2MiPID, cfgT2MiInterface, idStateActualTxTimeOffsetSource, cfgTxTimeOffsetSource, statusTxTimeOffset, 
+                statusIaState, cfgT2MiDejitterBuffer, cfgT2MiStaticSinglePLP, statusInputMatched, statusDetectedInput
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Objects for TSE devices only."
+            ::= { rsXx8000DvbT2ExcGroups 10 }
+
+        
+        groupObjectsIq OBJECT-GROUP
+            OBJECTS { cfgNetworkMode, cfgSource, chTransmissionFormat, chBandwidth, cmdExcFrequency, 
+                cmdExcReferenceSource, cmdExcTypeLossOfInput, cmdExcRfOutput, cmdExcRfOutputAttenuation, cmdExcRfOutputRfSlope, 
+                cmdExcRfOutputModulationSlope, cmdExcRfIqAdjustTestsignal, cmdExcRfIqAdjustBiasCoarseI, cmdExcRfIqAdjustBiasCoarseQ, cmdExcRfIqAdjustBiasFineI, 
+                cmdExcRfIqAdjustBiasFineQ, cmdExcRfIqAdjustGainI, cmdExcRfIqAdjustGainQ, cmdExcRfIqAdjustPhase, cmdExcInput1Source, 
+                cmdExcInput2Source, cmdExcRfWarningLimit, cmdExcRfFailLimit, cmdExcOutputPower, cmdExcMonitoringOutput, 
+                cmdExcOcxoAdjust, cmdExcFailDelayMode, statusRfOutputAgcRegulation, statusRfIqAdjustLO1Frequency, statusNominalPower, 
+                statusVSWR, statusAmplifierControl, statusFailDelay, precLinCorrection, precLinAutomaticADE, 
+                precLinMaxAmplitudeRipple, precLinMaxGroupDelayRipple, precLinAmplitudeRipple, precLinGroupDelayRipple, precLinInputLevel, 
+                precLinAutomatic, precNonlinCorrection, precNonlinAutomaticADE, precNonlinThresholdShoulders, precNonlinShoulderLeft, 
+                precNonlinShoulderRight, precNonlinInputLevel, precNonlinAutomatic, precUserState, precFactoryState, 
+                precRestoreCurrentSettings, precRestoreAllSettings, sfnDelayProcessing, sfnDelayStatic, sfnDelayDynamic, 
+                sfnDelayTotal, sfnDeviationTime, iqInputIConnected, iqInputQConnected, iqInputIHeaderIntegrity, 
+                iqInputQHeaderIntegrity, iqInputOrder, iqInputRegulation, iqConfiguration }
+            STATUS current
+            DESCRIPTION 
+                "Objects for exciters with IQ input."
+            ::= { rsXx8000DvbT2ExcGroups 11 }
+
+        
+        rsXx8000DvbT2ExcCompl OBJECT IDENTIFIER ::= { rsXx8000DvbT2ExcConf 2 }
+
+        
+        rsXx8000DvbT2ExcAll MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION 
+                "all DVB-T2 exciters without IQ input."
+            MODULE -- this module
+                MANDATORY-GROUPS { groupObjectsCommon, groupObjectsACU, groupEventsTable, groupEventsGeneral, groupObjectsLogbook, 
+                    groupObjectsProductInfo }
+                GROUP groupObjectsConfigSourceManual
+                    DESCRIPTION 
+                        "only when cfgSource is manual(1)"
+                GROUP groupObjectsSFN
+                    DESCRIPTION 
+                        "when cfgNetworkMode is sfn(2)"
+                OBJECT cfgNetworkMode
+                    MIN-ACCESS read-only
+                    DESCRIPTION 
+                        "for SLx8000 devices"
+                GROUP groupObjectsSLx
+                    DESCRIPTION 
+                        "For SLx devices only"
+                GROUP groupObjectsTSE
+                    DESCRIPTION 
+                        "for TSE devices only"
+            ::= { rsXx8000DvbT2ExcCompl 1 }
+
+        
+        rsXx8000DvbT2ExcIq MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION 
+                "DVB-T2 exciters with IQ input."
+            MODULE -- this module
+                MANDATORY-GROUPS { groupEventsTable, groupObjectsLogbook, groupObjectsProductInfo, groupObjectsIq }
+            ::= { rsXx8000DvbT2ExcCompl 2 }
+
+        
+    
+    END

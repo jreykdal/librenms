@@ -1,0 +1,13 @@
+os: db8008
+text: 'Deva Silence Monitor DB8008'
+type: appliance
+icon: deva
+group: deva
+mib_dir: deva
+over:
+    - { graph: mntrMainLoss, text: 'MainLoss' }
+
+discovery:
+    -
+        sysDescr_regex:
+            - '/Model: DB8008/'

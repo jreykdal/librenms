@@ -1,0 +1,37 @@
+mib: DB8008-MIB:SNMPv2-MIB
+modules:
+    os:
+      hardware: SNMPv2-MIB::sysDescr.0
+      serial: DB8008-MIB::sernum.0
+      version: DB8008-MIB::fwrev.0
+
+    sensors:
+        state:
+            data:
+                - 
+                   oid: mntrMainLoss
+                   num_oid: '.1.3.6.1.4.1.35833.6.3.53.0'
+                   descr: MainLoss
+                   index: 'mntrMainLoss.0'
+                   states:
+                       - { value: 1, generic: 0, graph: 1, descr: OK }
+                       - { value: 2, generic: 1, graph: 1, descr: SILENCE }
+
+                - 
+                   oid: mntrBackup1Loss
+                   num_oid: '.1.3.6.1.4.1.35833.6.3.54.0'
+                   descr: Backup1Loss
+                   index: 'mntrBackup1Loss.0'
+                   states:
+                       - { value: 1, generic: 0, graph: 1, descr: OK }
+                       - { value: 2, generic: 1, graph: 1, descr: SILENCE }
+
+                - 
+                   oid: mntrBackup2Loss
+                   num_oid: '.1.3.6.1.4.1.35833.6.3.55.0'
+                   descr: Backup2Loss
+                   index: 'mntrBackup2Loss.0'
+                   states:
+                       - { value: 1, generic: 0, graph: 1, descr: OK }
+                       - { value: 2, generic: 1, graph: 1, descr: SILENCE }
+ 

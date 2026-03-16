@@ -1,0 +1,86 @@
+mib: ECRESO-FM-TRANS-MIB:IRT-COMMONVARBINDS-MIB:IRT-FM-SINGLETRANSMITTER-MIB:IRT-TRANSMITTER-SMI-MIB
+  
+modules:
+  os:
+    hardware:
+      - ECRESO-FM-TRANS-MIB::syGeHardRel.0
+      - ECRESO-FM-TRANS-MIB::syGeType.0
+    hardware_template: '{{ ECRESO-FM-TRANS-MIB::syGeHardRel.0 }} {{ ECRESO-FM-TRANS-MIB::syGeType.0 }}'
+    serial: ECRESO-FM-TRANS-MIB::syGeSerial.0
+    version: ECRESO-FM-TRANS-MIB::syGeSoftRel.0
+
+  sensors:
+    power:
+      data:
+        - oid: txGnMsForwardPower
+          value: txGnMsForwardPower
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.7.1.3.1.{{ $index }}'
+          index: 'txForwardPower.{{ $index }}'
+          descr: 'Forward Power'
+          divisor: 1
+          low_limit: 90
+          high_limit: 110
+
+        - oid: txGnMsReflectedPower
+          value: txGnMsReflectedPower
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.7.1.3.2.{{ $index }}'
+          index: 'txReflectedPower.{{ $index }}'
+          descr: 'Reflected Power'
+          divisor: 10
+
+    dbm:
+      data:
+        - oid: txGnMsVSWR
+          value: txGnMsVSWR
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.7.1.3.3.{{ $index }}'
+          index: 'txVSWR.{{ $index }}'
+          descr: 'VSWR'
+          divisor: 10
+          high_limit: 1.5
+
+    state:
+      data:
+        -
+          oid: acGnGlOperation
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.8.1.1.3.{{ $index }}'
+          descr: ACU Operation
+          index: 'acGnGlOperation.{{ $index }}'
+          state_name: ECRESO-FM-TRANS-MIB:acGnGlOperation
+          states:
+              - { value:  0, generic: 3, graph: 0, descr: Undefined }
+              - { value:  1, generic: 2, graph: 0, descr: Manual }
+              - { value:  2, generic: 1, graph: 0, descr: Auto }
+
+        -
+          oid: acGnGlCurrentMain
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.8.1.1.7.{{ $index }}'
+          descr: ACU Current Position
+          index: 'acGnGlCurrentMain.{{ $index }}'
+          state_name: ECRESO-FM-TRANS-MIB:acGnGlCurrentMain
+          states:
+              - { value:  0, generic: 3, graph: 0, descr: Undefined }
+              - { value:  1, generic: 1, graph: 0, descr: TX1 }
+              - { value:  2, generic: 2, graph: 0, descr: TX2 }
+
+        -
+          oid: acGnGlLocalMode
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.8.1.1.8.{{ $index }}'
+          descr: Local/Remote
+          index: 'acGnGlLocalMode.{{ $index }}'
+          state_name: ECRESO-FM-TRANS-MIB:acGnGlLocalMode
+          states:
+              - { value:  0, generic: 3, graph: 0, descr: Undefined }
+              - { value:  1, generic: 2, graph: 0, descr: Local }
+              - { value:  2, generic: 1, graph: 0, descr: Remote }
+
+        -
+          oid: acGnGlMainOpmode
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.8.1.1.9.{{ $index }}'
+          descr: Main transmitter Opmode
+          index: 'acGnGlMainOpmode.{{ $index }}'
+          state_name: ECRESO-FM-TRANS-MIB:acGnGlMainOpmode
+          states:
+              - { value:  0, generic: 3, graph: 0, descr: Undefined }
+              - { value:  1, generic: 1, graph: 0, descr: ON }
+              - { value:  2, generic: 2, graph: 0, descr: OFF }
+

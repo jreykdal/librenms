@@ -1,0 +1,2918 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **
+-- **  COPYRIGHT      (c) 2010 Rohde & Schwarz GmbH & Co. KG
+-- **                          Muehldorfstrasse 15
+-- **    R & S                 D-81671 Muenchen
+-- **
+-- *****************************************************************************
+-- **
+-- **  MODULE         RS-XX8000-TRANSPOSER-MIB
+-- **  
+-- **  DESCRIPTION    Rohde & Schwarz SNMP
+-- **
+-- **  HISTORY        
+-- **  2008-08-26 ks - parametersetReSave obsolete
+-- **  2008-10-08 sr - synthesizerFrequency range up to 1500 MHz
+-- **  2009-02-12 sr - retransmitter, echoRegulation, inputConfigTable
+-- **  2009-03-05 ks - inputConfigTable with 2 indices, logbook table for N+1
+-- **  2009-03-30 ks - txParamSetSubDeviceDiffers obsoleted
+-- **  2009-11-27 ks - inputFailDelayTime, rfWarningLimit added
+-- **  2009-12-01 ks - monitoringOutput, configInputSource added
+-- **  2009-12-04 ks - configuration2Table added
+-- **  2010-01-15 ks - retransmitter is now read-only
+-- **  2010-02-18 ks - txRfOk added
+-- **  2010-03-01 ks - txRfWarning added
+-- **  2010-08-13 ks - inputChannelPower added, inputRfLevel clarified
+-- **  2010-08-13 ks - precLinearFilterLength added
+-- **  2011-05-11 ks - refFailDelayMode, refFailDelayStatus added
+-- **  2011-05-19 ks - added inputPreselect, inputPriority,  inputExpectReserve,
+--            inputCheckTimeForward, inputCheckTimeSwitchBack, inputAutomaticOpMode,
+--            inputAutomaticReady, inputAutomaticChangedOver, inputAutomaticReadyAfterChangeover,
+--            input1Connected,  input2Connected, inputSeamless, inputSeamlessSwitching,
+--            inputActive, muteCondition, networkControlInformationFault, inputReserveMissing,
+--            ampTemperatureWarning, ampTemperatureFault
+-- 
+-- *****************************************************************************
+-- *****************************************************************************
+
+  RS-XX8000-TRANSPOSER-MIB DEFINITIONS ::= BEGIN
+ 
+    IMPORTS
+      rsXx8000, eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, 
+      rsXx8000MibModule, EventPriority, EventClass, EventState, IndexTransmitter, 
+      TvStandard, SwitchOnOff, Trigger, AtvStandard, FloatingPoint, 
+      EqualizerCalibrationState, InputSource, LogbookMaxEntryNumber, LogbookEntrySlope, LogbookEntryMessagesExcTv, 
+      ReadableString, EventMaxEntryNumber, EventMask, FailDelayMode, FailDelayStatus      
+        FROM RS-XX8000-COMMON-MIB      
+      OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP      
+        FROM SNMPv2-CONF      
+      Integer32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, NOTIFICATION-TYPE      
+        FROM SNMPv2-SMI      
+      TruthValue, DateAndTime, RowStatus, TEXTUAL-CONVENTION      
+        FROM SNMPv2-TC;
+  
+  
+    rsXx8000TransposerMibModule MODULE-IDENTITY 
+      LAST-UPDATED "201105190800Z"		-- May 19, 2011 at 08:00 GMT
+      ORGANIZATION 
+        "Rohde&Schwarz GmbH & Co. KG"
+      CONTACT-INFO 
+        "Torsten Huebscher
+        Department 7TS2
+        Broadcasting Division
+        Muehldorfstrasse 15
+        81671 Munich, Germany
+        torsten.huebscher@rohde-schwarz.com"
+      DESCRIPTION 
+        "This MIB defines transposer parameters of transmitting systems from 
+        Rohde & Schwarz.
+        
+        Use this MIB if your system meets the following requirements:
+        - transposer XLx (series XX8000)
+        - variants SingleTx, NTx and Nplus1.
+        
+        The following MIBs are related to this:
+        - RS-COMMON-MIB         - mandatory for this MIB
+        - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+      REVISION "201105190800Z"		-- May 19, 2011 at 08:00 GMT
+      DESCRIPTION 
+        "added inputPreselect, inputPriority,  inputExpectReserve,
+          inputCheckTimeForward, inputCheckTimeSwitchBack, inputAutomaticOpMode,
+          inputAutomaticReady, inputAutomaticChangedOver, inputAutomaticReadyAfterChangeover,
+          input1Connected,  input2Connected, inputSeamless, inputSeamlessSwitching,
+          inputActive, muteCondition, networkControlInformationFault, inputReserveMissing,
+          ampTemperatureWarning, ampTemperatureFault"
+      REVISION "201105110800Z"		-- May 11, 2011 at 08:00 GMT
+      DESCRIPTION 
+        "refFailDelayMode, refFailDelayStatus added"
+      REVISION "201012020800Z"		-- December 02, 2010 at 08:00 GMT
+      DESCRIPTION 
+        "precLinearFilterLength added"
+      REVISION "201008130800Z"		-- August 13, 2010 at 08:00 GMT
+      DESCRIPTION 
+        "inputChannelPower added, inputRfLevel clarified"
+      REVISION "201002180800Z"		-- February 18, 2010 at 08:00 GMT
+      DESCRIPTION 
+        "txRfOk, txRfWarning  added"
+      REVISION "201001150800Z"		-- January 15, 2010 at 08:00 GMT
+      DESCRIPTION 
+        "inputFailDelayTime, rfWarningLimit, monitoringOutput,
+        configInputSource, configuration2Table added"
+      REVISION "200911270800Z"		-- November 27, 2009 at 08:00 GMT
+      DESCRIPTION 
+        "inputFailDelayTime, rfWarningLimit, monitoringOutput,
+        configInputSource, configuration2Table added"
+      REVISION "200903300900Z"		-- March 30, 2009 at 09:00 GMT
+      DESCRIPTION 
+        "txParamSetSubDeviceDiffers obsoleted"
+      REVISION "200903051400Z"		-- March 05, 2009 at 14:00 GMT
+      DESCRIPTION 
+        "inputConfigTable with 2 indices
+        logbook table for N+1"
+      REVISION "200902121530Z"		-- February 12, 2009 at 15:30 GMT
+      DESCRIPTION 
+        "retransmitter, echoRegulation, inputConfigTable"
+      REVISION "200810081100Z"		-- October 08, 2008 at 11:00 GMT
+      DESCRIPTION 
+        "synthesizerFrequency range up to 1500 MHz."
+      REVISION "200808260900Z"		-- August 26, 2008 at 09:00 GMT
+      DESCRIPTION 
+        "- parametersetReSave obsolete"
+      REVISION "200807231530Z"		-- July 23, 2008 at 15:30 GMT
+      DESCRIPTION 
+        "txType with changed syntax: TvStandard
+        new: atvStandard, irtNicam, timeScheduler, configurationTable, timeSchedulerTable"
+      REVISION "200804150900Z"		-- April 15, 2008 at 09:00 GMT
+      DESCRIPTION 
+        "Reviewed version."
+      REVISION "200803071530Z"		-- March 07, 2008 at 15:30 GMT
+      DESCRIPTION 
+        "Initial version."
+      ::= { rsXx8000MibModule 103 }
+
+    
+  
+--
+-- Textual conventions
+--
+  
+    ProdInfoModuleNameTransposer ::= TEXTUAL-CONVENTION
+      STATUS current
+      DESCRIPTION 
+        "The product information module names for the transposer."
+      SYNTAX INTEGER
+        {
+        transposer(1),
+        coder(2),
+        rfBoard(4),
+        sawFilter(7),
+        enhancedEchoCanceller(13),
+        amplifier(101)
+        }
+
+  
+--
+-- Node definitions
+--
+  
+    rsXx8000Transposer OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Xx8000 transposer"
+      ::= { rsXx8000 103 }
+
+    
+-- ************************************************************************************
+-- **          object definitions
+-- ************************************************************************************
+    rsXx8000TransposerObjs OBJECT IDENTIFIER ::= { rsXx8000Transposer 2 }
+
+    
+--     common
+    commonTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF CommonEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table for common parameters."
+      ::= { rsXx8000TransposerObjs 1 }
+
+    
+    commonEntry OBJECT-TYPE
+      SYNTAX CommonEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the common parameter of a specific transposer."
+      INDEX { commonTxIdx }
+      ::= { commonTable 1 }
+
+    
+    CommonEntry ::=
+      SEQUENCE { 
+        commonTxIdx
+          IndexTransmitter,
+        txType
+          TvStandard,
+        timeScheduler
+          SwitchOnOff,
+        resetSumFault
+          Trigger,
+        parametersetLoad
+          Integer32,
+        parametersetSave
+          Integer32,
+        parametersetReSave
+          Trigger,
+        atvStandard
+          AtvStandard,
+        irtNicam
+          INTEGER,
+        retransmitter
+          INTEGER
+       }
+
+    commonTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of NTx or Np1 systems.
+        If you have one transmitter only (SingleTx) this index is always 1."
+      ::= { commonEntry 1 }
+
+    
+    txType OBJECT-TYPE
+      SYNTAX TvStandard
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The TV-Standard of the transmitter. Changing the value involves an automatic 
+        reboot."
+      ::= { commonEntry 5 }
+
+    
+    timeScheduler OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "If on, the time scheduler controls the tx type. When switching on the scheduler 
+        it may instantly set the correct TV standard and reboot the device."
+      ::= { commonEntry 6 }
+
+    
+    resetSumFault OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Reset all faults (in all modules) of the transmitter.
+        
+        An equivalent would be pressing RESET at this transmitters frontpanel.
+        
+        A GET will always return idle(1).
+        A SET idle(1) will return NO_ERROR without doing anything."
+      ::= { commonEntry 7 }
+
+    
+    parametersetLoad OBJECT-TYPE
+      SYNTAX Integer32 (1..8)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "This loads the desired parameter set."
+      ::= { commonEntry 8 }
+
+    
+    parametersetSave OBJECT-TYPE
+      SYNTAX Integer32 (1..8)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "This saves the current settings to a designated parameter set."
+      ::= { commonEntry 9 }
+
+    
+    parametersetReSave OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS obsolete
+      DESCRIPTION
+        "This saves the changes to the current parameter set."
+      ::= { commonEntry 10 }
+
+    
+    atvStandard OBJECT-TYPE
+      SYNTAX AtvStandard
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The selection of the ATV standard."
+      ::= { commonEntry 11 }
+
+    
+    irtNicam OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        irt(1),
+        nicam(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The switch between IRT and NICAM."
+      ::= { commonEntry 12 }
+
+    
+    retransmitter OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        transposer(1),
+        transmitter(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "If retransmitter function is active. Changing the value involves an automatic 
+        reboot."
+      ::= { commonEntry 13 }
+
+    
+--     input
+    inputTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF InputEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table for input parameters."
+      ::= { rsXx8000TransposerObjs 3 }
+
+    
+    inputEntry OBJECT-TYPE
+      SYNTAX InputEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the input parameter of a specific transposer."
+      INDEX { inputTxIdx }
+      ::= { inputTable 1 }
+
+    
+    InputEntry ::=
+      SEQUENCE { 
+        inputTxIdx
+          IndexTransmitter,
+        inputFrequency
+          Integer32,
+        inputMode
+          INTEGER,
+        manualInputLevel
+          Integer32,
+        muteOnLowInputLevel
+          Integer32,
+        warningLevelOffset
+          Integer32,
+        onInputFail
+          INTEGER,
+        typeLossOfInput
+          INTEGER,
+        auxiliaryFilterBoard
+          INTEGER,
+        inputBandwidth
+          INTEGER,
+        adjacentChannelSelectivity
+          INTEGER,
+        inputRfLevel
+          FloatingPoint,
+        inputFailDelayTime
+          Integer32,
+        inputChannelPower
+          FloatingPoint,
+        inputPreselect
+          INTEGER,
+        inputPriority
+          INTEGER,
+        inputExpectReserve
+          SwitchOnOff,
+        inputCheckTimeForward
+          Integer32,
+        inputCheckTimeSwitchBack
+          Integer32,
+        inputAutomaticOpMode
+          SwitchOnOff,
+        inputAutomaticReady
+          TruthValue,
+        inputAutomaticChangedOver
+          TruthValue,
+        inputAutomaticReadyAfterChangeover
+          SwitchOnOff,
+        input1Connected
+          TruthValue,
+        input2Connected
+          TruthValue,
+        inputSeamless
+          TruthValue,
+        inputSeamlessSwitching
+          SwitchOnOff,
+        inputActive
+          INTEGER,
+        muteCondition
+          INTEGER,
+        networkControlInformationFault
+          TruthValue
+       }
+
+    inputTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of NTx or Np1 systems.
+        If you have one transmitter only (SingleTx) this index is always 1."
+      ::= { inputEntry 1 }
+
+    
+    inputFrequency OBJECT-TYPE
+      SYNTAX Integer32 (160000000..910000000)
+      UNITS "Hz"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Input frequency."
+      ::= { inputEntry 5 }
+
+    
+    inputMode OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        automatic(1),
+        manual(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The input mode."
+      ::= { inputEntry 6 }
+
+    
+    manualInputLevel OBJECT-TYPE
+      SYNTAX Integer32 (-75..0)
+      UNITS "dBm"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Manually sets the input level."
+      ::= { inputEntry 7 }
+
+    
+    muteOnLowInputLevel OBJECT-TYPE
+      SYNTAX Integer32 (-80..-30)
+      UNITS "dBm"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The absolute level of input power to force a mute."
+      ::= { inputEntry 8 }
+
+    
+    warningLevelOffset OBJECT-TYPE
+      SYNTAX Integer32 (0..50)
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The relative offset to the mute level to force a warning."
+      ::= { inputEntry 9 }
+
+    
+    onInputFail OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        mute(1),
+        noMute(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Controls the output behaviour on input failure."
+      ::= { inputEntry 10 }
+
+    
+    typeLossOfInput OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        warning(1),
+        fault(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "If the input signal is lost, either a warning or a fault can be generated.
+        If you select fault here, a switchover to the reserve exciter will be executed 
+        when input signal is lost."
+      ::= { inputEntry 11 }
+
+    
+    auxiliaryFilterBoard OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        active(1),
+        inactive(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Activate the optional filter board."
+      ::= { inputEntry 12 }
+
+    
+    inputBandwidth OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        mHz8(1),
+        mHz7(2),
+        mHz6(3),
+        mHz5(4),
+        mHz1point5(5),
+        mHz8ext(6),
+        mHz7ext(7)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The input bandwidth in MHz."
+      ::= { inputEntry 13 }
+
+    
+    adjacentChannelSelectivity OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        off(1),
+        selectivity50(2),
+        selectivity70(3),
+        steepSlope50(4),
+        steepSlope70(5)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The channel selectivity in dB."
+      ::= { inputEntry 14 }
+
+    
+    inputRfLevel OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "dBm"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Measurement of the total input RF level (wide band)."
+      ::= { inputEntry 17 }
+
+    
+    inputFailDelayTime OBJECT-TYPE
+      SYNTAX Integer32 (0..600)
+      UNITS "Seconds"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The time between detecting a loss of input signal and displaying a failure."
+      ::= { inputEntry 18 }
+
+    
+    inputChannelPower OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "dBm"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Measurement of the in-channel RF level at the input."
+      ::= { inputEntry 19 }
+
+    
+    inputPreselect OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        input1(1),
+        input2(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Preselected (if inputAutomatic = off(2)) or
+        preferred (i.e. with higher priority) input"
+      ::= { inputEntry 20 }
+
+    
+    inputPriority OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        equal(1),
+        prior(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "equal(1): There are no differences between both inputs. 
+               If a failure on the current input is detected it will be switched to the reserve input. 
+               It stays there until the reserve shows a failure. 
+        prior(2): Whenever possible the input inputPreselect shall be used. 
+               If a failure is detected the reserve will be used as short as possible."
+      ::= { inputEntry 21 }
+
+    
+    inputExpectReserve OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "If on(1) the warning inputReserveMissing will be generated
+        in case second input is missing."
+      ::= { inputEntry 22 }
+
+    
+    inputCheckTimeForward OBJECT-TYPE
+      SYNTAX Integer32 (0..600)
+      UNITS "second"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "This time has to elapse before the current input switches 
+        to the reserve input."
+      ::= { inputEntry 23 }
+
+    
+    inputCheckTimeSwitchBack OBJECT-TYPE
+      SYNTAX Integer32 (0..600)
+      UNITS "second"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "This time has to elapse before the automatic switches back 
+        from the reserve to a preselected input. 
+        This value has no effect if the priority is set to equal."
+      ::= { inputEntry 24 }
+
+    
+    inputAutomaticOpMode OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Switches input automatic on or off."
+      ::= { inputEntry 25 }
+
+    
+    inputAutomaticReady OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Shows whether input automatic is ready."
+      ::= { inputEntry 26 }
+
+    
+    inputAutomaticChangedOver OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Input Automatic changed over."
+      ::= { inputEntry 27 }
+
+    
+    inputAutomaticReadyAfterChangeover OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Input automatic ready after change over."
+      ::= { inputEntry 28 }
+
+    
+    input1Connected OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The input 1 is connected."
+      ::= { inputEntry 29 }
+
+    
+    input2Connected OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The input 1 is connected."
+      ::= { inputEntry 30 }
+
+    
+    inputSeamless OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The input is in seamless mode."
+      ::= { inputEntry 31 }
+
+    
+    inputSeamlessSwitching OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "If the datastreams on both inputs are synchronised
+        a seamless switch is possible. 
+        With this parameter the seamless switch can be suppressed
+        to enable a check of the input automatic."
+      ::= { inputEntry 32 }
+
+    
+    inputActive OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        input1(1),
+        input2(2)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The active input."
+      ::= { inputEntry 33 }
+
+    
+    muteCondition OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        onAllFaults(1),
+        notBeforeSyncLoss(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "When notBeforeSyncLoss(2) is selected,
+        it relativizes the onInputFail setting mute(1):
+        If a DVB receiver is the last valid input, an existing transport stream,
+        even if it is faulty, shall not be muted."
+      ::= { inputEntry 34 }
+
+    
+    networkControlInformationFault OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "DVB-T, DTMB: MIP fault
+        DVB-T2: no L1
+        ISDB-T: IIP fault"
+      ::= { inputEntry 35 }
+
+    
+--     RF Out
+    rfOutTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF RfOutEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table for RF Out parameters."
+      ::= { rsXx8000TransposerObjs 4 }
+
+    
+    rfOutEntry OBJECT-TYPE
+      SYNTAX RfOutEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the RF Out parameter of a specific transposer."
+      INDEX { rfOutTxIdx }
+      ::= { rfOutTable 1 }
+
+    
+    RfOutEntry ::=
+      SEQUENCE { 
+        rfOutTxIdx
+          IndexTransmitter,
+        amplifierOk
+          TruthValue,
+        powerNominal
+          FloatingPoint,
+        powerActual
+          FloatingPoint,
+        powerReflected
+          FloatingPoint,
+        powerOutput
+          FloatingPoint,
+        vswr
+          FloatingPoint,
+        rfFailLimit
+          FloatingPoint,
+        rfWarningLimit
+          FloatingPoint,
+        synthesizerFrequency
+          Integer32,
+        rfOutput
+          SwitchOnOff,
+        rfSlope
+          FloatingPoint,
+        modulationSlope
+          FloatingPoint
+       }
+
+    rfOutTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of NTx or Np1 systems.
+        If you have one transmitter only (SingleTx) this index is always 1."
+      ::= { rfOutEntry 1 }
+
+    
+    amplifierOk OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "If false, output stage signals sum warning."
+      ::= { rfOutEntry 4 }
+
+    
+    powerNominal OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "W"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The nominal power."
+      ::= { rfOutEntry 5 }
+
+    
+    powerActual OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "W"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The forward power."
+      ::= { rfOutEntry 6 }
+
+    
+    powerReflected OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "W"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The reflected power."
+      ::= { rfOutEntry 7 }
+
+    
+    powerOutput OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "W"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The output power (0.0 ... 440.0)."
+      ::= { rfOutEntry 8 }
+
+    
+    vswr OBJECT-TYPE
+      SYNTAX FloatingPoint
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The VSWR value."
+      ::= { rfOutEntry 9 }
+
+    
+    rfFailLimit OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Fault limit for the RF control (-15.0 ... 0.0)."
+      ::= { rfOutEntry 10 }
+
+    
+    rfWarningLimit OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Warning limit for the RF control (-15.0 ... 0.0)."
+      ::= { rfOutEntry 11 }
+
+    
+    synthesizerFrequency OBJECT-TYPE
+      SYNTAX Integer32 (47000000..1500000000)
+      UNITS "Hz"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The channel center frequency."
+      ::= { rfOutEntry 64 }
+
+    
+    rfOutput OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Turns on/switches off the output signal. This switch takes the same effect as the 
+        switch on the frontpanel of the exciter."
+      ::= { rfOutEntry 70 }
+
+    
+    rfSlope OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "percent"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts a slope in the RF signal (-50.0 ... 50.0)."
+      ::= { rfOutEntry 74 }
+
+    
+    modulationSlope OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "percent"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Modulation slope (-50.0 ... 50.0)."
+      ::= { rfOutEntry 75 }
+
+    
+--     IQ Adjust
+    iqAdjustTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF IqAdjustEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table for IQ Adjust parameters."
+      ::= { rsXx8000TransposerObjs 7 }
+
+    
+    iqAdjustEntry OBJECT-TYPE
+      SYNTAX IqAdjustEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the IQ Adjust parameter of a specific transposer."
+      INDEX { iqAdjustTxIdx }
+      ::= { iqAdjustTable 1 }
+
+    
+    IqAdjustEntry ::=
+      SEQUENCE { 
+        iqAdjustTxIdx
+          IndexTransmitter,
+        iqAdjustTestsignal
+          SwitchOnOff,
+        iqAdjustBiasCoarseI
+          Integer32,
+        iqAdjustBiasCoarseQ
+          Integer32,
+        iqAdjustBiasFineI
+          Integer32,
+        iqAdjustBiasFineQ
+          Integer32,
+        iqAdjustGainI
+          Integer32,
+        iqAdjustGainQ
+          Integer32,
+        iqAdjustPhase
+          FloatingPoint
+       }
+
+    iqAdjustTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of NTx or Np1 systems.
+        If you have one transmitter only (SingleTx) this index is always 1."
+      ::= { iqAdjustEntry 1 }
+
+    
+    iqAdjustTestsignal OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Generates a test signal to adjust the IQ modulation. It is necessary to 
+        disconnect the rf-cable to the output stages."
+      ::= { iqAdjustEntry 78 }
+
+    
+    iqAdjustBiasCoarseI OBJECT-TYPE
+      SYNTAX Integer32 (-2048..2047)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the offset for I in huge steps."
+      ::= { iqAdjustEntry 79 }
+
+    
+    iqAdjustBiasCoarseQ OBJECT-TYPE
+      SYNTAX Integer32 (-2048..2047)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the offset for Q in huge steps."
+      ::= { iqAdjustEntry 80 }
+
+    
+    iqAdjustBiasFineI OBJECT-TYPE
+      SYNTAX Integer32 (-32767..32767)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the offset for I in small steps."
+      ::= { iqAdjustEntry 81 }
+
+    
+    iqAdjustBiasFineQ OBJECT-TYPE
+      SYNTAX Integer32 (-32767..32767)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the offset for Q in small steps."
+      ::= { iqAdjustEntry 82 }
+
+    
+    iqAdjustGainI OBJECT-TYPE
+      SYNTAX Integer32 (-2048..2047)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the gain for I in small steps."
+      ::= { iqAdjustEntry 83 }
+
+    
+    iqAdjustGainQ OBJECT-TYPE
+      SYNTAX Integer32 (-2048..2047)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the gain for Q in small steps."
+      ::= { iqAdjustEntry 84 }
+
+    
+    iqAdjustPhase OBJECT-TYPE
+      SYNTAX FloatingPoint
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the phase between I and Q (-512.000 ... 511.000)."
+      ::= { iqAdjustEntry 85 }
+
+    
+--     Precorrection
+    precorrectionTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF PrecorrectionEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table for precorrection parameters."
+      ::= { rsXx8000TransposerObjs 9 }
+
+    
+    precorrectionEntry OBJECT-TYPE
+      SYNTAX PrecorrectionEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the precorrection parameter of a specific transposer."
+      INDEX { precTxIdx }
+      ::= { precorrectionTable 1 }
+
+    
+    PrecorrectionEntry ::=
+      SEQUENCE { 
+        precTxIdx
+          IndexTransmitter,
+        precLinCorrection
+          SwitchOnOff,
+        precNonlinCorrection
+          SwitchOnOff,
+        precLinearFilterLength
+          INTEGER,
+        precUserState
+          EqualizerCalibrationState,
+        precFactoryState
+          EqualizerCalibrationState,
+        precRestoreCurrentSettings
+          Trigger,
+        precRestoreAllSettings
+          Trigger
+       }
+
+    precTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of NTx or Np1 systems.
+        If you have one transmitter only (SingleTx) this index is always 1."
+      ::= { precorrectionEntry 1 }
+
+    
+    precLinCorrection OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Switches on/turns off the linear precorrector."
+      ::= { precorrectionEntry 4 }
+
+    
+    precNonlinCorrection OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Switches on/turns off the nonlinear precorrector."
+      ::= { precorrectionEntry 12 }
+
+    
+    precLinearFilterLength OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        small(1),
+        large(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The filter length affects the ability of the linear precorrector.
+        The larger of the two filters has better precorrection abilities,
+        but also adds more delay to the through-put time."
+      ::= { precorrectionEntry 30 }
+
+    
+    precUserState OBJECT-TYPE
+      SYNTAX EqualizerCalibrationState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The status of the user precorrection settings."
+      ::= { precorrectionEntry 100 }
+
+    
+    precFactoryState OBJECT-TYPE
+      SYNTAX EqualizerCalibrationState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Status of the factory precorrection settings."
+      ::= { precorrectionEntry 101 }
+
+    
+    precRestoreCurrentSettings OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Restores current factory precorrection settings."
+      ::= { precorrectionEntry 102 }
+
+    
+    precRestoreAllSettings OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Restores all factory precorrection settings."
+      ::= { precorrectionEntry 103 }
+
+    
+--     Reference
+    referenceTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ReferenceEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table for reference parameters."
+      ::= { rsXx8000TransposerObjs 11 }
+
+    
+    referenceEntry OBJECT-TYPE
+      SYNTAX ReferenceEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the reference parameter of a specific transposer."
+      INDEX { referenceTxIdx }
+      ::= { referenceTable 1 }
+
+    
+    ReferenceEntry ::=
+      SEQUENCE { 
+        referenceTxIdx
+          IndexTransmitter,
+        monitoringOutput
+          INTEGER,
+        ocxoAdjust
+          Integer32,
+        referenceSource
+          INTEGER,
+        muteOnPPSFail
+          INTEGER,
+        muteOnReferenceFail
+          INTEGER,
+        refFailDelayTime
+          Integer32,
+        refFailDelayMode
+          FailDelayMode,
+        refFailDelayStatus
+          FailDelayStatus
+       }
+
+    referenceTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of NTx or Np1 systems.
+        If you have one transmitter only (SingleTx) this index is always 1."
+      ::= { referenceEntry 1 }
+
+    
+    monitoringOutput OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        off(1),
+        reference10MHz(2),
+        generated1PPS(3),
+        kHz1(4),
+        pulse1PPS(5)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Selects which signal appears at the monitoring output."
+      ::= { referenceEntry 63 }
+
+    
+    ocxoAdjust OBJECT-TYPE
+      SYNTAX Integer32 (0..65535)
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Adjusts the frequency of the internal 10 MHz reference. This value only takes 
+        effect if the reference source intern(1) is selected."
+      ::= { referenceEntry 64 }
+
+    
+    referenceSource OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        intern(1),
+        extern5Mhz(2),
+        extern10Mhz(3),
+        extern1PPS(4),
+        internGPS(5)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The reference source for stabilisation of the frequency processing (reference 
+        frequency source)."
+      ::= { referenceEntry 65 }
+
+    
+    muteOnPPSFail OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        off(1),
+        onlyAtStartup(2),
+        afterFailDelayTime(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The behaviour if the external second pulse is not available."
+      ::= { referenceEntry 66 }
+
+    
+    muteOnReferenceFail OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        off(1),
+        onlyAtStartup(2),
+        afterFailDelayTime(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The behaviour of the system if the external reference is not available."
+      ::= { referenceEntry 67 }
+
+    
+    refFailDelayTime OBJECT-TYPE
+      SYNTAX Integer32 (0..24)
+      UNITS "Hours"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The time after the RF shall be muted in case of a reference problem. Zero hours 
+        means it reacts immediately."
+      ::= { referenceEntry 68 }
+
+    
+    refFailDelayMode OBJECT-TYPE
+      SYNTAX FailDelayMode
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Condition when the fail delay time is used."
+      ::= { referenceEntry 69 }
+
+    
+    refFailDelayStatus OBJECT-TYPE
+      SYNTAX FailDelayStatus
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Shows whether the fail delay time is qualified."
+      ::= { referenceEntry 70 }
+
+    
+--     Echo Canceller
+    echoCancellerTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF EchoCancellerEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table for Echo Canceller parameters."
+      ::= { rsXx8000TransposerObjs 15 }
+
+    
+    echoCancellerEntry OBJECT-TYPE
+      SYNTAX EchoCancellerEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the Echo Canceller parameter of a specific transposer."
+      INDEX { echoCancellerTxIdx }
+      ::= { echoCancellerTable 1 }
+
+    
+    EchoCancellerEntry ::=
+      SEQUENCE { 
+        echoCancellerTxIdx
+          IndexTransmitter,
+        echoCancellerOperation
+          INTEGER,
+        windowWidth
+          FloatingPoint,
+        windowOffset
+          FloatingPoint,
+        echoLevel
+          FloatingPoint,
+        echoLevelLimit
+          FloatingPoint,
+        echoRegulation
+          INTEGER
+       }
+
+    echoCancellerTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of NTx or Np1 systems.
+        If you have one transmitter only (SingleTx) this index is always 1."
+      ::= { echoCancellerEntry 1 }
+
+    
+    echoCancellerOperation OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        off(1),
+        on(2),
+        enhanced(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Determines the way if and how echo cancellation is used."
+      ::= { echoCancellerEntry 5 }
+
+    
+    windowWidth OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "microSeconds"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The Window Width (0.5 ... 5.0)."
+      ::= { echoCancellerEntry 6 }
+
+    
+    windowOffset OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "microSeconds"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The Window Offset (0.0 ... 20.0)."
+      ::= { echoCancellerEntry 7 }
+
+    
+    echoLevel OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "dB"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Echo Level."
+      ::= { echoCancellerEntry 8 }
+
+    
+    echoLevelLimit OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Limit from which the output power is reduced to maintain the echo level 
+        (-50.0 ... 30.0)."
+      ::= { echoCancellerEntry 9 }
+
+    
+    echoRegulation OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        slow(1),
+        medium(2),
+        fast(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "A slow regulation mode improves the MER though the response to an echo
+        disturbance is slower."
+      ::= { echoCancellerEntry 10 }
+
+    
+--     Input Config
+    inputConfigTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF InputConfigEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table for Input Config parameters."
+      ::= { rsXx8000TransposerObjs 16 }
+
+    
+    inputConfigEntry OBJECT-TYPE
+      SYNTAX InputConfigEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the Input Config parameter of a specific transposer."
+      INDEX { inputConfigTxIdx, inputConfigInputIdx }
+      ::= { inputConfigTable 1 }
+
+    
+    InputConfigEntry ::=
+      SEQUENCE { 
+        inputConfigTxIdx
+          IndexTransmitter,
+        inputConfigInputIdx
+          INTEGER,
+        inputConfigRxFrequency
+          Integer32,
+        inputConfigTxFrequency
+          Integer32,
+        inputConfigTxPower
+          FloatingPoint
+       }
+
+    inputConfigTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of NTx or Np1 systems.
+        If you have one transmitter only (SingleTx) this index is always 1."
+      ::= { inputConfigEntry 1 }
+
+    
+    inputConfigInputIdx OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        input1(1),
+        input2(2)
+        }
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The input index."
+      ::= { inputConfigEntry 3 }
+
+    
+    inputConfigRxFrequency OBJECT-TYPE
+      SYNTAX Integer32 (160000000..910000000)
+      UNITS "Hz"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Rx frequency for input."
+      ::= { inputConfigEntry 5 }
+
+    
+    inputConfigTxFrequency OBJECT-TYPE
+      SYNTAX Integer32 (47000000..1500000000)
+      UNITS "Hz"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Tx frequency for input."
+      ::= { inputConfigEntry 6 }
+
+    
+    inputConfigTxPower OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "W"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Tx power for input (0.0 ... 2500.0)."
+      ::= { inputConfigEntry 7 }
+
+    
+--     Configuration
+    configurationTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ConfigurationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table for Type Configuration parameters."
+      ::= { rsXx8000TransposerObjs 17 }
+
+    
+    configurationEntry OBJECT-TYPE
+      SYNTAX ConfigurationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the Type Configuration parameters of a specific transposer."
+      INDEX { configTxIdx, configTvStandardIdx }
+      ::= { configurationTable 1 }
+
+    
+    ConfigurationEntry ::=
+      SEQUENCE { 
+        configTxIdx
+          IndexTransmitter,
+        configTvStandardIdx
+          TvStandard,
+        configTvStandardName
+          TvStandard,
+        configFrequencyIn
+          Integer32,
+        configFrequencyOut
+          Integer32,
+        configPower
+          FloatingPoint,
+        configInputSource
+          InputSource
+       }
+
+    configTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of NTx or Np1 systems.
+        If you have one transmitter only (SingleTx) this index is always 1."
+      ::= { configurationEntry 1 }
+
+    
+    configTvStandardIdx OBJECT-TYPE
+      SYNTAX TvStandard
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The index for the TV standard."
+      ::= { configurationEntry 3 }
+
+    
+    configTvStandardName OBJECT-TYPE
+      SYNTAX TvStandard
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The name of the TV standard as a text."
+      ::= { configurationEntry 5 }
+
+    
+    configFrequencyIn OBJECT-TYPE
+      SYNTAX Integer32 (160000000..910000000)
+      UNITS "Hz"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The input frequency for input 1."
+      ::= { configurationEntry 6 }
+
+    
+    configFrequencyOut OBJECT-TYPE
+      SYNTAX Integer32 (47000000..1500000000)
+      UNITS "Hz"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The output frequency for input 1."
+      ::= { configurationEntry 7 }
+
+    
+    configPower OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "W"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The power (0.0 ... 440.0) for input 1."
+      ::= { configurationEntry 8 }
+
+    
+    configInputSource OBJECT-TYPE
+      SYNTAX InputSource
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The source for input 1."
+      ::= { configurationEntry 9 }
+
+    
+--     Time Scheduler
+    timeSchedulerTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF TimeSchedulerEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table for Time Scheduler parameters."
+      ::= { rsXx8000TransposerObjs 18 }
+
+    
+    timeSchedulerEntry OBJECT-TYPE
+      SYNTAX TimeSchedulerEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry in the table for the Time Scheduler parameters of a specific transposer.
+        
+        A row in this table is created by setting the value of schedulerRowStatus to 
+        'createAndGo' or 'createAndWait'.
+        
+        A row in this table is deleted by setting the value of schedulerRowStatus to 
+        'destroy'."
+      INDEX { schedulerTxIdx, schedulerDateTimeIdx }
+      ::= { timeSchedulerTable 1 }
+
+    
+    TimeSchedulerEntry ::=
+      SEQUENCE { 
+        schedulerTxIdx
+          IndexTransmitter,
+        schedulerDateTimeIdx
+          DateAndTime,
+        schedulerRowStatus
+          RowStatus,
+        schedulerEvent
+          INTEGER,
+        schedulerDateTime
+          DateAndTime,
+        schedulerTvStandard
+          TvStandard
+       }
+
+    schedulerTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of NTx or Np1 systems.
+        If you have one transmitter only (SingleTx) this index is always 1."
+      ::= { timeSchedulerEntry 1 }
+
+    
+    schedulerDateTimeIdx OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The DateAndTime index.
+        
+        Note: Deci-seconds different from 0 and UTC values are ignored.
+              The index is implemented as a Fixed length string of 8 components. The last
+              component (Deci-seconds) is always 0.
+        Example:
+              The DateTime of 2008-9-15,17:45:30.0 
+              has the index: 7.216.9.15.17.45.30.0"
+      ::= { timeSchedulerEntry 3 }
+
+    
+    schedulerRowStatus OBJECT-TYPE
+      SYNTAX RowStatus
+      MAX-ACCESS read-create
+      STATUS current
+      DESCRIPTION
+        "This object is used to create and delete rows in the timeSchedulerTable."
+      ::= { timeSchedulerEntry 5 }
+
+    
+    schedulerEvent OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        daily(1),
+        once(2)
+        }
+      MAX-ACCESS read-create
+      STATUS current
+      DESCRIPTION
+        "The event type."
+      ::= { timeSchedulerEntry 6 }
+
+    
+    schedulerDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The start date and the time of a daily or one-time event."
+      ::= { timeSchedulerEntry 7 }
+
+    
+    schedulerTvStandard OBJECT-TYPE
+      SYNTAX TvStandard
+      MAX-ACCESS read-create
+      STATUS current
+      DESCRIPTION
+        "The TV standard."
+      ::= { timeSchedulerEntry 8 }
+
+    
+    configuration2Table OBJECT-TYPE
+      SYNTAX SEQUENCE OF Configuration2Entry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table for Type Configuration parameters of input 2."
+      ::= { rsXx8000TransposerObjs 19 }
+
+    
+    configuration2Entry OBJECT-TYPE
+      SYNTAX Configuration2Entry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the Type Configuration parameters of input 2."
+      AUGMENTS { configurationEntry }
+      ::= { configuration2Table 1 }
+
+    
+    Configuration2Entry ::=
+      SEQUENCE { 
+        config2TvStandardName
+          TvStandard,
+        config2RxFrequency
+          Integer32,
+        config2Frequency
+          Integer32,
+        config2Power
+          FloatingPoint,
+        config2InputSource
+          InputSource
+       }
+
+    config2TvStandardName OBJECT-TYPE
+      SYNTAX TvStandard
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The name of the TV standard as a text."
+      ::= { configuration2Entry 5 }
+
+    
+    config2RxFrequency OBJECT-TYPE
+      SYNTAX Integer32 (160000000..910000000)
+      UNITS "Hz"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The input frequency for input 2."
+      ::= { configuration2Entry 6 }
+
+    
+    config2Frequency OBJECT-TYPE
+      SYNTAX Integer32 (47000000..1500000000)
+      UNITS "Hz"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The output frequency for input 2."
+      ::= { configuration2Entry 7 }
+
+    
+    config2Power OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "W"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The output power (0.0 ... 2500.0)  for input 2."
+      ::= { configuration2Entry 8 }
+
+    
+    config2InputSource OBJECT-TYPE
+      SYNTAX InputSource
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "The source for input 2."
+      ::= { configuration2Entry 9 }
+
+    
+--     logbook
+    logbook OBJECT IDENTIFIER ::= { rsXx8000TransposerObjs 20 }
+
+    
+    logbookNumberOfEntries OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in logbook."
+      ::= { logbook 1 }
+
+    
+    logbookClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear the logbook.
+        idle(1)    --> ready
+        clear(2)   --> do clear now
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing 
+        anything."
+      ::= { logbook 2 }
+
+    
+    logbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF LogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Transposer logbook table."
+      ::= { logbook 3 }
+
+    
+    logbookEntry OBJECT-TYPE
+      SYNTAX LogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an entry in the logbook."
+      INDEX { logbookEntryIdx }
+      ::= { logbookTable 1 }
+
+    
+    LogbookEntry ::=
+      SEQUENCE { 
+        logbookEntryIdx
+          LogbookMaxEntryNumber,
+        logbookEntryNbr
+          LogbookMaxEntryNumber,
+        logbookType
+          EventClass,
+        logbookSlope
+          LogbookEntrySlope,
+        logbookMessage
+          LogbookEntryMessagesExcTv,
+        logbookDateTime
+          DateAndTime
+       }
+
+    logbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to maximum. It is used as an index column for 
+        SNMP."
+      ::= { logbookEntry 1 }
+
+    
+    logbookEntryNbr OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from maximum 
+        down to 1."
+      ::= { logbookEntry 2 }
+
+    
+    logbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { logbookEntry 3 }
+
+    
+    logbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Either set (event raises) or reset (event disappears)"
+      ::= { logbookEntry 4 }
+
+    
+    logbookMessage OBJECT-TYPE
+      SYNTAX LogbookEntryMessagesExcTv
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Message identifier."
+      ::= { logbookEntry 5 }
+
+    
+    logbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The time of the logbook entry."
+      ::= { logbookEntry 6 }
+
+    
+    nPlus1LogbookConfigTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF NPlus1LogbookConfigEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Configuration for N+1 logbook tables."
+      ::= { logbook 4 }
+
+    
+    nPlus1LogbookConfigEntry OBJECT-TYPE
+      SYNTAX NPlus1LogbookConfigEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the logbook of a specific transposer."
+      AUGMENTS { commonEntry }
+      ::= { nPlus1LogbookConfigTable 1 }
+
+    
+    NPlus1LogbookConfigEntry ::=
+      SEQUENCE { 
+        nP1LbCfgNumberOfEntries
+          LogbookMaxEntryNumber,
+        nP1LbCfgClear
+          Trigger
+       }
+
+    nP1LbCfgNumberOfEntries OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in logbook."
+      ::= { nPlus1LogbookConfigEntry 1 }
+
+    
+    nP1LbCfgClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear the logbook.
+        idle(1)    --> ready
+        clear(2)   --> do clear now
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+      ::= { nPlus1LogbookConfigEntry 2 }
+
+    
+    nPlus1LogbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF NPlus1LogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Transposer N+1 logbook tables."
+      ::= { logbook 5 }
+
+    
+    nPlus1LogbookEntry OBJECT-TYPE
+      SYNTAX NPlus1LogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an entry in the logbook."
+      INDEX { commonTxIdx, nP1LogbookEntryIdx }
+      ::= { nPlus1LogbookTable 1 }
+
+    
+    NPlus1LogbookEntry ::=
+      SEQUENCE { 
+        nP1LogbookEntryIdx
+          LogbookMaxEntryNumber,
+        nP1LogbookEntryNbr
+          LogbookMaxEntryNumber,
+        nP1LogbookType
+          EventClass,
+        nP1LogbookSlope
+          LogbookEntrySlope,
+        nP1LogbookMessage
+          LogbookEntryMessagesExcTv,
+        nP1LogbookDateTime
+          DateAndTime
+       }
+
+    nP1LogbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to maximum. It is used as an index column for 
+        SNMP."
+      ::= { nPlus1LogbookEntry 1 }
+
+    
+    nP1LogbookEntryNbr OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from maximum 
+        down to 1."
+      ::= { nPlus1LogbookEntry 2 }
+
+    
+    nP1LogbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { nPlus1LogbookEntry 3 }
+
+    
+    nP1LogbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Either set (event raises) or reset (event disappears)"
+      ::= { nPlus1LogbookEntry 4 }
+
+    
+    nP1LogbookMessage OBJECT-TYPE
+      SYNTAX LogbookEntryMessagesExcTv
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Message identifier."
+      ::= { nPlus1LogbookEntry 5 }
+
+    
+    nP1LogbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The time of the logbook entry."
+      ::= { nPlus1LogbookEntry 6 }
+
+    
+--     productInfo
+    productInformationTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF ProductInformationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The table for the product information (electronic typeplate)."
+      ::= { rsXx8000TransposerObjs 100 }
+
+    
+    productInformationEntry OBJECT-TYPE
+      SYNTAX ProductInformationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "A row (an entry) for one typeplate."
+      INDEX { prodInfoModuleIdx, prodInfoTxIdx }
+      ::= { productInformationTable 1 }
+
+    
+    ProductInformationEntry ::=
+      SEQUENCE { 
+        prodInfoModuleIdx
+          ProdInfoModuleNameTransposer,
+        prodInfoTxIdx
+          IndexTransmitter,
+        prodInfoModuleName
+          ProdInfoModuleNameTransposer,
+        prodInfoSerialNumber
+          ReadableString,
+        prodInfoIdentNumberSW
+          ReadableString,
+        prodInfoVersionNumberSW
+          ReadableString,
+        prodInfoIdentNumberHW
+          ReadableString,
+        prodInfoVersionNumberHW
+          ReadableString,
+        prodInfoProductDateHW
+          DateAndTime
+       }
+
+    prodInfoModuleIdx OBJECT-TYPE
+      SYNTAX ProdInfoModuleNameTransposer
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The module index."
+      ::= { productInformationEntry 1 }
+
+    
+    prodInfoTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of NTx or Np1 systems.
+        If you have one transmitter only (SingleTx) this index is always 1."
+      ::= { productInformationEntry 2 }
+
+    
+    prodInfoModuleName OBJECT-TYPE
+      SYNTAX ProdInfoModuleNameTransposer
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The name of the module as a text."
+      ::= { productInformationEntry 6 }
+
+    
+    prodInfoSerialNumber OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The serial number of the module."
+      ::= { productInformationEntry 7 }
+
+    
+    prodInfoIdentNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the software."
+      ::= { productInformationEntry 8 }
+
+    
+    prodInfoVersionNumberSW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number of the software."
+      ::= { productInformationEntry 9 }
+
+    
+    prodInfoIdentNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz identification number of the hardware."
+      ::= { productInformationEntry 10 }
+
+    
+    prodInfoVersionNumberHW OBJECT-TYPE
+      SYNTAX ReadableString
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz revision number of the hardware."
+      ::= { productInformationEntry 11 }
+
+    
+    prodInfoProductDateHW OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The Rohde&Schwarz production date of the hardware."
+      ::= { productInformationEntry 12 }
+
+    
+-- **************************************************************************************
+-- **          event definitions
+-- **************************************************************************************
+    rsXx8000TransposerEvents OBJECT IDENTIFIER ::= { rsXx8000Transposer 12 }
+
+    
+    eventTransposer OBJECT IDENTIFIER ::= { rsXx8000TransposerEvents 1 }
+
+    
+    eventsTransposerV2 OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Root node of notifications."
+      ::= { eventTransposer 0 }
+
+    
+    txSummaryFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Summary fault of transposer n. This causes a change over in reserve systems."
+      ::= { eventsTransposerV2 1 }
+
+    
+    txSummaryWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Summary warning of transposer n. Probably no output signal will be generated 
+        depending on the event."
+      ::= { eventsTransposerV2 2 }
+
+    
+    txLocal NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Transposer Local/Remote"
+      ::= { eventsTransposerV2 3 }
+
+    
+    txRfOn NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Transposer output signal is on or not."
+      ::= { eventsTransposerV2 4 }
+
+    
+    txRfOk NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Transmitter RF Ok / Not OK"
+      ::= { eventsTransposerV2 5 }
+
+    
+    txParamSetSubDeviceDiffers NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS obsolete
+      DESCRIPTION 
+        "Parameterset of subdevice is different.
+        The currently loaded parameterset is inconsistent because
+        a subdevice (e.g. an exciter) has a different configuration than expected.
+        To correct this, save settings to the current or save a complete new."
+      ::= { eventsTransposerV2 6 }
+
+    
+    txParamSetValuesChanged NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Value Of Current Parameterset Changed.
+        The currently loaded parameterset is inconsistent because
+        there were changes happening since the load/save of it.
+        To correct this, save settings to the current or save a complete new."
+      ::= { eventsTransposerV2 7 }
+
+    
+    rfLoop NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "RF loop open warning. If the protection loop is open the RF will be switched off 
+        immediately."
+      ::= { eventsTransposerV2 8 }
+
+    
+    txRfWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent }
+      STATUS current
+      DESCRIPTION 
+        "NetCCU RF Warning"
+      ::= { eventsTransposerV2 10 }
+
+    
+    txRfFail NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Active if the RF output power decreased the fault threshold."
+      ::= { eventsTransposerV2 14 }
+
+    
+    actualPowerWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "An overflow of the internal power meter."
+      ::= { eventsTransposerV2 15 }
+
+    
+    exciterOn NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "The device is logically switched on. It does not indicate that RF is generated."
+      ::= { eventsTransposerV2 113 }
+
+    
+    noInput NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "No valid input signal."
+      ::= { eventsTransposerV2 115 }
+
+    
+    inputReserveMissing NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Missing input, or automatic switching enabled with only one input present.
+        Disable automatic switching or press reset fault to remove this warning.
+        Monitoring of a second input will start automatically if two input signals have been detected.
+        
+        This event will be generated only if inputExpectReserve is set to on(1)."
+      ::= { eventsTransposerV2 116 }
+
+    
+    excSelfTest NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Exciter self test. The internal continuous hardware check indicates a electrical 
+        failure. A detailed diagnose in an authorized service department is necessary."
+      ::= { eventsTransposerV2 118 }
+
+    
+    excOutputOpen NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Exciter output open. Indicates if the output stage is not connected to the RF 
+        output."
+      ::= { eventsTransposerV2 119 }
+
+    
+    excBoardTemperatureWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "One of the internal sensors indicated that the temperature of the exciter is too 
+        high or a fan problem occured. For detailed information please refer to the 
+        logbook."
+      ::= { eventsTransposerV2 120 }
+
+    
+    fanFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "The fan is faulty."
+      ::= { eventsTransposerV2 122 }
+
+    
+    excTestSignal NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Indicates that at least one of several test modes are enabled. In this case a 
+        proper output signal is not possible. Detailed information can be seen in the 
+        logbook."
+      ::= { eventsTransposerV2 124 }
+
+    
+    excMute NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "The exciter suppresses the RF e.g. not to disturb SFNs."
+      ::= { eventsTransposerV2 127 }
+
+    
+    excPPSFail NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Exciter PPS Fail. The external one second pulse is not ok or not synchronised to 
+        the reference."
+      ::= { eventsTransposerV2 128 }
+
+    
+    excReferenceFail NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Exciter Reference Fail. A reference is needed but not detected."
+      ::= { eventsTransposerV2 129 }
+
+    
+    ampTemperatureWarning NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Amplifier temperature warning."
+      ::= { eventsTransposerV2 130 }
+
+    
+    ampTemperatureFault NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Amplifier temperature fault."
+      ::= { eventsTransposerV2 131 }
+
+    
+    precRestoreCurrentSettingsState NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "The state of Restoring current factory precorrection settings."
+      ::= { eventsTransposerV2 150 }
+
+    
+    precRestoreAllSettingsState NOTIFICATION-TYPE
+      OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter }
+      STATUS current
+      DESCRIPTION 
+        "The state of Restoring all factory precorrection settings."
+      ::= { eventsTransposerV2 151 }
+
+    
+    eventsTransposerTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF EventsTransposerEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains necessary information for handling alarms. 
+        For each alarm you have the following information: 
+        - name (get),
+        - mask to enable/disable sending out (set/get),
+        - priority (set/get) and 
+        - the current state (get only)."
+      ::= { eventTransposer 1 }
+
+    
+    eventsTransposerEntry OBJECT-TYPE
+      SYNTAX EventsTransposerEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An event entry always consists of 4 values:
+        - name: an enumerated list of all possible notifications
+        - mask: the corresponding mask (enable/disable)
+        - priority: the corresponding priority value
+        - event: the event itself (active/inactive)"
+      INDEX { eventTxIdx, eventNameIdx }
+      ::= { eventsTransposerTable 1 }
+
+    
+    EventsTransposerEntry ::=
+      SEQUENCE { 
+        eventTxIdx
+          IndexTransmitter,
+        eventNameIdx
+          EventMaxEntryNumber,
+        eventName
+          INTEGER,
+        eventMask
+          EventMask,
+        eventPriority
+          EventPriority,
+        eventValueTransposer
+          EventState
+       }
+
+    eventTxIdx OBJECT-TYPE
+      SYNTAX IndexTransmitter
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The transmitter index in case of NTx or Np1 systems.
+        If you have one transmitter only (SingleTx) this index is always 1."
+      ::= { eventsTransposerEntry 1 }
+
+    
+    eventNameIdx OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The event number as index.
+        This is a helper column and therefore not-accessible."
+      ::= { eventsTransposerEntry 2 }
+
+    
+    eventName OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        txSummaryFault(1),
+        txSummaryWarning(2),
+        txLocal(3),
+        txRfOn(4),
+        txRfOk(5),
+        txParamSetSubDeviceDiffers(6),
+        txParamSetValuesChanged(7),
+        rfLoop(8),
+        txRfWarning(10),
+        txRfFail(14),
+        actualPowerWarning(15),
+        exciterOn(113),
+        noInput(115),
+        inputReserveMissing(116),
+        excSelfTest(118),
+        excOutputOpen(119),
+        excBoardTemperatureWarning(120),
+        fanFault(122),
+        excTestSignal(124),
+        excMute(127),
+        excPPSFail(128),
+        excReferenceFail(129),
+        ampTemperatureWarning(130),
+        ampTemperatureFault(131),
+        precRestoreCurrentSettingsState(150),
+        precRestoreAllSettingsState(151)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The event number as integer and the value as readable text.
+        The enumeration correlates with the notifications under eventsTransposerV2."
+      ::= { eventsTransposerEntry 3 }
+
+    
+    eventMask OBJECT-TYPE
+      SYNTAX EventMask
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsTransposerEntry 4 }
+
+    
+    eventPriority OBJECT-TYPE
+      SYNTAX EventPriority
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsTransposerEntry 5 }
+
+    
+    eventValueTransposer OBJECT-TYPE
+      SYNTAX EventState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsTransposerEntry 6 }
+
+    
+-- ************************************************************************************
+-- **          conformance statements
+-- ************************************************************************************
+    rsXx8000TransposerConf OBJECT IDENTIFIER ::= { rsXx8000Transposer 100 }
+
+    
+    rsXx8000TransposerGroups OBJECT IDENTIFIER ::= { rsXx8000TransposerConf 1 }
+
+    
+    groupObjects OBJECT-GROUP
+      OBJECTS { txType, timeScheduler, resetSumFault, parametersetLoad, parametersetSave, 
+        atvStandard, irtNicam, inputFrequency, inputMode, manualInputLevel, 
+        muteOnLowInputLevel, warningLevelOffset, onInputFail, typeLossOfInput, auxiliaryFilterBoard, 
+        inputBandwidth, adjacentChannelSelectivity, inputRfLevel, inputFailDelayTime, amplifierOk, 
+        powerNominal, powerActual, powerReflected, powerOutput, vswr, 
+        rfFailLimit, rfWarningLimit, synthesizerFrequency, rfOutput, rfSlope, 
+        modulationSlope, iqAdjustTestsignal, iqAdjustBiasCoarseI, iqAdjustBiasCoarseQ, iqAdjustBiasFineI, 
+        iqAdjustBiasFineQ, iqAdjustGainI, iqAdjustGainQ, iqAdjustPhase, precLinCorrection, 
+        precNonlinCorrection, precUserState, precFactoryState, precRestoreCurrentSettings, precRestoreAllSettings, 
+        monitoringOutput, ocxoAdjust, referenceSource, echoCancellerOperation, windowWidth, 
+        windowOffset, echoLevel, echoLevelLimit, echoRegulation, inputConfigRxFrequency, 
+        inputConfigTxFrequency, inputConfigTxPower, configTvStandardName, configFrequencyIn, configFrequencyOut, 
+        configPower, configInputSource, config2InputSource, config2Power, config2Frequency, 
+        config2RxFrequency, inputChannelPower, precLinearFilterLength, refFailDelayStatus, refFailDelayMode, 
+        config2TvStandardName, schedulerRowStatus, schedulerEvent, schedulerDateTime, schedulerTvStandard
+         }
+      STATUS current
+      DESCRIPTION 
+        "Group for objects."
+      ::= { rsXx8000TransposerGroups 1 }
+
+    
+    groupObjectsReTx OBJECT-GROUP
+      OBJECTS { retransmitter }
+      STATUS current
+      DESCRIPTION 
+        "Group for objects of retransmitter capability."
+      ::= { rsXx8000TransposerGroups 2 }
+
+    
+    groupObjectsDvbT OBJECT-GROUP
+      OBJECTS { inputPreselect, inputPriority, inputExpectReserve, inputCheckTimeForward, inputCheckTimeSwitchBack, 
+        inputAutomaticOpMode, inputAutomaticReady, inputAutomaticChangedOver, inputAutomaticReadyAfterChangeover, input1Connected, 
+        input2Connected, inputSeamless, inputSeamlessSwitching, inputActive, muteCondition, 
+        networkControlInformationFault, muteOnPPSFail, muteOnReferenceFail, refFailDelayTime }
+      STATUS current
+      DESCRIPTION 
+        "Objects for TV standard DVB-T."
+      ::= { rsXx8000TransposerGroups 3 }
+
+    
+    groupObjectsDvbT2 OBJECT-GROUP
+      OBJECTS { inputPreselect, inputPriority, inputCheckTimeForward, inputCheckTimeSwitchBack, inputAutomaticOpMode, 
+        inputAutomaticReady, inputAutomaticChangedOver, inputAutomaticReadyAfterChangeover, input1Connected, input2Connected, 
+        inputSeamless, inputSeamlessSwitching, inputActive, networkControlInformationFault, muteOnPPSFail, 
+        muteOnReferenceFail, refFailDelayTime }
+      STATUS current
+      DESCRIPTION 
+        "Objects for TV standard DVB-T2."
+      ::= { rsXx8000TransposerGroups 4 }
+
+    
+    groupObjectsATSC OBJECT-GROUP
+      OBJECTS { inputPreselect, inputPriority, inputCheckTimeForward, inputCheckTimeSwitchBack, inputAutomaticOpMode, 
+        input1Connected, input2Connected, inputSeamlessSwitching, inputActive, muteOnPPSFail, 
+        muteOnReferenceFail, refFailDelayTime, inputSeamless }
+      STATUS current
+      DESCRIPTION 
+        "Objects for TV standard ATSC."
+      ::= { rsXx8000TransposerGroups 5 }
+
+    
+    groupObjectsDAB OBJECT-GROUP
+      OBJECTS { inputPreselect, inputPriority, inputAutomaticOpMode, input1Connected, input2Connected, 
+        inputSeamless, inputActive, muteOnPPSFail, muteOnReferenceFail, refFailDelayTime
+         }
+      STATUS current
+      DESCRIPTION 
+        "Objects for standard DAB."
+      ::= { rsXx8000TransposerGroups 6 }
+
+    
+    groupObjectsDTMB OBJECT-GROUP
+      OBJECTS { inputPreselect, inputPriority, inputCheckTimeForward, inputCheckTimeSwitchBack, inputAutomaticOpMode, 
+        input1Connected, input2Connected, inputSeamless, inputSeamlessSwitching, inputActive, 
+        networkControlInformationFault, muteOnPPSFail, muteOnReferenceFail, refFailDelayTime }
+      STATUS current
+      DESCRIPTION 
+        "Objects for TV standard DTMB."
+      ::= { rsXx8000TransposerGroups 7 }
+
+    
+    groupObjectsISDBT OBJECT-GROUP
+      OBJECTS { inputPreselect, inputPriority, inputCheckTimeForward, inputCheckTimeSwitchBack, inputAutomaticOpMode, 
+        input1Connected, input2Connected, inputActive, networkControlInformationFault, muteOnPPSFail, 
+        muteOnReferenceFail, refFailDelayTime }
+      STATUS current
+      DESCRIPTION 
+        "Objects for TV standard ISDB-T."
+      ::= { rsXx8000TransposerGroups 8 }
+
+    
+    groupObjectsMediaFLO OBJECT-GROUP
+      OBJECTS { inputPreselect, inputAutomaticOpMode, input1Connected, input2Connected, inputActive, 
+        muteOnPPSFail, muteOnReferenceFail, refFailDelayTime }
+      STATUS current
+      DESCRIPTION 
+        "Objects for TV standard MediaFLO."
+      ::= { rsXx8000TransposerGroups 9 }
+
+    
+    groupObjectsLogbook OBJECT-GROUP
+      OBJECTS { logbookNumberOfEntries, logbookClear, logbookEntryNbr, logbookType, logbookSlope, 
+        logbookMessage, logbookDateTime }
+      STATUS current
+      DESCRIPTION 
+        "Group for logbooks."
+      ::= { rsXx8000TransposerGroups 10 }
+
+    
+    groupObjectsProductInfo OBJECT-GROUP
+      OBJECTS { prodInfoModuleName, prodInfoSerialNumber, prodInfoIdentNumberSW, prodInfoVersionNumberSW, prodInfoIdentNumberHW, 
+        prodInfoVersionNumberHW, prodInfoProductDateHW }
+      STATUS current
+      DESCRIPTION 
+        "Group for productInfoTable."
+      ::= { rsXx8000TransposerGroups 11 }
+
+    
+    groupObsoleted OBJECT-GROUP
+      OBJECTS { parametersetReSave }
+      STATUS obsolete
+      DESCRIPTION 
+        "This group includes all deprecated and obsoleted objects."
+      ::= { rsXx8000TransposerGroups 99 }
+
+    
+    groupEvents NOTIFICATION-GROUP
+      NOTIFICATIONS { txSummaryFault, txSummaryWarning, txLocal, txRfOn, txParamSetValuesChanged, 
+        rfLoop, txRfFail, actualPowerWarning, exciterOn, noInput, 
+        excSelfTest, excOutputOpen, excBoardTemperatureWarning, fanFault, excTestSignal, 
+        excMute, precRestoreCurrentSettingsState, txRfWarning, ampTemperatureFault, ampTemperatureWarning, 
+        precRestoreAllSettingsState, txRfOk }
+      STATUS current
+      DESCRIPTION 
+        "Group for events."
+      ::= { rsXx8000TransposerGroups 101 }
+
+    
+    groupEventsDvbT NOTIFICATION-GROUP
+      NOTIFICATIONS { inputReserveMissing, excPPSFail, excReferenceFail }
+      STATUS current
+      DESCRIPTION 
+        "Events for TV standard DVB-T."
+      ::= { rsXx8000TransposerGroups 102 }
+
+    
+    groupEventHandling OBJECT-GROUP
+      OBJECTS { eventName, eventMask, eventPriority, eventValueTransposer }
+      STATUS current
+      DESCRIPTION 
+        "Group for objects of handling events."
+      ::= { rsXx8000TransposerGroups 400 }
+
+    
+    groupObjectsNp1Logbook OBJECT-GROUP
+      OBJECTS { nP1LbCfgNumberOfEntries, nP1LbCfgClear, nP1LogbookEntryNbr, nP1LogbookType, nP1LogbookSlope, 
+        nP1LogbookMessage, nP1LogbookDateTime }
+      STATUS current
+      DESCRIPTION 
+        "Group for logbooks in case N+1."
+      ::= { rsXx8000TransposerGroups 401 }
+
+    
+    groupEventsObsoleted NOTIFICATION-GROUP
+      NOTIFICATIONS { txParamSetSubDeviceDiffers }
+      STATUS obsolete
+      DESCRIPTION 
+        "Group for obsoleted or deprecated events."
+      ::= { rsXx8000TransposerGroups 500 }
+
+    
+    rsXx8000TransposerCompl OBJECT IDENTIFIER ::= { rsXx8000TransposerConf 3 }
+
+    
+    rsXx8000TransposerXLx MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "The transposer XLx (series XX8000)."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupObjects, groupObjectsLogbook, groupObjectsProductInfo, groupEvents, groupEventHandling
+           }
+        GROUP groupObjectsDvbT
+          DESCRIPTION 
+            "only for TV standard DVB-T"
+        GROUP groupObjectsDvbT2
+          DESCRIPTION 
+            "only for TV standard DVB-T2"
+        GROUP groupObjectsATSC
+          DESCRIPTION 
+            "only for TV standard ATSC"
+        GROUP groupObjectsDAB
+          DESCRIPTION 
+            "only for standard DAB"
+        GROUP groupObjectsDTMB
+          DESCRIPTION 
+            "only for TV standard DTMB"
+        GROUP groupObjectsISDBT
+          DESCRIPTION 
+            "only for TV standard ISDB-T"
+        GROUP groupObjectsMediaFLO
+          DESCRIPTION 
+            "only for TV standard MediaFLO"
+        GROUP groupEventsDvbT
+          DESCRIPTION 
+            "only for TV standard DVB-T"
+      ::= { rsXx8000TransposerCompl 1 }
+
+    
+    rsXx8000TransposerXLxReTx MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "The transposer XLx (series XX8000) with retransmitter capability."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupObjects, groupObjectsReTx, groupObjectsLogbook, groupObjectsProductInfo, groupEvents, 
+          groupEventHandling }
+        OBJECT retransmitter
+          MIN-ACCESS read-only
+          DESCRIPTION 
+            "Since software version 1.21 this object is read-only."
+        GROUP groupObjectsDvbT
+          DESCRIPTION 
+            "only for TV standard DVB-T"
+        GROUP groupObjectsDvbT2
+          DESCRIPTION 
+            "only for TV standard DVB-T2"
+        GROUP groupObjectsATSC
+          DESCRIPTION 
+            "only for TV standard ATSC"
+        GROUP groupObjectsDAB
+          DESCRIPTION 
+            "only for standard DAB"
+        GROUP groupObjectsDTMB
+          DESCRIPTION 
+            "only for TV standard DTMB"
+        GROUP groupObjectsISDBT
+          DESCRIPTION 
+            "only for TV standard ISDB-T"
+        GROUP groupObjectsMediaFLO
+          DESCRIPTION 
+            "only for TV standard MediaFLO"
+        GROUP groupEventsDvbT
+          DESCRIPTION 
+            "only for TV standard DVB-T"
+      MODULE RS-XX8000-DVB-TX-MIB
+        MANDATORY-GROUPS { groupExcCommon, groupObjectsACU, groupExciterStatus, groupExciterPrecorrection, groupEvents, 
+          groupEventsExciter }
+      ::= { rsXx8000TransposerCompl 2 }
+
+    
+    rsXx8000TransposerXLxNp1 MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "The transposer XLx (series XX8000) in case N+1."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupObjects, groupObjectsProductInfo, groupEvents, groupEventHandling, groupObjectsNp1Logbook
+           }
+        GROUP groupObjectsDvbT
+          DESCRIPTION 
+            "only for TV standard DVB-T"
+        GROUP groupObjectsDvbT2
+          DESCRIPTION 
+            "only for TV standard DVB-T2"
+        GROUP groupObjectsATSC
+          DESCRIPTION 
+            "only for TV standard ATSC"
+        GROUP groupObjectsDAB
+          DESCRIPTION 
+            "only for standard DAB"
+        GROUP groupObjectsDTMB
+          DESCRIPTION 
+            "only for TV standard DTMB"
+        GROUP groupObjectsISDBT
+          DESCRIPTION 
+            "only for TV standard ISDB-T"
+        GROUP groupObjectsMediaFLO
+          DESCRIPTION 
+            "only for TV standard MediaFLO"
+        GROUP groupEventsDvbT
+          DESCRIPTION 
+            "only for TV standard DVB-T"
+      ::= { rsXx8000TransposerCompl 3 }
+
+    
+    rsXx8000TransposerXLxReTxNp1 MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "The transposer XLx (series XX8000) with retransmitter capability
+        in case N+1."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupObjects, groupObjectsReTx, groupObjectsProductInfo, groupEvents, groupEventHandling, 
+          groupObjectsNp1Logbook }
+        OBJECT retransmitter
+          MIN-ACCESS read-only
+          DESCRIPTION 
+            "Since software version 1.21 this object is read-only."
+        GROUP groupObjectsDvbT
+          DESCRIPTION 
+            "only for TV standard DVB-T"
+        GROUP groupObjectsDvbT2
+          DESCRIPTION 
+            "only for TV standard DVB-T2"
+        GROUP groupObjectsATSC
+          DESCRIPTION 
+            "only for TV standard ATSC"
+        GROUP groupObjectsDAB
+          DESCRIPTION 
+            "only for standard DAB"
+        GROUP groupObjectsDTMB
+          DESCRIPTION 
+            "only for TV standard DTMB"
+        GROUP groupObjectsISDBT
+          DESCRIPTION 
+            "only for TV standard ISDB-T"
+        GROUP groupObjectsMediaFLO
+          DESCRIPTION 
+            "only for TV standard MediaFLO"
+        GROUP groupEventsDvbT
+          DESCRIPTION 
+            "only for TV standard DVB-T"
+      MODULE RS-XX8000-DVB-TX-MIB
+        MANDATORY-GROUPS { groupExcCommon, groupObjectsACU, groupExciterStatus, groupExciterPrecorrection, groupEvents, 
+          groupEventsExciter }
+      ::= { rsXx8000TransposerCompl 4 }
+
+    
+  
+  END

@@ -1,0 +1,1537 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **
+-- **  COPYRIGHT      (c) 2011 Rohde & Schwarz GmbH & Co. KG
+-- **                          Muehldorfstrasse 15
+-- **    R & S                 D-81671 Muenchen
+-- **
+-- *****************************************************************************
+-- **
+-- **  MODULE         RS-XX8000-TSE-MIB
+-- **
+-- **  DESCRIPTION    Rohde & Schwarz SNMP
+-- **
+-- *****************************************************************************
+-- *****************************************************************************
+
+    RS-XX8000-TSE-MIB DEFINITIONS ::= BEGIN
+ 
+        IMPORTS
+            InetAddress, InetAddressType            
+                FROM INET-ADDRESS-MIB            
+            rsXx8000, eventAlarmClass, indexTransmitter, indexAB, rsXx8000MibModule, 
+            EventClass, Trigger, SwitchOnOff, LogbookMaxEntryNumber, LogbookEntrySlope, 
+            ReadableString, EventMaxEntryNumber, EventMask, EventPriority, EventState            
+                FROM RS-XX8000-COMMON-MIB            
+            OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP            
+                FROM SNMPv2-CONF            
+            Integer32, Unsigned32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, 
+            NOTIFICATION-TYPE            
+                FROM SNMPv2-SMI            
+            DateAndTime, TruthValue            
+                FROM SNMPv2-TC;
+    
+    
+        rsXx8000TseMibModule MODULE-IDENTITY 
+            LAST-UPDATED "201504170800Z"		-- April 17, 2015 at 08:00 GMT
+            ORGANIZATION 
+                "Rohde&Schwarz GmbH & Co. KG"
+            CONTACT-INFO 
+                "Torsten Huebscher
+                Department 7TS2
+                Broadcasting Division
+                Muehldorfstrasse 15
+                81671 Munich, Germany
+                torsten.huebscher@rohde-schwarz.com"
+            DESCRIPTION 
+                "This MIB defines transmitting systems from Rohde & Schwarz.
+                
+                Use this MIB if your system meets the following requirements:
+                - series XX8000 with TSE,
+                
+                The following MIBs are related to this:
+                - RS-COMMON-MIB         - mandatory for this MIB
+                - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+            REVISION "201504170800Z"		-- April 17, 2015 at 08:00 GMT
+            DESCRIPTION 
+                "inpAutoSeamless added"
+            REVISION "201206210900Z"		-- June 21, 2012 at 09:00 GMT
+            DESCRIPTION 
+                "logicalInputT2MI obsoleted"
+            REVISION "201109300900Z"		-- September 30, 2011 at 09:00 GMT
+            DESCRIPTION 
+                "inpAutoPreferred, inpAutoSwitchDirection,
+                inpAutoPreDelayActiveInput, inpAutoDelayInput1To2,
+                lossOfInputReserve, tseInputAutomaticReady,
+                tseInputNoReserve added
+                inpAutoPriority deprecated"
+            REVISION "201109150900Z"		-- September 15, 2011 at 09:00 GMT
+            DESCRIPTION 
+                "additional logbook messages"
+            REVISION "201106221100Z"		-- June 22, 2011 at 11:00 GMT
+            DESCRIPTION 
+                "tseFwUpdateInProgress added"
+            REVISION "201106081100Z"		-- June 08, 2011 at 11:00 GMT
+            DESCRIPTION 
+                "input parameters added
+                indexTransmitter, indexAB added for each notification"
+            REVISION "201105301100Z"		-- May 30, 2011 at 11:00 GMT
+            DESCRIPTION 
+                "frequency regulation parameters added"
+            REVISION "201102011100Z"		-- February 01, 2011 at 11:00 GMT
+            DESCRIPTION 
+                "initial revision"
+            ::= { rsXx8000MibModule 301 }
+
+        
+    
+    
+--
+-- Node definitions
+--
+    
+        rsXx8000Tse OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION 
+                "Xx8000 TSE.
+                Several devices can be addressed via the cmdTxIdx."
+            ::= { rsXx8000 301 }
+
+        
+-- *****************************************************************************
+-- **          object definitions
+-- *****************************************************************************
+        rsXx8000TseObjs OBJECT IDENTIFIER ::= { rsXx8000Tse 1 }
+
+        
+        commands OBJECT IDENTIFIER ::= { rsXx8000TseObjs 1 }
+
+        
+        cmdResetSumFault OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Reset all faults (in all modules) of the TSE.
+                
+                A GET will always return idle(1).
+                A SET idle(1) will return NO_ERROR without doing anything."
+            ::= { commands 1 }
+
+        
+        cmdParametersetLoad OBJECT-TYPE
+            SYNTAX Integer32 (1..8)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This loads the desired parameter set."
+            ::= { commands 2 }
+
+        
+        cmdParametersetSave OBJECT-TYPE
+            SYNTAX Integer32 (1..8)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This saves the current settings to a designated parameter set."
+            ::= { commands 3 }
+
+        
+        cmdOperationModeProgram OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This switches the program path of the TSE on/off."
+            ::= { commands 5 }
+
+        
+        frequencyRegulation OBJECT IDENTIFIER ::= { rsXx8000TseObjs 2 }
+
+        
+        frqRgStatus OBJECT IDENTIFIER ::= { frequencyRegulation 1 }
+
+        
+        frqRgCurrentSource OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                manual(1),
+                external5MHz(2),
+                external10MHz(3),
+                external1PPS(4),
+                internalGPS(5)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows the source currently used for frequency synchronization."
+            ::= { frqRgStatus 1 }
+
+        
+        frqRgReferenceState OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                fail(1),
+                warning(2),
+                ok(3)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows the state of the currently used reference.
+                In SFN a reference failure may lead to an error
+                that results in an exciter switch-over.
+                "
+            ::= { frqRgStatus 2 }
+
+        
+        frqRgControllerState OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                unknown(1),
+                inaccurate(2),
+                good(3),
+                standsGuardTime(4)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows the frequency precision of the controller.
+                Only at least 24 hours after switching on the exciter
+                the highest possible precision - standsGuardTime(4) - is reached.
+                Only then it is assured that a reference fail does not lead to SFN error
+                during guard time."
+            ::= { frqRgStatus 3 }
+
+        
+        frqRgConfiguration OBJECT IDENTIFIER ::= { frequencyRegulation 2 }
+
+        
+        frqRgSource OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                manual(1),
+                external5MHz(2),
+                external10MHz(3),
+                external1PPS(4),
+                internalGPS(5),
+                auto(6)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Selects the appropriate reference source.
+                If auto(6) is selected and several sources are available,
+                an external reference is preferred to internal GPS.
+                If manual(1) is selected, the internal crystal oscillator (OCXO)
+                can be adjusted manually and no external reference is used
+                (not applicable for SFN).
+                "
+            ::= { frqRgConfiguration 1 }
+
+        
+        frqRgControllerMode OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                standard(1),
+                regardJitter(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "If an external reference source with high jitter is used,
+                the selection of regardJitter(2) can result in a better frequency stability.
+                For a 'good' reference source the selection should be standard(1), because
+                the control needs considerable more time to reach maximum frequency stability.
+                If internal GPS is used, regardJitter(2) is selected automatically."
+            ::= { frqRgConfiguration 2 }
+
+        
+        frqRgGuardTime OBJECT-TYPE
+            SYNTAX Integer32 (0..24)
+            UNITS "hour"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This value defines how many hours signal processing shall go on
+                without synchronization after reference failed.
+                This guard time becomes active only if at the time when reference
+                failed the frequency stability was good.
+                The greater this value is choosen,
+                the more worsens the accuracy of transmitter frequency.
+                Furthermore the transmitting time of the signal shifts.
+                "
+            ::= { frqRgConfiguration 3 }
+
+        
+        frqRgMuteOnFail OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                never(1),
+                onlyAtStartup(2),
+                ifGuardTimeExpires(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Defines the action taken in case of reference source failure.
+                never(1) - Muting is never done.
+                      This leads to SFN errors, especially after power failure.
+                onlyAtStartup(2) - After power failure muting is done until the control is synchronized.
+                      If reference fails, the transmitter will continue to work as long as possible.
+                ifGuardTimeExpires(3) - Muting is done not only after power failure,
+                      but also if reference fails and guard time has expired."
+            ::= { frqRgConfiguration 4 }
+
+        
+        frqRgManualOCXOadjust OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Offers manual adjustment of the internal crystal oscillator.
+                This requires connecting a frequency counter,
+                which is synchronized by a high precision reference,
+                to the monitor output."
+            ::= { frqRgConfiguration 5 }
+
+        
+        frqRgMonitor OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                mhz5(2),
+                mhz10(3),
+                pps1(4),
+                gps(5),
+                currentSource(6)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Selects the signal for the monitor out connector (X24)."
+            ::= { frqRgConfiguration 6 }
+
+        
+        input OBJECT IDENTIFIER ::= { rsXx8000TseObjs 3 }
+
+        
+        logicalInputTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF LogicalInputEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Logical input configuration and status."
+            ::= { input 1 }
+
+        
+        logicalInputEntry OBJECT-TYPE
+            SYNTAX LogicalInputEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the logicalInputTable."
+            INDEX { logicalInputIdx }
+            ::= { logicalInputTable 1 }
+
+        
+        LogicalInputEntry ::=
+            SEQUENCE { 
+                logicalInputIdx
+                    INTEGER,
+                logicalInputSource
+                    INTEGER,
+                logicalInputT2MI
+                    SwitchOnOff,
+                logicalInputState
+                    INTEGER,
+                logicalInputRequiredDatarate
+                    Unsigned32,
+                logicalInputMeasuredDatarate
+                    Unsigned32,
+                logicalInputPacketLength
+                    Unsigned32,
+                logicalInputDatarateInfo
+                    INTEGER
+             }
+
+        logicalInputIdx OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                logicalInput1(1),
+                logicalInput2(2)
+                }
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The logical input index."
+            ::= { logicalInputEntry 1 }
+
+        
+        logicalInputSource OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                ts1(1),
+                ts2(2),
+                ipStream1(3),
+                ipStream2(4),
+                rx(5)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "For each input you can select the input interface to use.
+                The selection possibilities are determined by the installed
+                input interfaces and the existing option keys."
+            ::= { logicalInputEntry 2 }
+
+        
+        logicalInputT2MI OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS obsolete
+            DESCRIPTION
+                "Enables or disables T2MI mode of the input.
+                
+                This object is obsolete from software version 1.42 on.
+                Use the cfgT2MiInterface from the RS-XX8000-DVBT2-EXC-MIB
+                instead."
+            ::= { logicalInputEntry 3 }
+
+        
+        logicalInputState OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                undefined(1),
+                noSignal(2),
+                fail(3),
+                warning(4),
+                ok(5)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The current state of the input."
+            ::= { logicalInputEntry 4 }
+
+        
+        logicalInputRequiredDatarate OBJECT-TYPE
+            SYNTAX Unsigned32
+            UNITS "bit/second"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The expected data rate of the input.
+                In MFN the measured datarate has to be less than this value.
+                In SFN both values have to be approximate with a tolerance of 1000 ppm.
+                "
+            ::= { logicalInputEntry 5 }
+
+        
+        logicalInputMeasuredDatarate OBJECT-TYPE
+            SYNTAX Unsigned32
+            UNITS "bit/second"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The current data rate of the input (without null packets in MFN mode).
+                "
+            ::= { logicalInputEntry 6 }
+
+        
+        logicalInputPacketLength OBJECT-TYPE
+            SYNTAX Unsigned32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The measured packet length of the input."
+            ::= { logicalInputEntry 7 }
+
+        
+        logicalInputDatarateInfo OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                undefined(1),
+                noSignal(2),
+                fail(3),
+                warning(4),
+                ok(5)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The datarate info of the input."
+            ::= { logicalInputEntry 8 }
+
+        
+        inputAutomatic OBJECT IDENTIFIER ::= { input 2 }
+
+        
+        inpAutoPreselection OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                input1(1),
+                input2(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Possibility to manually change input.
+                It's - contrary to its name - not a preselection, but a selection.
+                The current value always follows the automatic change of active input.
+                You cannot change this value if inpAutoPreferred is
+                input1(1) or input2(3), inpAutoOperationMode is on(1)
+                and inpAutoSwitchDirection is toReserveNback(1)."
+            ::= { inputAutomatic 1 }
+
+        
+        inpAutoOperationMode OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Activates/deactivates the input automatic.
+                If a loss of input signal is detected on the current input
+                and the input automatic is active
+                the reserve input will be used."
+            ::= { inputAutomatic 2 }
+
+        
+        inpAutoPriority OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                equal(1),
+                prior(2)
+                }
+            MAX-ACCESS read-write
+            STATUS deprecated
+            DESCRIPTION
+                "equal(1) - there are no differences between both inputs.
+                If a failure on the current input is detected it will be switched to the reserve input.
+                It stays there until the reserve shows a failure.
+                prior(2) - whenever possible the input selected with inpAutoPreselection shall be used.
+                If a failure is detected the reserve will be used as short as possible.
+                
+                This object is now deprecated.
+                Please use inpAutoPreferred instead."
+            ::= { inputAutomatic 3 }
+
+        
+        inpAutoCheckTimeForward OBJECT-TYPE
+            SYNTAX Unsigned32 (0..600)
+            UNITS "second"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This time has to elapse before the current input switches to the reserve input."
+            ::= { inputAutomatic 4 }
+
+        
+        inpAutoCheckTimeBack OBJECT-TYPE
+            SYNTAX Unsigned32 (0..600)
+            UNITS "second"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This time has to elapse before the automatic switches back from the reserve
+                to the preselected input.
+                This value takes no effect if inpAutoPriority is equal(1)."
+            ::= { inputAutomatic 5 }
+
+        
+        inpAutoPreferred OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                input1(1),
+                none(2),
+                input2(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Determines the preferred input for the input automatic,
+                or no preference.
+                This only configures the input automatic.
+                For manual input selection use inpAutoPreselection."
+            ::= { inputAutomatic 6 }
+
+        
+        inpAutoSwitchDirection OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                toReserveNback(1),
+                toReserveOnly(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "toReserveNback(1) - switches with or without preferred input to reserve
+                                    and - if conditions permit this - also back
+                toReserveOnly(2)  - switches to reserve only.
+                                    Switch back has to be done with inpAutoPreselection."
+            ::= { inputAutomatic 7 }
+
+        
+        inpAutoPreDelayActiveInput OBJECT-TYPE
+            SYNTAX Integer32
+            UNITS "milli second"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "In MFN mode seamless switching is possible
+                if both input TS are identical.
+                To this the input TS are delayed and correlated,
+                a time stamp is not necessary.
+                To facilitate correlation a max pre-delay of active input
+                is set in delay FIFO. Reserve input must not arrive
+                this amount later than active input."
+            ::= { inputAutomatic 8 }
+
+        
+        inpAutoDelayInput1To2 OBJECT-TYPE
+            SYNTAX Integer32
+            UNITS "milli second"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This measured value shows the necessary delay in seamles module.
+                If seamless is not possible, this value is not valid."
+            ::= { inputAutomatic 9 }
+
+        
+        inpAutoSeamless OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Description."
+            ::= { inputAutomatic 10 }
+
+        
+        tsInputTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF TsInputEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "TS input configuration"
+            ::= { input 3 }
+
+        
+        tsInputEntry OBJECT-TYPE
+            SYNTAX TsInputEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the tsInputTable."
+            INDEX { tsIdx }
+            ::= { tsInputTable 1 }
+
+        
+        TsInputEntry ::=
+            SEQUENCE { 
+                tsIdx
+                    INTEGER,
+                tsInputProtocol
+                    INTEGER
+             }
+
+        tsIdx OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                ts1(1),
+                ts2(2)
+                }
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The TS input index.
+                ts1(1) - X20
+                ts2(2) - X21"
+            ::= { tsInputEntry 1 }
+
+        
+        tsInputProtocol OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                auto(1),
+                asi(2),
+                smpte(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The data format of the input feed can be detected automatically
+                or can be set manually to ASI or SMPTE.
+                "
+            ::= { tsInputEntry 2 }
+
+        
+        ipStreamTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF IpStreamEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "IP stream configuration and status."
+            ::= { input 4 }
+
+        
+        ipStreamEntry OBJECT-TYPE
+            SYNTAX IpStreamEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the ipStreamTable."
+            INDEX { ipStreamIdx }
+            ::= { ipStreamTable 1 }
+
+        
+        IpStreamEntry ::=
+            SEQUENCE { 
+                ipStreamIdx
+                    INTEGER,
+                ipStreamPhysicalConnector
+                    INTEGER,
+                ipStreamMode
+                    INTEGER,
+                ipStreamAddressType
+                    InetAddressType,
+                ipStreamAddress
+                    InetAddress,
+                ipStreamPort
+                    Unsigned32,
+                ipStreamProtocol
+                    INTEGER,
+                ipStreamState
+                    INTEGER,
+                ipStreamTsDatarate
+                    Unsigned32,
+                ipStreamFecRow
+                    Unsigned32,
+                ipStreamFecRowValid
+                    TruthValue,
+                ipStreamFecColumn
+                    Unsigned32,
+                ipStreamFecColumnValid
+                    TruthValue
+             }
+
+        ipStreamIdx OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                ipStream1(1),
+                ipStream2(2)
+                }
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The IP stream index."
+            ::= { ipStreamEntry 1 }
+
+        
+        ipStreamPhysicalConnector OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                x30(1),
+                x31(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The source of the logical input stream."
+            ::= { ipStreamEntry 2 }
+
+        
+        ipStreamMode OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                unicast(1),
+                multicast(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The streaming mode of the logical input stream."
+            ::= { ipStreamEntry 3 }
+
+        
+        ipStreamAddressType OBJECT-TYPE
+            SYNTAX InetAddressType
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Specifies the accepted internet address type for ipStreamAddress."
+            ::= { ipStreamEntry 4 }
+
+        
+        ipStreamAddress OBJECT-TYPE
+            SYNTAX InetAddress
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "If ipStreamMode is unicast(1) this object is read-only and shows the IP address
+                on the physical connector.
+                If ipStreamMode is multicast(2) this object is read-write for configuration
+                of the multicast source the IP address.
+                "
+            ::= { ipStreamEntry 5 }
+
+        
+        ipStreamPort OBJECT-TYPE
+            SYNTAX Unsigned32 (1..65535)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The port of the logical input stream."
+            ::= { ipStreamEntry 6 }
+
+        
+        ipStreamProtocol OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                auto(1),
+                udp(2),
+                rtp(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The protocol of the logical input stream."
+            ::= { ipStreamEntry 7 }
+
+        
+        ipStreamState OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                undefined(1),
+                noStream(2),
+                fail(3),
+                warning(4),
+                ok(5)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The state of the logical input stream."
+            ::= { ipStreamEntry 8 }
+
+        
+        ipStreamTsDatarate OBJECT-TYPE
+            SYNTAX Unsigned32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The datarate Info of the logical input stream."
+            ::= { ipStreamEntry 9 }
+
+        
+        ipStreamFecRow OBJECT-TYPE
+            SYNTAX Unsigned32 (0..255)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The FEC row of the logical input stream."
+            ::= { ipStreamEntry 10 }
+
+        
+        ipStreamFecRowValid OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The validity of ipStreamFecRow."
+            ::= { ipStreamEntry 11 }
+
+        
+        ipStreamFecColumn OBJECT-TYPE
+            SYNTAX Unsigned32 (0..255)
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The FEC column of the logical input stream."
+            ::= { ipStreamEntry 12 }
+
+        
+        ipStreamFecColumnValid OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The validity of ipStreamFecColumn."
+            ::= { ipStreamEntry 13 }
+
+        
+        inputCommonSettings OBJECT IDENTIFIER ::= { input 5 }
+
+        
+        lossOfInputReserve OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                nothing(1),
+                warning(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "What to do when reserve input is lost."
+            ::= { inputCommonSettings 1 }
+
+        
+        logbook OBJECT IDENTIFIER ::= { rsXx8000TseObjs 90 }
+
+        
+        lbNumberOfEntries OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Number of logbook entries."
+            ::= { logbook 1 }
+
+        
+        lbClear OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Clear the logbook.
+                idle(1)    --> ready
+                clear(2)   --> do clear now
+                
+                A GET will always return idle(1).
+                A SET idle(1) will return NO_ERROR without doing anything."
+            ::= { logbook 2 }
+
+        
+        logbookTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF LogbookEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "TSE logbook table."
+            ::= { logbook 3 }
+
+        
+        logbookEntry OBJECT-TYPE
+            SYNTAX LogbookEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This is a entry in the logbook."
+            INDEX { logbookEntryIdx }
+            ::= { logbookTable 1 }
+
+        
+        LogbookEntry ::=
+            SEQUENCE { 
+                logbookEntryIdx
+                    LogbookMaxEntryNumber,
+                logbookEntryNbr
+                    LogbookMaxEntryNumber,
+                logbookType
+                    EventClass,
+                logbookSlope
+                    LogbookEntrySlope,
+                logbookMessage
+                    INTEGER,
+                logbookDateTime
+                    DateAndTime
+             }
+
+        logbookEntryIdx OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This is an increasing number from 1 to 128.
+                It is used as an index column for SNMP."
+            ::= { logbookEntry 1 }
+
+        
+        logbookEntryNbr OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This is the number of the logbook entry.
+                It is an decreasing number from max 128 down to 1."
+            ::= { logbookEntry 2 }
+
+        
+        logbookType OBJECT-TYPE
+            SYNTAX EventClass
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Can either be Fault, Warning or State."
+            ::= { logbookEntry 3 }
+
+        
+        logbookSlope OBJECT-TYPE
+            SYNTAX LogbookEntrySlope
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Either set (event raises) or reset (event disappears)"
+            ::= { logbookEntry 4 }
+
+        
+        logbookMessage OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                sumFault(1),
+                sumWarning(2),
+                local(3),
+                tseOn(4),
+                tseOk(5),
+                input1Active(6),
+                input2Active(7),
+                input1LpAct(8),
+                input2LpAct(9),
+                input1Avail(10),
+                input2Avail(11),
+                input1LpAvail(12),
+                input2LpAvail(13),
+                inputChanged(14),
+                inputArrivalMfOff(15),
+                extRefWeak(16),
+                extPpsAsync(17),
+                agcLocked(19),
+                carrierLocked(20),
+                tpsLocked(21),
+                mpegSyncLocked(22),
+                optionKeyExpired(23),
+                swBackupStarted(24),
+                swBackupDone(25),
+                swBackupFailed(26),
+                swRestoreStarted(27),
+                swRestoreDone(28),
+                swRestoreFailed(29),
+                swUpdateInProgress(30),
+                fwUpdateRunning(31),
+                external1PPS(32),
+                intGPS1PPS(33),
+                external10MHz(34),
+                valid1PPS(35),
+                reboot(99),
+                mute(100),
+                rfWarning(101),
+                fanWarning(102),
+                boardTempWarning(103),
+                testMode(104),
+                dataRateWarning(105),
+                fifoFail(106),
+                delayChange(107),
+                wrongDelay(108),
+                noMIP(109),
+                packetUnlock(110),
+                inputNoReserve(111),
+                inputWarning(112),
+                extRefAbsent(113),
+                extPpsAbsent(114),
+                coderSumWarning(115),
+                sfnDelay(116),
+                sfnMissingTimestamp(117),
+                invalidL1Config(118),
+                unsupportedL1Config(119),
+                receiverSumWarning(120),
+                uncorrMPEG(121),
+                merWarning(122),
+                berWarning(123),
+                optionkeyWillExpire(124),
+                missingTimeReference(125),
+                mismatchedL1Config(126),
+                mismatchedFrame(127),
+                refFreqNotStable(128),
+                missingIA(129),
+                powerSupplyFault(200),
+                rfFail(201),
+                temperatureFault(202),
+                inputFail(203),
+                extRefFail(204),
+                extPpsFail(205),
+                coderConnectionFault(206),
+                coderSumFault(207),
+                receiverConnectionFault(208),
+                receiverSumFault(209),
+                hwFault(210),
+                merFail(211),
+                berFail(212),
+                sysConBoardConnectionFault(213),
+                sysConBoardSumFault(214),
+                sysClkBoardConnectionFault(215),
+                sysClkBoardSumFault(216),
+                refNotTimeSync(217)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Textual convention for the specific message."
+            ::= { logbookEntry 5 }
+
+        
+        logbookDateTime OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The time of the logbook entry."
+            ::= { logbookEntry 6 }
+
+        
+        productInfoTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF ProductInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The table for product typeplates."
+            ::= { rsXx8000TseObjs 100 }
+
+        
+        productInfoEntry OBJECT-TYPE
+            SYNTAX ProductInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the productInfoTable."
+            INDEX { prodInfoModuleIdx }
+            ::= { productInfoTable 1 }
+
+        
+        ProductInfoEntry ::=
+            SEQUENCE { 
+                prodInfoModuleIdx
+                    Unsigned32,
+                prodInfoModuleName
+                    ReadableString,
+                prodInfoSerialNumber
+                    ReadableString,
+                prodInfoIdentNumberSW
+                    ReadableString,
+                prodInfoVersionNumberSW
+                    ReadableString,
+                prodInfoIdentNumberHW
+                    ReadableString,
+                prodInfoVersionNumberHW
+                    ReadableString,
+                productInfoProductDateHW
+                    DateAndTime
+             }
+
+        prodInfoModuleIdx OBJECT-TYPE
+            SYNTAX Unsigned32 (1..20)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The module index."
+            ::= { productInfoEntry 1 }
+
+        
+        prodInfoModuleName OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The name of the module as a text."
+            ::= { productInfoEntry 5 }
+
+        
+        prodInfoSerialNumber OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The serial number of the subdevice."
+            ::= { productInfoEntry 6 }
+
+        
+        prodInfoIdentNumberSW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz identification number of the software, for example 2094.2090.02."
+            ::= { productInfoEntry 7 }
+
+        
+        prodInfoVersionNumberSW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz revision number of the software, for example 1.2.1."
+            ::= { productInfoEntry 8 }
+
+        
+        prodInfoIdentNumberHW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz identification number of the hardware, for example 2095.8007.02."
+            ::= { productInfoEntry 9 }
+
+        
+        prodInfoVersionNumberHW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz revision number (product index) of the hardware, for example 03.03."
+            ::= { productInfoEntry 10 }
+
+        
+        productInfoProductDateHW OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz production date of the hardware,"
+            ::= { productInfoEntry 11 }
+
+        
+-- *****************************************************************************
+-- **          event definitions
+-- *****************************************************************************
+        rsXx8000TseEvents OBJECT IDENTIFIER ::= { rsXx8000Tse 3 }
+
+        
+        eventsV2 OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION 
+                "Compatibility to SMIv1."
+            ::= { rsXx8000TseEvents 0 }
+
+        
+        tseSummaryFault NOTIFICATION-TYPE
+            OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "TSE Summary Fault"
+            ::= { eventsV2 1 }
+
+        
+        tseSummaryWarning NOTIFICATION-TYPE
+            OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "TSE Summary Warning"
+            ::= { eventsV2 2 }
+
+        
+        tseLocal NOTIFICATION-TYPE
+            OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "TSE Local/Remote"
+            ::= { eventsV2 3 }
+
+        
+        tseRfOn NOTIFICATION-TYPE
+            OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "TSE RF On/Off"
+            ::= { eventsV2 4 }
+
+        
+        tseRfOk NOTIFICATION-TYPE
+            OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "TSE RF Ok / Not OK"
+            ::= { eventsV2 5 }
+
+        
+        tseRfWarning NOTIFICATION-TYPE
+            OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "TSE RF Warning"
+            ::= { eventsV2 6 }
+
+        
+        tseRfFail NOTIFICATION-TYPE
+            OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "NetCCU (Transmitter) RF Fail"
+            ::= { eventsV2 7 }
+
+        
+        tseFanFault NOTIFICATION-TYPE
+            OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "TSE Fan Fault"
+            ::= { eventsV2 8 }
+
+        
+        tsePowerSupply NOTIFICATION-TYPE
+            OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "TSE Power Supply Fault"
+            ::= { eventsV2 9 }
+
+        
+        tseBoardTemperatureWarning NOTIFICATION-TYPE
+            OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "TSE Board Temperature Warning"
+            ::= { eventsV2 10 }
+
+        
+        tseBoardTemperatureFault NOTIFICATION-TYPE
+            OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "TSE Board Temperature Fault"
+            ::= { eventsV2 11 }
+
+        
+        tseFwUpdateInProgress NOTIFICATION-TYPE
+            OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Shows whether a firmware update is in progress.
+                
+                There is another notification in the RS-XX8000-COMMON-MIB
+                that notifies a software update in progress: swUpdateStarted ."
+            ::= { eventsV2 12 }
+
+        
+        tseInputAutomaticReady NOTIFICATION-TYPE
+            OBJECTS { evtPriority, eventAlarmClass, evtEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Input automatic ready info."
+            ::= { eventsV2 13 }
+
+        
+        tseInputNoReserve NOTIFICATION-TYPE
+            STATUS current
+            DESCRIPTION 
+                "No input reserve warning."
+            ::= { eventsV2 14 }
+
+        
+        eventsTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF EventsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This table contains necessary information for handling alarms.
+                For each alarm you have the following information:
+                - name (get),
+                - mask to enable/disable sending out (set/get),
+                - priority (set/get) and
+                - the current state (get only)."
+            ::= { rsXx8000TseEvents 1 }
+
+        
+        eventsEntry OBJECT-TYPE
+            SYNTAX EventsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the eventsTable."
+            INDEX { evtNameIdx }
+            ::= { eventsTable 1 }
+
+        
+        EventsEntry ::=
+            SEQUENCE { 
+                evtNameIdx
+                    EventMaxEntryNumber,
+                evtName
+                    INTEGER,
+                evtMask
+                    EventMask,
+                evtPriority
+                    EventPriority,
+                evtEvent
+                    EventState
+             }
+
+        evtNameIdx OBJECT-TYPE
+            SYNTAX EventMaxEntryNumber
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The event number as integer.
+                This is a helper column and therefore not-accessible."
+            ::= { eventsEntry 1 }
+
+        
+        evtName OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                tseSummaryFault(1),
+                tseSummaryWarning(2),
+                tseLocal(3),
+                tseRfOn(4),
+                tseRfOk(5),
+                tseRfWarning(6),
+                tseRfFail(7),
+                tseFanFault(8),
+                tsePowerSupply(9),
+                tseBoardTemperatureWarning(10),
+                tseBoardTemperatureFault(11),
+                tseFwUpdateInProgress(12),
+                tseInputAutomaticReady(13),
+                tseInputNoReserve(14)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The event number as integer and the value as readable text.
+                The enumeration correlates with the notifications under eventsV2."
+            ::= { eventsEntry 2 }
+
+        
+        evtMask OBJECT-TYPE
+            SYNTAX EventMask
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsEntry 3 }
+
+        
+        evtPriority OBJECT-TYPE
+            SYNTAX EventPriority
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsEntry 4 }
+
+        
+        evtEvent OBJECT-TYPE
+            SYNTAX EventState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsEntry 5 }
+
+        
+-- *****************************************************************************
+-- **          conformance statements
+-- *****************************************************************************
+        rsXx8000TseConf OBJECT IDENTIFIER ::= { rsXx8000Tse 5 }
+
+        
+        rsXx8000TseGroups OBJECT IDENTIFIER ::= { rsXx8000TseConf 1 }
+
+        
+        rsXx8000TseObjectGroup OBJECT-GROUP
+            OBJECTS { cmdResetSumFault, cmdParametersetLoad, cmdParametersetSave, cmdOperationModeProgram, frqRgCurrentSource, 
+                frqRgReferenceState, frqRgControllerState, frqRgSource, frqRgControllerMode, frqRgGuardTime, 
+                frqRgMuteOnFail, frqRgManualOCXOadjust, frqRgMonitor }
+            STATUS current
+            DESCRIPTION 
+                "Objects for TSE parameters."
+            ::= { rsXx8000TseGroups 1 }
+
+        
+        rsXx8000TseLogbookGroup OBJECT-GROUP
+            OBJECTS { logbookEntryNbr, logbookType, logbookSlope, logbookMessage, logbookDateTime, 
+                lbNumberOfEntries, lbClear }
+            STATUS current
+            DESCRIPTION 
+                "Logbook objects."
+            ::= { rsXx8000TseGroups 2 }
+
+        
+        rsXx8000TseProductInfoGroup OBJECT-GROUP
+            OBJECTS { prodInfoModuleName, prodInfoSerialNumber, prodInfoIdentNumberSW, prodInfoVersionNumberSW, prodInfoIdentNumberHW, 
+                prodInfoVersionNumberHW, productInfoProductDateHW }
+            STATUS current
+            DESCRIPTION 
+                "Product info objects."
+            ::= { rsXx8000TseGroups 3 }
+
+        
+        rsXx8000TseEventsTableGroup OBJECT-GROUP
+            OBJECTS { evtName, evtMask, evtPriority, evtEvent }
+            STATUS current
+            DESCRIPTION 
+                "Event table objects."
+            ::= { rsXx8000TseGroups 4 }
+
+        
+        rsXx8000TseNotificationGroup NOTIFICATION-GROUP
+            NOTIFICATIONS { tseSummaryFault, tseSummaryWarning, tseLocal, tseRfOn, tseRfOk, 
+                tseRfWarning, tseRfFail, tseFanFault, tsePowerSupply, tseBoardTemperatureWarning, 
+                tseBoardTemperatureFault, tseFwUpdateInProgress, tseInputAutomaticReady, tseInputNoReserve }
+            STATUS current
+            DESCRIPTION 
+                "TSE notifications."
+            ::= { rsXx8000TseGroups 5 }
+
+        
+        rsXx8000TseInputObjectGroup OBJECT-GROUP
+            OBJECTS { logicalInputSource, logicalInputState, logicalInputRequiredDatarate, logicalInputMeasuredDatarate, logicalInputPacketLength, 
+                logicalInputDatarateInfo, tsInputProtocol, ipStreamPhysicalConnector, ipStreamMode, ipStreamAddressType, 
+                ipStreamAddress, ipStreamPort, ipStreamProtocol, ipStreamState, ipStreamTsDatarate, 
+                ipStreamFecRow, ipStreamFecRowValid, ipStreamFecColumn, lossOfInputReserve, inpAutoDelayInput1To2, 
+                inpAutoPreDelayActiveInput, inpAutoSwitchDirection, inpAutoPreferred, inpAutoSeamless, ipStreamFecColumnValid, 
+                inpAutoPreselection, inpAutoOperationMode, inpAutoCheckTimeForward, inpAutoCheckTimeBack }
+            STATUS current
+            DESCRIPTION 
+                "Objects for input configuration and state."
+            ::= { rsXx8000TseGroups 6 }
+
+        
+        rsXx8000TseDeprecatedGroup OBJECT-GROUP
+            OBJECTS { inpAutoPriority }
+            STATUS deprecated
+            DESCRIPTION 
+                "deprecated objects"
+            ::= { rsXx8000TseGroups 7 }
+
+        
+        rsXx8000TseObsoletedGroup OBJECT-GROUP
+            OBJECTS { logicalInputT2MI }
+            STATUS obsolete
+            DESCRIPTION 
+                "obsoleted objects"
+            ::= { rsXx8000TseGroups 8 }
+
+        
+        rsXx8000TseCompls OBJECT IDENTIFIER ::= { rsXx8000TseConf 2 }
+
+        
+        rsXx8000TseAll MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION 
+                "Specification of mandatory and non-mandatory MIB objects."
+            MODULE -- this module
+                MANDATORY-GROUPS { rsXx8000TseObjectGroup, rsXx8000TseLogbookGroup, rsXx8000TseProductInfoGroup, rsXx8000TseEventsTableGroup, rsXx8000TseNotificationGroup
+                     }
+                GROUP rsXx8000TseInputObjectGroup
+                    DESCRIPTION 
+                        "with coder board only"
+                GROUP rsXx8000TseDeprecatedGroup
+                    DESCRIPTION 
+                        "not for the future"
+            ::= { rsXx8000TseCompls 1 }
+
+        
+    
+    END

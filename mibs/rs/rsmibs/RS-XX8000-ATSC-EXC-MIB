@@ -1,0 +1,2155 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **
+-- **  COPYRIGHT      (c) 2008 Rohde & Schwarz GmbH & Co. KG
+-- **                          Muehldorfstrasse 15
+-- **    R & S                 D-81671 Muenchen
+-- **
+-- *****************************************************************************
+-- **
+-- **  MODULE         RS-XX8000-ATSC-EXC-MIB
+-- **  
+-- **  DESCRIPTION    Rohde & Schwarz SNMP
+-- **
+-- **  HISTORY        
+-- **  2009-03-16 ks - initial version
+-- **  2009-11-26 ks - cmdExcRfFailLimit, cmdExcRfWarningLimit added
+-- **  2009-11-27 ks - cmdExcInputFailDelayTime added
+-- **  2009-11-30 ks - cmdExcMonitoringOutput, cmdExcOcxoAdjust added
+-- **  2009-12-07 ks - excStatusNominalPower added
+-- **  2010-01-12 ks - excStatusVSWR added
+-- **  2010-01-29 ks - excPrecExtendedGroupDelay added
+-- **  2010-07-13 ks - cmdExcSfnSynchronizationMode added
+-- **  2010-10-07 ks - cmdExcMuteOnLossOfSyncInformation added
+-- **  2011-05-12 ks - cmdExcFailDelayMode, excStatusFailDelay added
+-- *****************************************************************************
+-- *****************************************************************************
+
+    RS-XX8000-ATSC-EXC-MIB DEFINITIONS ::= BEGIN
+ 
+        IMPORTS
+            rsXx8000, eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, 
+            indexAB, rsXx8000MibModule, EventPriority, EventClass, EventState, 
+            IndexTransmitter, IndexAB, SwitchOnOff, FloatingPoint, EqualizerCalibrationState, 
+            LogbookMaxEntryNumber, Trigger, LogbookEntrySlope, LogbookEntryMessagesExcTv, ProdInfoModuleNameTv, 
+            ReadableString, EventMaxEntryNumber, EventMask, InputSource, FailDelayMode, 
+            FailDelayStatus            
+                FROM RS-XX8000-COMMON-MIB            
+            OBJECT-GROUP, MODULE-COMPLIANCE, NOTIFICATION-GROUP            
+                FROM SNMPv2-CONF            
+            Integer32, OBJECT-TYPE, MODULE-IDENTITY, OBJECT-IDENTITY, NOTIFICATION-TYPE            
+                FROM SNMPv2-SMI            
+            TruthValue, DateAndTime            
+                FROM SNMPv2-TC;
+    
+    
+        rsXx8000AtscExcMibModule MODULE-IDENTITY 
+            LAST-UPDATED "201105120800Z"		-- May 12, 2011 at 08:00 GMT
+            ORGANIZATION 
+                "Rohde&Schwarz GmbH & Co. "
+            CONTACT-INFO 
+                "Torsten Huebscher
+                Department 7TS2
+                Broadcasting Division
+                Muehldorfstrasse 15
+                81671 Munich, Germany
+                torsten.huebscher@rohde-schwarz.com"
+            DESCRIPTION 
+                "This MIB defines transmitting systems from Rohde & Schwarz.
+                
+                Use this MIB if your system meets the following requirements:
+                - series XX8000 (NetCCU800),
+                - ATSC,
+                - transmitter reserve concept SingleTx, DualDrive,
+                  Active Reserve or Passive Reserve.
+                
+                The following MIBs are related to this:
+                - RS-COMMON-MIB         - mandatory for this MIB
+                - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+            REVISION "201105120800Z"		-- May 12, 2011 at 08:00 GMT
+            DESCRIPTION 
+                "cmdExcFailDelayMode, excStatusFailDelay added"
+            REVISION "201010070800Z"		-- October 07, 2010 at 08:00 GMT
+            DESCRIPTION 
+                "cmdExcMuteOnLossOfSyncInformation added"
+            REVISION "201007130800Z"		-- July 13, 2010 at 08:00 GMT
+            DESCRIPTION 
+                "cmdExcSfnSynchronizationMode added"
+            REVISION "201001290800Z"		-- January 29, 2010 at 08:00 GMT
+            DESCRIPTION 
+                "excPrecExtendedGroupDelay added"
+            REVISION "201001120800Z"		-- January 12, 2010 at 08:00 GMT
+            DESCRIPTION 
+                "excStatusVSWR added"
+            REVISION "200911261300Z"		-- November 26, 2009 at 13:00 GMT
+            DESCRIPTION 
+                "cmdExcRfFailLimit, cmdExcRfWarningLimit,
+                cmdExcInputFailDelayTime, cmdExcMonitoringOutput,
+                cmdExcOcxoAdjust, excStatusNominalPower added"
+            REVISION "200903161300Z"		-- March 16, 2009 at 13:00 GMT
+            DESCRIPTION 
+                "initial revision"
+            ::= { rsXx8000MibModule 210 }
+
+        
+    
+    
+--
+-- Node definitions
+--
+    
+        rsXx8000AtscExc OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION 
+                "Xx8000 ATSC exciter."
+            ::= { rsXx8000 210 }
+
+        
+        rsXx8000AtscExcObjs OBJECT IDENTIFIER ::= { rsXx8000AtscExc 1 }
+
+        
+        commandsTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF CommandsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This table contains important commands for the exciter."
+            ::= { rsXx8000AtscExcObjs 1 }
+
+        
+        commandsEntry OBJECT-TYPE
+            SYNTAX CommandsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated device."
+            INDEX { cmdTxIdx, cmdExcIdx }
+            ::= { commandsTable 1 }
+
+        
+        CommandsEntry ::=
+            SEQUENCE { 
+                cmdTxIdx
+                    IndexTransmitter,
+                cmdExcIdx
+                    IndexAB,
+                cmdExcOpModeInputAutomatic
+                    SwitchOnOff,
+                cmdExcPreselectInput
+                    INTEGER,
+                cmdExcNetworkMode
+                    INTEGER,
+                cmdExcTxAutomatic
+                    SwitchOnOff,
+                cmdExcInputPriority
+                    INTEGER,
+                cmdExcInputCheckTimeForward
+                    Integer32,
+                cmdExcInputCheckTimeSwitchback
+                    Integer32,
+                cmdExcInputMuteOnFail
+                    INTEGER,
+                cmdExcInputManualPreselectionTS1
+                    INTEGER,
+                cmdExcInputManualPreselectionTS2
+                    INTEGER,
+                cmdExcSfnSynchronizationMode
+                    INTEGER,
+                cmdExcMobileDTV
+                    SwitchOnOff,
+                cmdExcMhePID
+                    Integer32,
+                cmdExcMtxID
+                    SwitchOnOff,
+                cmdExcWatermark
+                    INTEGER,
+                cmdExcTransmitterID
+                    Integer32,
+                cmdExcMarketID
+                    Integer32,
+                cmdExcMuteOnLossOfSyncInformation
+                    SwitchOnOff,
+                cmdExcSFNStaticDelay
+                    FloatingPoint,
+                cmdExcSFNDeviationTime
+                    Integer32,
+                cmdExcFrequency
+                    Integer32,
+                cmdExcReferenceSource
+                    INTEGER,
+                cmdExcMuteOnPPSFail
+                    INTEGER,
+                cmdExcMuteOnReferenceFail
+                    INTEGER,
+                cmdExcRefFailDelayTime
+                    Integer32,
+                cmdExcTypeLossOfInput
+                    INTEGER,
+                cmdExcRfOutput
+                    SwitchOnOff,
+                cmdExcRfOutputRegulation
+                    SwitchOnOff,
+                cmdExcRfOutputManualRfLevel
+                    FloatingPoint,
+                cmdExcRfOutputAttenuation
+                    Integer32,
+                cmdExcRfOutputRfSlope
+                    FloatingPoint,
+                cmdExcRfOutputModulationSlope
+                    FloatingPoint,
+                cmdExcRfIqAdjustStart
+                    INTEGER,
+                cmdExcRfIqAdjustTestsignal
+                    SwitchOnOff,
+                cmdExcRfIqAdjustBiasCoarseI
+                    Integer32,
+                cmdExcRfIqAdjustBiasCoarseQ
+                    Integer32,
+                cmdExcRfIqAdjustBiasFineI
+                    Integer32,
+                cmdExcRfIqAdjustBiasFineQ
+                    Integer32,
+                cmdExcRfIqAdjustGainI
+                    Integer32,
+                cmdExcRfIqAdjustGainQ
+                    Integer32,
+                cmdExcRfIqAdjustPhase
+                    FloatingPoint,
+                cmdExcInput1Source
+                    InputSource,
+                cmdExcInput2Source
+                    InputSource,
+                cmdExcInputFailDelayTime
+                    Integer32,
+                cmdExcRfWarningLimit
+                    FloatingPoint,
+                cmdExcRfFailLimit
+                    FloatingPoint,
+                cmdExcOutputPower
+                    FloatingPoint,
+                cmdExcMonitoringOutput
+                    INTEGER,
+                cmdExcOcxoAdjust
+                    Integer32,
+                cmdExcFailDelayMode
+                    FailDelayMode
+             }
+
+        cmdTxIdx OBJECT-TYPE
+            SYNTAX IndexTransmitter
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The transmitter index. "
+            ::= { commandsEntry 1 }
+
+        
+        cmdExcIdx OBJECT-TYPE
+            SYNTAX IndexAB
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This index distinguishes the exiters.
+                Necessary if you have dual drive transmitters."
+            ::= { commandsEntry 2 }
+
+        
+        cmdExcOpModeInputAutomatic OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Activates the input automatic. 
+                If a loss of input signal is detected on the current input
+                the reserve input will be used instead."
+            ::= { commandsEntry 31 }
+
+        
+        cmdExcPreselectInput OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                input1(1),
+                input2(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This sets the preselection of a transmitters input."
+            ::= { commandsEntry 32 }
+
+        
+        cmdExcNetworkMode OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                mfn(1),
+                sfn(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Switch between Single Frequency Networks (SFN) and 
+                Multiple Frequency Networks (MFN)."
+            ::= { commandsEntry 34 }
+
+        
+        cmdExcTxAutomatic OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This enables Tx specific parameters from the 
+                MIP data caroussel (e.g. time offset, frequency offset)."
+            ::= { commandsEntry 38 }
+
+        
+        cmdExcInputPriority OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                equal(1),
+                prior(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Equal: There are no differences between both inputs. 
+                If a failure on the current input is detected it will be switched to the reserve input. 
+                It stays there until the reserve shows a failure. 
+                Prior: Whenever possible a certain input shall be used. 
+                If a failure is detected the reserve will be used as short as possible."
+            ::= { commandsEntry 41 }
+
+        
+        cmdExcInputCheckTimeForward OBJECT-TYPE
+            SYNTAX Integer32 (0..600)
+            UNITS "seconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This time has to elapse before the current input switches 
+                to the reserve input."
+            ::= { commandsEntry 42 }
+
+        
+        cmdExcInputCheckTimeSwitchback OBJECT-TYPE
+            SYNTAX Integer32 (0..600)
+            UNITS "seconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This time has to elapse before the automatic switches back 
+                from the reserve to a preselected input. 
+                This value has no effect if the priority is set to equal."
+            ::= { commandsEntry 43 }
+
+        
+        cmdExcInputMuteOnFail OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                mute(1),
+                noMute(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "If a loss of input signal is detected, the exciter mutes."
+            ::= { commandsEntry 44 }
+
+        
+        cmdExcInputManualPreselectionTS1 OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                auto(1),
+                asi(2),
+                smpte(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The data format of the input can be detected 
+                automatically or can be set manually to ASI or SMPTE."
+            ::= { commandsEntry 45 }
+
+        
+        cmdExcInputManualPreselectionTS2 OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                auto(1),
+                asi(2),
+                smpte(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The data format of the input can be detected 
+                automatically or can be set manually to ASI or SMPTE."
+            ::= { commandsEntry 46 }
+
+        
+        cmdExcSfnSynchronizationMode OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                rus(1),
+                a110(2),
+                rusTCP(3),
+                a110TCP(4),
+                a53TCP(5)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Used to define the type of time synchronization.
+                This switch is available only after the appropriate software options
+                have been enabled.
+                
+                rus(1), rusTCP(3)
+                RSMobile: For transmitting mobile content and
+                          when using a Rohde & Schwarz AEM100 Emission Mux/SFN inserter.
+                
+                a110(2), a110TCP(4)
+                A/110: For standard-conforming SFN synchronization corresponding to ATSC A/110B.
+                       It contains a compatible expansion to allow use of Mobile DTV.
+                
+                With the synchronization types 'R&S Mobile' and 'A/110', a distinction can also be made
+                as to whether the time of transmission is to be synchronized
+                primarily using data from the TCP information or using data from the dummy bytes.
+                
+                a53TCP(5)
+                RSA53: When transmitting normal content and
+                       when using a Rohde & Schwarz AEM100 Emission Mux/SFN inserter."
+            ::= { commandsEntry 49 }
+
+        
+        cmdExcMobileDTV OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Enables/disables Mobile DTV."
+            ::= { commandsEntry 50 }
+
+        
+        cmdExcMhePID OBJECT-TYPE
+            SYNTAX Integer32 (0..8191)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Setting of MHE-PID for Mobile DTV."
+            ::= { commandsEntry 51 }
+
+        
+        cmdExcMtxID OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Switch off/on market ID."
+            ::= { commandsEntry 52 }
+
+        
+        cmdExcWatermark OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                m39(2),
+                m36(3),
+                m33(4),
+                m30(5),
+                m27(6),
+                m24(7),
+                m21(8)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Select watermark:
+                m39: -39dB
+                m36: -36dB
+                m33: -33dB
+                m30: -30dB
+                m27: -27dB
+                m24: -24dB
+                m21: -21dB"
+            ::= { commandsEntry 53 }
+
+        
+        cmdExcTransmitterID OBJECT-TYPE
+            SYNTAX Integer32 (0..31)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Setting of transmitter ID."
+            ::= { commandsEntry 54 }
+
+        
+        cmdExcMarketID OBJECT-TYPE
+            SYNTAX Integer32 (0..495)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Setting of market ID."
+            ::= { commandsEntry 55 }
+
+        
+        cmdExcMuteOnLossOfSyncInformation OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Allows a best effort SFN network if switched off.
+                This prevents muting on loss of synchronization information,
+                e.g. when no Mobile DTV content is present."
+            ::= { commandsEntry 61 }
+
+        
+        cmdExcSFNStaticDelay OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Microseconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "A constant adjustable delay for tuning a SFN (-999999.9 ... 999999.9)."
+            ::= { commandsEntry 62 }
+
+        
+        cmdExcSFNDeviationTime OBJECT-TYPE
+            SYNTAX Integer32 (1..100)
+            UNITS "Microseconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Leap In Time.
+                This parameter sets the deviation in time when a readjustment 
+                of the dynamic delay is necessary."
+            ::= { commandsEntry 63 }
+
+        
+        cmdExcFrequency OBJECT-TYPE
+            SYNTAX Integer32 (47000000..1500000000)
+            UNITS "Hertz"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "This is the RF frequency."
+            ::= { commandsEntry 64 }
+
+        
+        cmdExcReferenceSource OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                intern(1),
+                extern5Mhz(2),
+                extern10Mhz(3),
+                extern1PPS(4),
+                internGPS(5)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The Source of the reference signal.
+                The value internGPS is not valid for SX800."
+            ::= { commandsEntry 65 }
+
+        
+        cmdExcMuteOnPPSFail OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                onlyAtStartup(2),
+                afterFailDelayTime(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Select the behaviour if the external second pulse is not available."
+            ::= { commandsEntry 66 }
+
+        
+        cmdExcMuteOnReferenceFail OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                onlyAtStartup(2),
+                afterFailDelayTime(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Select the behaviour if the external reference is not available."
+            ::= { commandsEntry 67 }
+
+        
+        cmdExcRefFailDelayTime OBJECT-TYPE
+            SYNTAX Integer32 (0..24)
+            UNITS "Hours"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the time after the RF will be muted in case of a reference problem.
+                Zero hours means react immediately."
+            ::= { commandsEntry 68 }
+
+        
+        cmdExcTypeLossOfInput OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                warning(1),
+                fault(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "If the input signal is lost, either a warning or a fault can be generated.
+                If you select fault here, a switchover to the reserve exciter will be executed 
+                when input signal is lost."
+            ::= { commandsEntry 69 }
+
+        
+        cmdExcRfOutput OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Turns on/switches off the output signal. This switch takes the same effect as the switch on the frontpanel of the exciter."
+            ::= { commandsEntry 70 }
+
+        
+        cmdExcRfOutputRegulation OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Turns on/switches off the automatic output level regulation."
+            ::= { commandsEntry 71 }
+
+        
+        cmdExcRfOutputManualRfLevel OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Percent"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the RF level (0.0 ... 100.0). The value relates to an attenuation of 0 dB."
+            ::= { commandsEntry 72 }
+
+        
+        cmdExcRfOutputAttenuation OBJECT-TYPE
+            SYNTAX Integer32 (0..9)
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Activates internal attenuators to reduce the output level of the exciter.
+                Adjustable in steps of 3 dB only."
+            ::= { commandsEntry 73 }
+
+        
+        cmdExcRfOutputRfSlope OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Percent"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts a slope in the RF signal (-50.0 ... 50.0)."
+            ::= { commandsEntry 74 }
+
+        
+        cmdExcRfOutputModulationSlope OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Percent"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Modulation slope (-50.0 ... 50.0)."
+            ::= { commandsEntry 75 }
+
+        
+        cmdExcRfIqAdjustStart OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                break(1),
+                start(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Starts the automatic IQ adjustment. It works for the current used local 1 frequency and lasts up to 5 minutes. In this time the output will be muted. During the adjustment no transmitter parameter shall be changed. Break will stop the automatic immediately. The IQ modulator looses its adjustment!
+                Read values mean idle(1) and started(2)."
+            ::= { commandsEntry 77 }
+
+        
+        cmdExcRfIqAdjustTestsignal OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Generates a test signal to adjust the IQ modulation. It is necessary to disconnect the rf-cable to the output stages."
+            ::= { commandsEntry 78 }
+
+        
+        cmdExcRfIqAdjustBiasCoarseI OBJECT-TYPE
+            SYNTAX Integer32 (-1023..1023)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the offset for I in huge steps."
+            ::= { commandsEntry 79 }
+
+        
+        cmdExcRfIqAdjustBiasCoarseQ OBJECT-TYPE
+            SYNTAX Integer32 (-1023..1023)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the offset for Q in huge steps."
+            ::= { commandsEntry 80 }
+
+        
+        cmdExcRfIqAdjustBiasFineI OBJECT-TYPE
+            SYNTAX Integer32 (-32767..32767)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the offset for I in small steps."
+            ::= { commandsEntry 81 }
+
+        
+        cmdExcRfIqAdjustBiasFineQ OBJECT-TYPE
+            SYNTAX Integer32 (-32767..32767)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the offset for Q in small steps."
+            ::= { commandsEntry 82 }
+
+        
+        cmdExcRfIqAdjustGainI OBJECT-TYPE
+            SYNTAX Integer32 (0..255)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the gain for I in small steps."
+            ::= { commandsEntry 83 }
+
+        
+        cmdExcRfIqAdjustGainQ OBJECT-TYPE
+            SYNTAX Integer32 (0..255)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the gain for Q in small steps."
+            ::= { commandsEntry 84 }
+
+        
+        cmdExcRfIqAdjustPhase OBJECT-TYPE
+            SYNTAX FloatingPoint
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the phase between I and Q (-14.000 ... 14.000)."
+            ::= { commandsEntry 85 }
+
+        
+        cmdExcInput1Source OBJECT-TYPE
+            SYNTAX InputSource
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Source for input 1."
+            ::= { commandsEntry 86 }
+
+        
+        cmdExcInput2Source OBJECT-TYPE
+            SYNTAX InputSource
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Source for input 2."
+            ::= { commandsEntry 87 }
+
+        
+        cmdExcInputFailDelayTime OBJECT-TYPE
+            SYNTAX Integer32 (0..600)
+            UNITS "Seconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The time between detecting a loss of input signal and displaying a failure."
+            ::= { commandsEntry 89 }
+
+        
+        cmdExcRfWarningLimit OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Warning limit for the RF control.
+                min: -15.0, max: 0.0"
+            ::= { commandsEntry 97 }
+
+        
+        cmdExcRfFailLimit OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Fault limit for the RF control.
+                min: -15.0, max: 0.0"
+            ::= { commandsEntry 98 }
+
+        
+        cmdExcOutputPower OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "W"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "amplifier output power
+                0 ... 400 W"
+            ::= { commandsEntry 99 }
+
+        
+        cmdExcMonitoringOutput OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                off(1),
+                reference10MHz(2),
+                generated1PPS(3),
+                kHz1(4),
+                pulse1PPS(5)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Selects which signal appears at the monitoring output."
+            ::= { commandsEntry 110 }
+
+        
+        cmdExcOcxoAdjust OBJECT-TYPE
+            SYNTAX Integer32 (0..65535)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Adjusts the frequency of the internal 10 MHz reference.
+                This value only takes effect if the reference source 'internal' is selected."
+            ::= { commandsEntry 111 }
+
+        
+        cmdExcFailDelayMode OBJECT-TYPE
+            SYNTAX FailDelayMode
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Condition when the fail delay time is used."
+            ::= { commandsEntry 115 }
+
+        
+        inputTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF InputEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A table for more detailed information about the exciter.
+                These values are all read-only. For settings, refer to commands."
+            ::= { rsXx8000AtscExcObjs 2 }
+
+        
+        inputEntry OBJECT-TYPE
+            SYNTAX InputEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry for a designated input channel."
+            INDEX { cmdTxIdx, cmdExcIdx, excInputChannelIdx }
+            ::= { inputTable 1 }
+
+        
+        InputEntry ::=
+            SEQUENCE { 
+                excInputChannelIdx
+                    Integer32,
+                excInputChannelName
+                    INTEGER,
+                excInputConnected
+                    TruthValue,
+                excInputPreselected
+                    TruthValue,
+                excInputActive
+                    TruthValue,
+                excInputPacketLength
+                    Integer32,
+                excInputMeasuredDatarate
+                    Integer32,
+                excInputRequiredDatarate
+                    Integer32,
+                excInputMaximumDelay
+                    Integer32,
+                excInputDynamicDelay
+                    Integer32,
+                excInputNetworkDelay
+                    Integer32,
+                excInputTotalDelay
+                    Integer32,
+                excInputFrameState
+                    INTEGER,
+                excInputNumberOfGroups
+                    Integer32
+             }
+
+        excInputChannelIdx OBJECT-TYPE
+            SYNTAX Integer32 (1..2)
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The index for the different input channels."
+            ::= { inputEntry 2 }
+
+        
+        excInputChannelName OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                ts1(1),
+                ts2(2)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This is the logical name for the index for the different input channels."
+            ::= { inputEntry 3 }
+
+        
+        excInputConnected OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The input channel is connected."
+            ::= { inputEntry 4 }
+
+        
+        excInputPreselected OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The input channel is the preselected."
+            ::= { inputEntry 6 }
+
+        
+        excInputActive OBJECT-TYPE
+            SYNTAX TruthValue
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The input channel is active."
+            ::= { inputEntry 7 }
+
+        
+        excInputPacketLength OBJECT-TYPE
+            SYNTAX Integer32
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Packet length for the channel."
+            ::= { inputEntry 17 }
+
+        
+        excInputMeasuredDatarate OBJECT-TYPE
+            SYNTAX Integer32
+            UNITS "Bit/s"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The measured datarate of the input."
+            ::= { inputEntry 18 }
+
+        
+        excInputRequiredDatarate OBJECT-TYPE
+            SYNTAX Integer32
+            UNITS "Bit/s"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The required datarate of the input."
+            ::= { inputEntry 19 }
+
+        
+        excInputMaximumDelay OBJECT-TYPE
+            SYNTAX Integer32 (0..1000000)
+            UNITS "Microseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The maximum delay of the input."
+            ::= { inputEntry 20 }
+
+        
+        excInputDynamicDelay OBJECT-TYPE
+            SYNTAX Integer32 (-1000000..1000000)
+            UNITS "Microseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The dynamic delay of the input."
+            ::= { inputEntry 21 }
+
+        
+        excInputNetworkDelay OBJECT-TYPE
+            SYNTAX Integer32 (0..1000000)
+            UNITS "Microseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The network delay of the input."
+            ::= { inputEntry 22 }
+
+        
+        excInputTotalDelay OBJECT-TYPE
+            SYNTAX Integer32 (-1000000..1000000)
+            UNITS "Microseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The total delay of the input."
+            ::= { inputEntry 23 }
+
+        
+        excInputFrameState OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                random(1),
+                locked(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Frame state:
+                Random - no Mobile DTV frames are detected. Exciter works in standard ATSC mode.
+                         Possible reasons: transport stream does not include Mobile DTV data or the setting
+                         of MHE-packet ID (menue ATSC-&gt;Common) does not fit to signalisation in transport stream.
+                Locked - Exciter is locked to Mobile DTV framing structure and a valid MHE-PID has been identified."
+            ::= { inputEntry 24 }
+
+        
+        excInputNumberOfGroups OBJECT-TYPE
+            SYNTAX Integer32 (0..15)
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Number of groups."
+            ::= { inputEntry 25 }
+
+        
+        statusTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF StatusEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Exciter status values."
+            ::= { rsXx8000AtscExcObjs 20 }
+
+        
+        statusEntry OBJECT-TYPE
+            SYNTAX StatusEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A row (an entry) for one exciter."
+            AUGMENTS { commandsEntry }
+            ::= { statusTable 1 }
+
+        
+        StatusEntry ::=
+            SEQUENCE { 
+                excStatusRfOutputAgcRegulation
+                    FloatingPoint,
+                excStatusRfIqAdjustAuto
+                    INTEGER,
+                excStatusRfIqAdjustLO1Frequency
+                    FloatingPoint,
+                excStatusNominalPower
+                    Integer32,
+                excStatusVSWR
+                    FloatingPoint,
+                excStatusSfnDelayDynamic
+                    FloatingPoint,
+                excStatusSfnDelayNetwork
+                    FloatingPoint,
+                excStatusSfnDelayMaximum
+                    FloatingPoint,
+                excStatusSfnDelayTotal
+                    FloatingPoint,
+                excStatusFailDelay
+                    FailDelayStatus
+             }
+
+        excStatusRfOutputAgcRegulation OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Percent"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows the operating point of the RF regulator.
+                The shown value should be around 50 per cent."
+            ::= { statusEntry 4 }
+
+        
+        excStatusRfIqAdjustAuto OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                notAdjusted(1),
+                inProgress(2),
+                adjusted(3)
+                }
+            UNITS "Percent"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Automatic I/Q-Adjust."
+            ::= { statusEntry 5 }
+
+        
+        excStatusRfIqAdjustLO1Frequency OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "MHz"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Modulator LO1."
+            ::= { statusEntry 6 }
+
+        
+        excStatusNominalPower OBJECT-TYPE
+            SYNTAX Integer32
+            UNITS "W"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Description."
+            ::= { statusEntry 7 }
+
+        
+        excStatusVSWR OBJECT-TYPE
+            SYNTAX FloatingPoint
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Voltage Standing Wave Ratio"
+            ::= { statusEntry 9 }
+
+        
+        excStatusSfnDelayDynamic OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Microseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The period of time by which signal processing is artificially delayed
+                so that the desired time of transmission is obtained."
+            ::= { statusEntry 14 }
+
+        
+        excStatusSfnDelayNetwork OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Microseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The signal propagation time between the play-out center
+                (MIP inserter) and the exciter input. This delay depends
+                on the transmission path used."
+            ::= { statusEntry 15 }
+
+        
+        excStatusSfnDelayMaximum OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Microseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The period of time between the signal leaving the play-out center
+                (MIP inserter) and its regular transmission at the antenna.
+                This delay is set in the MIP inserter and serves as a basis for
+                all the transmitters in the SFN."
+            ::= { statusEntry 17 }
+
+        
+        excStatusSfnDelayTotal OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "Microseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The actual signal transit time through the exciter.
+                This is derived from the sum of static-, dynamic-, 
+                offset- and processing delay."
+            ::= { statusEntry 18 }
+
+        
+        excStatusFailDelay OBJECT-TYPE
+            SYNTAX FailDelayStatus
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows whether the fail delay time is qualified."
+            ::= { statusEntry 40 }
+
+        
+        precorrectionTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF PrecorrectionEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Exciter status values."
+            ::= { rsXx8000AtscExcObjs 21 }
+
+        
+        precorrectionEntry OBJECT-TYPE
+            SYNTAX PrecorrectionEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "A row (an entry) for one exciter."
+            AUGMENTS { commandsEntry }
+            ::= { precorrectionTable 1 }
+
+        
+        PrecorrectionEntry ::=
+            SEQUENCE { 
+                excPrecLinCorrection
+                    SwitchOnOff,
+                excPrecLinAutomaticADE
+                    INTEGER,
+                excPrecLinMaxAmplitudeRipple
+                    FloatingPoint,
+                excPrecLinMaxGroupDelayRipple
+                    Integer32,
+                excPrecLinAmplitudeRipple
+                    FloatingPoint,
+                excPrecLinGroupDelayRipple
+                    Integer32,
+                excPrecLinInputLevel
+                    INTEGER,
+                excPrecLinAutomatic
+                    INTEGER,
+                excPrecNonlinCorrection
+                    SwitchOnOff,
+                excPrecNonlinAutomaticADE
+                    INTEGER,
+                excPrecNonlinThresholdShoulders
+                    FloatingPoint,
+                excPrecNonlinShoulderLeft
+                    FloatingPoint,
+                excPrecNonlinShoulderRight
+                    FloatingPoint,
+                excPrecNonlinInputLevel
+                    INTEGER,
+                excPrecNonlinAutomatic
+                    INTEGER,
+                excPrecExtendedGroupDelay
+                    SwitchOnOff,
+                excPrecUserState
+                    EqualizerCalibrationState,
+                excPrecFactoryState
+                    EqualizerCalibrationState,
+                excPrecRestoreCurrentSettings
+                    INTEGER,
+                excPrecRestoreAllSettings
+                    INTEGER
+             }
+
+        excPrecLinCorrection OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Switches on/turns off the linear precorrector."
+            ::= { precorrectionEntry 4 }
+
+        
+        excPrecLinAutomaticADE OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                manual(1),
+                automatic(2),
+                adaptive(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Enables /disables the automatic precorrector. To get the ADE in work linear precorrection has to be switched on."
+            ::= { precorrectionEntry 5 }
+
+        
+        excPrecLinMaxAmplitudeRipple OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Sets te maximum ripple for automatic amplitude correction (0.0 ... 2.0)."
+            ::= { precorrectionEntry 6 }
+
+        
+        excPrecLinMaxGroupDelayRipple OBJECT-TYPE
+            SYNTAX Integer32 (0..500)
+            UNITS "Nanoseconds"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Sets the maximum ripple for automatic group delay correction."
+            ::= { precorrectionEntry 7 }
+
+        
+        excPrecLinAmplitudeRipple OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows the current amplitude ripple."
+            ::= { precorrectionEntry 8 }
+
+        
+        excPrecLinGroupDelayRipple OBJECT-TYPE
+            SYNTAX Integer32
+            UNITS "Nanoseconds"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows the current group delay ripple."
+            ::= { precorrectionEntry 9 }
+
+        
+        excPrecLinInputLevel OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                tooHigh(1),
+                ok(2),
+                tooLow(3),
+                failure(4)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows the state of the feedback signal from the measurement point between output stage and antenna."
+            ::= { precorrectionEntry 10 }
+
+        
+        excPrecLinAutomatic OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                disabled(1),
+                active(2),
+                calculate(3),
+                measure(4)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows if the automatic precorrector works properly."
+            ::= { precorrectionEntry 11 }
+
+        
+        excPrecNonlinCorrection OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Switches on/turns off the nonlinear precorrector."
+            ::= { precorrectionEntry 12 }
+
+        
+        excPrecNonlinAutomaticADE OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                manual(1),
+                automatic(2),
+                adaptive(3)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Enables /disables the automatic precorrector. To get the ADE in work nonlinear precorrection has to be switched on."
+            ::= { precorrectionEntry 13 }
+
+        
+        excPrecNonlinThresholdShoulders OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "The target shoulder distance for ADE (0.0 ... 40.0)."
+            ::= { precorrectionEntry 14 }
+
+        
+        excPrecNonlinShoulderLeft OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Displays the current measurement for the left handed shoulder distance."
+            ::= { precorrectionEntry 15 }
+
+        
+        excPrecNonlinShoulderRight OBJECT-TYPE
+            SYNTAX FloatingPoint
+            UNITS "dB"
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Displays the current measurement of the right handed shoulder."
+            ::= { precorrectionEntry 16 }
+
+        
+        excPrecNonlinInputLevel OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                tooHigh(1),
+                ok(2),
+                tooLow(3),
+                failure(4)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows the state of the feedback signal from the measurement point between output stage and antenna."
+            ::= { precorrectionEntry 17 }
+
+        
+        excPrecNonlinAutomatic OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                disabled(1),
+                active(2),
+                calculate(3),
+                measure(4)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Shows if the automatic precorrector works properly."
+            ::= { precorrectionEntry 18 }
+
+        
+        excPrecExtendedGroupDelay OBJECT-TYPE
+            SYNTAX SwitchOnOff
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Switch extended group delay on or off.
+                Switching on is possible only when the corresponding option key is active."
+            ::= { precorrectionEntry 30 }
+
+        
+        excPrecUserState OBJECT-TYPE
+            SYNTAX EqualizerCalibrationState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "status of the user precorrection settings"
+            ::= { precorrectionEntry 100 }
+
+        
+        excPrecFactoryState OBJECT-TYPE
+            SYNTAX EqualizerCalibrationState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "status of the factory precorrection settings"
+            ::= { precorrectionEntry 101 }
+
+        
+        excPrecRestoreCurrentSettings OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                stop(1),
+                start(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "restores current factory precorrection setting"
+            ::= { precorrectionEntry 102 }
+
+        
+        excPrecRestoreAllSettings OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                stop(1),
+                start(2)
+                }
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "restores all factory precorrection settings"
+            ::= { precorrectionEntry 103 }
+
+        
+        logbook OBJECT IDENTIFIER ::= { rsXx8000AtscExcObjs 90 }
+
+        
+        logbookConfigTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF LogbookConfigEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "Configuration for exciter logbook table."
+            ::= { logbook 1 }
+
+        
+        logbookConfigEntry OBJECT-TYPE
+            SYNTAX LogbookConfigEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the logbookConfigTable."
+            AUGMENTS { commandsEntry }
+            ::= { logbookConfigTable 1 }
+
+        
+        LogbookConfigEntry ::=
+            SEQUENCE { 
+                lbCfgNumberOfEntries
+                    LogbookMaxEntryNumber,
+                lbCfgClear
+                    Trigger
+             }
+
+        lbCfgNumberOfEntries OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The number of entries in logbook."
+            ::= { logbookConfigEntry 1 }
+
+        
+        lbCfgClear OBJECT-TYPE
+            SYNTAX Trigger
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "Clear the logbook.
+                idle(1)    --> ready
+                clear(2)   --> do clear now
+                
+                A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing anything."
+            ::= { logbookConfigEntry 2 }
+
+        
+        logbookTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF LogbookEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "exciter logbook table."
+            ::= { logbook 2 }
+
+        
+        logbookEntry OBJECT-TYPE
+            SYNTAX LogbookEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This is a entry in the logbook."
+            INDEX { cmdTxIdx, cmdExcIdx, logbookEntryIdx }
+            ::= { logbookTable 1 }
+
+        
+        LogbookEntry ::=
+            SEQUENCE { 
+                logbookEntryIdx
+                    LogbookMaxEntryNumber,
+                logbookEntryNbr
+                    LogbookMaxEntryNumber,
+                logbookType
+                    EventClass,
+                logbookSlope
+                    LogbookEntrySlope,
+                logbookMessage
+                    LogbookEntryMessagesExcTv,
+                logbookDateTime
+                    DateAndTime
+             }
+
+        logbookEntryIdx OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This is an increasing number from 1 to 128. It is used as an index column for SNMP."
+            ::= { logbookEntry 1 }
+
+        
+        logbookEntryNbr OBJECT-TYPE
+            SYNTAX LogbookMaxEntryNumber
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "This is the number of the logbook entry. It is an decreasing number from max 128 down to 1."
+            ::= { logbookEntry 2 }
+
+        
+        logbookType OBJECT-TYPE
+            SYNTAX EventClass
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Can either be Fault, Warning or State."
+            ::= { logbookEntry 3 }
+
+        
+        logbookSlope OBJECT-TYPE
+            SYNTAX LogbookEntrySlope
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "Either set (event raises) or reset (event disappears)"
+            ::= { logbookEntry 4 }
+
+        
+        logbookMessage OBJECT-TYPE
+            SYNTAX LogbookEntryMessagesExcTv
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "See RS-XX8000-COMMON-MIB - TextualConvention - LogbookEntryMessagesExcTv for details."
+            ::= { logbookEntry 5 }
+
+        
+        logbookDateTime OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The time of the logbook entry."
+            ::= { logbookEntry 6 }
+
+        
+        productInfoTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF ProductInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The table for product typeplates."
+            ::= { rsXx8000AtscExcObjs 100 }
+
+        
+        productInfoEntry OBJECT-TYPE
+            SYNTAX ProductInfoEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the productInfoTable."
+            INDEX { prodInfoModuleIdx, cmdTxIdx, cmdExcIdx }
+            ::= { productInfoTable 1 }
+
+        
+        ProductInfoEntry ::=
+            SEQUENCE { 
+                prodInfoModuleIdx
+                    ProdInfoModuleNameTv,
+                prodInfoModuleName
+                    ProdInfoModuleNameTv,
+                prodInfoSerialNumber
+                    ReadableString,
+                prodInfoIdentNumberSW
+                    ReadableString,
+                prodInfoVersionNumberSW
+                    ReadableString,
+                prodInfoIdentNumberHW
+                    ReadableString,
+                prodInfoVersionNumberHW
+                    ReadableString,
+                productInfoProductDateHW
+                    DateAndTime
+             }
+
+        prodInfoModuleIdx OBJECT-TYPE
+            SYNTAX ProdInfoModuleNameTv
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The module index."
+            ::= { productInfoEntry 1 }
+
+        
+        prodInfoModuleName OBJECT-TYPE
+            SYNTAX ProdInfoModuleNameTv
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The readable module type."
+            ::= { productInfoEntry 6 }
+
+        
+        prodInfoSerialNumber OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The serial number of the subdevice."
+            ::= { productInfoEntry 7 }
+
+        
+        prodInfoIdentNumberSW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz identification number of the software, for example 
+                2094.2090.02."
+            ::= { productInfoEntry 8 }
+
+        
+        prodInfoVersionNumberSW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz revision number of the software, for example 1.2.1."
+            ::= { productInfoEntry 9 }
+
+        
+        prodInfoIdentNumberHW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz identification number of the hardware, for example 
+                2095.8007.02 (NetCCU)."
+            ::= { productInfoEntry 10 }
+
+        
+        prodInfoVersionNumberHW OBJECT-TYPE
+            SYNTAX ReadableString
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz revision number (product index) of the hardware, for example 
+                03.03."
+            ::= { productInfoEntry 11 }
+
+        
+        productInfoProductDateHW OBJECT-TYPE
+            SYNTAX DateAndTime
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The Rohde&Schwarz production date of the hardware,"
+            ::= { productInfoEntry 12 }
+
+        
+        rsXx8000AtscExcEvents OBJECT IDENTIFIER ::= { rsXx8000AtscExc 3 }
+
+        
+        eventsV2 OBJECT-IDENTITY
+            STATUS current
+            DESCRIPTION 
+                "Compatibility to SMIv1."
+            ::= { rsXx8000AtscExcEvents 0 }
+
+        
+        txExcSummaryFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Summary Fault."
+            ::= { eventsV2 100 }
+
+        
+        txExcSummaryWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Summary Warning."
+            ::= { eventsV2 101 }
+
+        
+        txExcInputNoConnectTS1 NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Input TS1 has no connected input signal"
+            ::= { eventsV2 105 }
+
+        
+        txExcInputNoConnectTS2 NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Input TS2 has no connected input signal"
+            ::= { eventsV2 107 }
+
+        
+        txExcInputActiveTS1 NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Input TS1 is active"
+            ::= { eventsV2 109 }
+
+        
+        txExcInputActiveTS2 NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Input TS2 is active"
+            ::= { eventsV2 111 }
+
+        
+        txExcOn NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Exciter On"
+            ::= { eventsV2 113 }
+
+        
+        txExcRfOn NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB }
+            STATUS current
+            DESCRIPTION 
+                "Exciter RF On"
+            ::= { eventsV2 114 }
+
+        
+        txExcNoInput NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB }
+            STATUS current
+            DESCRIPTION 
+                "Exciter has no valid input signal."
+            ::= { eventsV2 115 }
+
+        
+        txExcRfLoop NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB }
+            STATUS current
+            DESCRIPTION 
+                "Exciter RF loop"
+            ::= { eventsV2 116 }
+
+        
+        txExcRfFail NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB }
+            STATUS current
+            DESCRIPTION 
+                "Exciter RF Fail"
+            ::= { eventsV2 117 }
+
+        
+        txExcSelfTest NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB }
+            STATUS current
+            DESCRIPTION 
+                "Exciter hardware self test"
+            ::= { eventsV2 118 }
+
+        
+        txExcOutputOpen NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB }
+            STATUS current
+            DESCRIPTION 
+                "Exciter output open"
+            ::= { eventsV2 119 }
+
+        
+        txExcBoardTemperatureWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Board Temperature"
+            ::= { eventsV2 120 }
+
+        
+        txExcFanWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB }
+            STATUS current
+            DESCRIPTION 
+                "Exciter has one faulty fan"
+            ::= { eventsV2 121 }
+
+        
+        txExcFanFault NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB }
+            STATUS current
+            DESCRIPTION 
+                "Both exciter fans are faulty."
+            ::= { eventsV2 122 }
+
+        
+        txExcFifoWarning NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Fifo"
+            ::= { eventsV2 123 }
+
+        
+        txExcTestSignal NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Testsignal Active"
+            ::= { eventsV2 124 }
+
+        
+        txExcWrongDatarate NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Wrong Datarate"
+            ::= { eventsV2 126 }
+
+        
+        txExcMute NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexAB }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Mute"
+            ::= { eventsV2 127 }
+
+        
+        txExcPPSFail NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Exciter PPS Fail"
+            ::= { eventsV2 128 }
+
+        
+        txExcReferenceFail NOTIFICATION-TYPE
+            OBJECTS { eventAlarmPriority, eventAlarmClass, eventEvent, indexTransmitter, indexAB
+                 }
+            STATUS current
+            DESCRIPTION 
+                "Exciter Reference Fail"
+            ::= { eventsV2 129 }
+
+        
+        eventsTable OBJECT-TYPE
+            SYNTAX SEQUENCE OF EventsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "This table contains necessary information for handling alarms.
+                For each alarm you have the following information:
+                - name (get),
+                - mask to enable/disable sending out (set/get),
+                - priority (set/get) and
+                - the current state (get only)."
+            ::= { rsXx8000AtscExcEvents 1 }
+
+        
+        eventsEntry OBJECT-TYPE
+            SYNTAX EventsEntry
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "An entry (conceptual row) in the eventsTable."
+            INDEX { cmdTxIdx, cmdExcIdx, eventExcNameIdx }
+            ::= { eventsTable 1 }
+
+        
+        EventsEntry ::=
+            SEQUENCE { 
+                eventExcNameIdx
+                    EventMaxEntryNumber,
+                eventExcName
+                    INTEGER,
+                eventExcMask
+                    EventMask,
+                eventExcPriority
+                    EventPriority,
+                eventExcEvent
+                    EventState
+             }
+
+        eventExcNameIdx OBJECT-TYPE
+            SYNTAX EventMaxEntryNumber
+            MAX-ACCESS not-accessible
+            STATUS current
+            DESCRIPTION
+                "The event number as integer.
+                This is a helper column and therefore not-accessible."
+            ::= { eventsEntry 3 }
+
+        
+        eventExcName OBJECT-TYPE
+            SYNTAX INTEGER
+                {
+                txExcSummaryFault(100),
+                txExcSummaryWarning(101),
+                txExcInputNoConnectTS1(105),
+                txExcInputNoConnectTS2(107),
+                txExcInputActiveTS1(109),
+                txExcInputActiveTS2(111),
+                txExcOn(113),
+                txExcRfOn(114),
+                txExcNoInput(115),
+                txExcRfLoop(116),
+                txExcRfFail(117),
+                txExcSelfTest(118),
+                txExcOutputOpen(119),
+                txExcBoardTemperatureWarning(120),
+                txExcFanWarning(121),
+                txExcFanFault(122),
+                txExcFifoWarning(123),
+                txExcTestSignal(124),
+                txExcWrongDatarate(126),
+                txExcMute(127),
+                txExcPPSFail(128),
+                txExcReferenceFail(129)
+                }
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "The event name as readable integer.
+                The enumeration correlates with the notifications under eventsTxV2."
+            ::= { eventsEntry 4 }
+
+        
+        eventExcMask OBJECT-TYPE
+            SYNTAX EventMask
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsEntry 5 }
+
+        
+        eventExcPriority OBJECT-TYPE
+            SYNTAX EventPriority
+            MAX-ACCESS read-write
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsEntry 6 }
+
+        
+        eventExcEvent OBJECT-TYPE
+            SYNTAX EventState
+            MAX-ACCESS read-only
+            STATUS current
+            DESCRIPTION
+                "See TextualConvention for details."
+            ::= { eventsEntry 7 }
+
+        
+        rsXx8000AtscExcConf OBJECT IDENTIFIER ::= { rsXx8000AtscExc 5 }
+
+        
+        rsXx8000AtscExcGroups OBJECT IDENTIFIER ::= { rsXx8000AtscExcConf 1 }
+
+        
+        groupObjectsGeneral OBJECT-GROUP
+            OBJECTS { cmdExcOpModeInputAutomatic, cmdExcPreselectInput, cmdExcNetworkMode, cmdExcTxAutomatic, cmdExcInputPriority, 
+                cmdExcInputCheckTimeForward, cmdExcInputCheckTimeSwitchback, cmdExcInputMuteOnFail, cmdExcInputManualPreselectionTS1, cmdExcInputManualPreselectionTS2, 
+                cmdExcMobileDTV, cmdExcMhePID, cmdExcMtxID, cmdExcWatermark, cmdExcTransmitterID, 
+                cmdExcMarketID, cmdExcSFNStaticDelay, cmdExcSFNDeviationTime, cmdExcMuteOnPPSFail, cmdExcMuteOnReferenceFail, 
+                excPrecNonlinAutomatic, excPrecNonlinInputLevel, excPrecNonlinShoulderRight, excPrecNonlinShoulderLeft, excPrecNonlinThresholdShoulders, 
+                excPrecNonlinAutomaticADE, excPrecNonlinCorrection, excPrecLinAutomatic, excPrecLinInputLevel, excPrecLinGroupDelayRipple, 
+                excPrecLinAmplitudeRipple, excPrecLinMaxGroupDelayRipple, excPrecLinMaxAmplitudeRipple, excPrecLinAutomaticADE, excPrecLinCorrection, 
+                excStatusSfnDelayTotal, excStatusSfnDelayMaximum, excStatusSfnDelayNetwork, excStatusSfnDelayDynamic, excStatusRfIqAdjustLO1Frequency, 
+                excStatusRfIqAdjustAuto, excStatusRfOutputAgcRegulation, excInputNumberOfGroups, excInputFrameState, excInputTotalDelay, 
+                excInputNetworkDelay, excInputDynamicDelay, excInputMaximumDelay, excInputRequiredDatarate, excInputMeasuredDatarate, 
+                excInputPacketLength, excInputActive, excInputPreselected, excInputConnected, excInputChannelName, 
+                cmdExcInput2Source, cmdExcInput1Source, cmdExcRfIqAdjustPhase, cmdExcRfIqAdjustGainQ, cmdExcRfIqAdjustGainI, 
+                cmdExcRfIqAdjustBiasFineQ, cmdExcRfIqAdjustBiasFineI, cmdExcFrequency, cmdExcReferenceSource, cmdExcTypeLossOfInput, 
+                cmdExcRfOutput, cmdExcRfOutputRegulation, cmdExcRfOutputManualRfLevel, cmdExcRfOutputAttenuation, cmdExcRfOutputRfSlope, 
+                cmdExcRfOutputModulationSlope, cmdExcRfIqAdjustStart, cmdExcRfIqAdjustTestsignal, cmdExcRfIqAdjustBiasCoarseI, cmdExcInputFailDelayTime, 
+                cmdExcOcxoAdjust, excPrecExtendedGroupDelay, cmdExcSfnSynchronizationMode, cmdExcMuteOnLossOfSyncInformation, excStatusFailDelay, 
+                cmdExcFailDelayMode, cmdExcRfIqAdjustBiasCoarseQ, cmdExcRefFailDelayTime }
+            STATUS current
+            DESCRIPTION 
+                "group for common objects of ATSC exciters"
+            ::= { rsXx8000AtscExcGroups 1 }
+
+        
+        groupObjectsSlx OBJECT-GROUP
+            OBJECTS { excPrecUserState, excPrecFactoryState, excPrecRestoreCurrentSettings, cmdExcRfFailLimit, cmdExcRfWarningLimit, 
+                cmdExcMonitoringOutput, excStatusNominalPower, excStatusVSWR, excPrecRestoreAllSettings, cmdExcOutputPower
+                 }
+            STATUS current
+            DESCRIPTION 
+                "additional objects for exciters of SLx devices"
+            ::= { rsXx8000AtscExcGroups 2 }
+
+        
+        groupObjectsLogbook OBJECT-GROUP
+            OBJECTS { lbCfgNumberOfEntries, lbCfgClear, logbookEntryNbr, logbookType, logbookSlope, 
+                logbookMessage, logbookDateTime }
+            STATUS current
+            DESCRIPTION 
+                "Group for objects of the logbook"
+            ::= { rsXx8000AtscExcGroups 3 }
+
+        
+        groupObjectsProductInfo OBJECT-GROUP
+            OBJECTS { prodInfoModuleName, prodInfoSerialNumber, prodInfoIdentNumberSW, prodInfoVersionNumberSW, prodInfoIdentNumberHW, 
+                prodInfoVersionNumberHW, productInfoProductDateHW }
+            STATUS current
+            DESCRIPTION 
+                "Group for objects of the productInfoTable"
+            ::= { rsXx8000AtscExcGroups 4 }
+
+        
+        groupEventsGeneral NOTIFICATION-GROUP
+            NOTIFICATIONS { txExcSummaryFault, txExcSummaryWarning, txExcInputNoConnectTS1, txExcInputNoConnectTS2, txExcInputActiveTS1, 
+                txExcInputActiveTS2, txExcOn, txExcFifoWarning, txExcWrongDatarate, txExcPPSFail, 
+                txExcReferenceFail, txExcRfOn, txExcNoInput, txExcRfLoop, txExcRfFail, 
+                txExcSelfTest, txExcOutputOpen, txExcBoardTemperatureWarning, txExcFanWarning, txExcFanFault, 
+                txExcTestSignal, txExcMute }
+            STATUS current
+            DESCRIPTION 
+                "group for common events of ATSC exciters"
+            ::= { rsXx8000AtscExcGroups 5 }
+
+        
+        groupEventTable OBJECT-GROUP
+            OBJECTS { eventExcName, eventExcMask, eventExcPriority, eventExcEvent }
+            STATUS current
+            DESCRIPTION 
+                "Group for all objects of event table."
+            ::= { rsXx8000AtscExcGroups 6 }
+
+        
+        rsXx8000AtscExcCompl OBJECT IDENTIFIER ::= { rsXx8000AtscExcConf 2 }
+
+        
+        rsXx8000AtscExciter MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION 
+                "ATSC exciters of Sx800 devices"
+            MODULE -- this module
+                MANDATORY-GROUPS { groupObjectsGeneral, groupEventsGeneral, groupEventTable, groupObjectsLogbook, groupObjectsProductInfo
+                     }
+            ::= { rsXx8000AtscExcCompl 1 }
+
+        
+        rsXx8000AtscExciterSlx MODULE-COMPLIANCE
+            STATUS current
+            DESCRIPTION 
+                "ATSC exciters of SLx devices"
+            MODULE -- this module
+                MANDATORY-GROUPS { groupObjectsGeneral, groupEventsGeneral, groupObjectsSlx, groupEventTable, groupObjectsLogbook, 
+                    groupObjectsProductInfo }
+            ::= { rsXx8000AtscExcCompl 2 }
+
+        
+    
+    END

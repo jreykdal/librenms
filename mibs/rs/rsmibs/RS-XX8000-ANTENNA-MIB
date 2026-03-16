@@ -1,0 +1,1799 @@
+-- *****************************************************************************
+-- *****************************************************************************
+-- **
+-- **  COPYRIGHT      (c) 2007 Rohde & Schwarz GmbH & Co. KG
+-- **                          Muehldorfstrasse 15
+-- **    R & S                 D-81671 Muenchen
+-- **
+-- *****************************************************************************
+-- **
+-- **  MODULE         RS-XX8000-ANTENNA-MIB
+-- **  
+-- **  DESCRIPTION    Rohde & Schwarz SNMP
+-- **
+-- *****************************************************************************
+-- **  2008-05-07 sr  - initial version
+-- **  2008-08-05 hue - added emergencySwitch
+-- **  2009-01-23 sr  - statusTable added
+-- **  2009-05-11 sr  - new groups and compliance statement for variant NTx
+-- **
+-- *****************************************************************************
+-- *****************************************************************************
+
+  RS-XX8000-ANTENNA-MIB DEFINITIONS ::= BEGIN
+ 
+    IMPORTS
+      EventClass,
+      EventMask,
+      EventMaxEntryNumber,
+      EventPriority,
+      EventState,
+      FloatingPoint,
+      LogbookEntrySlope,
+      LogbookMaxEntryNumber,
+      rsXx8000,
+      rsXx8000MibModule,
+      SwitchOnOff,
+      TimeOfDay,
+      Trigger
+        FROM RS-XX8000-COMMON-MIB      
+      MODULE-COMPLIANCE,
+      NOTIFICATION-GROUP,
+      OBJECT-GROUP
+        FROM SNMPv2-CONF      
+      Integer32,
+      MODULE-IDENTITY,
+      NOTIFICATION-TYPE,
+      OBJECT-IDENTITY,
+      OBJECT-TYPE
+        FROM SNMPv2-SMI      
+      DateAndTime,
+      TEXTUAL-CONVENTION,
+      TruthValue
+        FROM SNMPv2-TC;
+  
+  
+    rsXx8000AntennaRedundMibModule MODULE-IDENTITY 
+      LAST-UPDATED "200905110800Z"
+      ORGANIZATION 
+        "Rohde&Schwarz GmbH & Co. KG"
+      CONTACT-INFO 
+        "Torsten Huebscher
+        Department 7TS2
+        Broadcasting Division
+        Muehldorfstrasse 15
+        81671 Munich, Germany
+        torsten.huebscher@rohde-schwarz.com"
+      DESCRIPTION 
+        "This MIB defines antenna redundancy of transmitting systems from Rohde & Schwarz.
+        
+        Use this MIB if your system meets the following requirements:
+        - series XX8000 (NetCCU800),
+        - variant Nplus1 with antenna redundancy.
+        
+        The following MIBs are related to this:
+        - RS-COMMON-MIB         - mandatory for this MIB
+        - RS-XX8000-COMMON-MIB  - mandatory for this MIB"
+        
+      REVISION "200905110800Z"
+      DESCRIPTION 
+        "new groups and compliance statement for variant NTx"
+        
+      REVISION "200901231130Z"
+      DESCRIPTION 
+        "statusTable added"
+        
+      REVISION "200808050900Z"
+      DESCRIPTION 
+        "Added emergencySwitch"
+        
+      REVISION "200805070900Z"
+      DESCRIPTION 
+        "Initial version."
+      ::= { rsXx8000MibModule 101 }
+
+    
+  
+    rsXx8000AntennaRedundancy OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Xx8000 Antenna Redundancy"
+      ::= { rsXx8000 101 }
+
+    
+-- Textual conventions
+  
+    IndexAntennaProgram ::= TEXTUAL-CONVENTION
+      STATUS current
+      DESCRIPTION 
+        "The program index for antenna redundancy."
+      SYNTAX INTEGER
+        {
+        program1(1),
+        program2(2),
+        program3(3),
+        program4(4)
+        }
+
+    IndexAntennaSub ::= TEXTUAL-CONVENTION
+      STATUS current
+      DESCRIPTION 
+        "The subindex.
+         For U-Link parameters this index can be 1..6.
+         For Switch parameters this index can be 1..3.
+         For all other parameters this index is always 1."
+      SYNTAX INTEGER
+        {
+        subindex1(1),
+        subindex2(2),
+        subindex3(3),
+        subindex4(4),
+        subindex5(5),
+        subindex6(6)
+        }
+
+
+-- ************************************************************************************
+-- **          object definitions
+-- ************************************************************************************
+    rsXx8000AntennaRedundancyObjs OBJECT IDENTIFIER ::= { rsXx8000AntennaRedundancy 1 }
+
+    
+-- configuration
+
+    configuration OBJECT IDENTIFIER ::= { rsXx8000AntennaRedundancyObjs 1 }
+
+    antennaFailTime OBJECT-TYPE
+      SYNTAX Integer32 (0..30)
+      UNITS "seconds"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Time to elapse for reaction on antenna alarm."
+      ::= { configuration 2 }
+
+
+    antennaTripAlarmTime OBJECT-TYPE
+      SYNTAX Integer32 (0..30)
+      UNITS "seconds"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Time to elapse for reaction on external trip alarm."
+      ::= { configuration 3 }
+
+
+    antennaOutputLevelThreshold OBJECT-TYPE
+      SYNTAX Integer32 (0..100)
+      UNITS "percent"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Percentage of nominal power for evaluating reflected power."
+      ::= { configuration 4 }
+
+
+    antennaFailLimit OBJECT-TYPE
+      SYNTAX FloatingPoint
+      UNITS "dB"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Reflected power threshold for antenna alarm (-22.0 ... -18.0)."
+      ::= { configuration 5 }
+
+
+    autoTxBTesting OBJECT-TYPE
+      SYNTAX SwitchOnOff
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Switch automatic testing for TxB on or off."
+      ::= { configuration 20 }
+
+
+    autoTxBTestTime OBJECT-TYPE
+      SYNTAX TimeOfDay
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Time of day for performing the TxB automatic test sequence.
+         Seconds are not used."
+      ::= { configuration 21 }
+
+
+    autoTxBTestCycle OBJECT-TYPE
+      SYNTAX Integer32 (1..100)
+      UNITS "days"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Number of days between each test sequence."
+      ::= { configuration 22 }
+
+
+    autoTxBNextTest OBJECT-TYPE
+      SYNTAX Integer32 (0..100)
+      UNITS "days"
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Number of days left for next test sequence."
+      ::= { configuration 23 }
+
+
+    autoTxBTestDuration OBJECT-TYPE
+      SYNTAX TimeOfDay
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Duration of each parameter set test in TxB test sequence.
+        Seconds are not used."
+      ::= { configuration 24 }
+
+
+    autoTxBInclusionTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF AutoTxBInclusionEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Inclusion list for automatic TxB test sequence."
+      ::= { configuration 30 }
+
+    
+    autoTxBInclusionEntry OBJECT-TYPE
+      SYNTAX AutoTxBInclusionEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the inclusion list."
+      INDEX { autoTxBInclusionIdx }
+      ::= { autoTxBInclusionTable 1 }
+
+    
+    AutoTxBInclusionEntry ::=
+      SEQUENCE { 
+        autoTxBInclusionIdx
+          Integer32,
+        autoTxBInclusionTestIncluded
+          TruthValue
+       }
+
+    autoTxBInclusionIdx OBJECT-TYPE
+      SYNTAX Integer32 (1..8)
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The inclusion list index. There are at most 8 tests includable."
+      ::= { autoTxBInclusionEntry 1 }
+
+    
+    autoTxBInclusionTestIncluded OBJECT-TYPE
+      SYNTAX TruthValue
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Include the test in the list."
+      ::= { autoTxBInclusionEntry 2 }
+
+    
+-- operation
+
+    operation OBJECT IDENTIFIER ::= { rsXx8000AntennaRedundancyObjs 2 }
+
+    operationTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF OperationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table for operation parameters."
+      ::= { operation 1 }
+
+    
+    operationEntry OBJECT-TYPE
+      SYNTAX OperationEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the operation parameters of a specific program."
+      INDEX { opProgramIdx }
+      ::= { operationTable 1 }
+
+    
+    OperationEntry ::=
+      SEQUENCE { 
+        opProgramIdx
+          IndexAntennaProgram,
+        opAntennaSelected
+          INTEGER,
+        opAntennaSelectMainReserve
+          INTEGER,
+        opAntennaSelectUpperLower
+          INTEGER,
+        opAntennaMode
+          INTEGER,
+        opAntennaModeManual
+          Trigger,
+        opAntennaModeAutomatic
+          Trigger,
+        opAntennaModeEmergency
+          Trigger,
+        opAntennaReset
+          Trigger
+       }
+
+    opProgramIdx OBJECT-TYPE
+      SYNTAX IndexAntennaProgram
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The program index."
+      ::= { operationEntry 1 }
+
+    
+    opAntennaSelected OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        unknown(1),
+        reserve(2),
+        main(3),
+        lower(4),
+        upper(5),
+        full(6),
+        dummy(7)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Selected antenna for transmitter An."
+      ::= { operationEntry 2 }
+
+    
+    opAntennaSelectMainReserve OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        reserve(1),
+        main(2)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Select antenna for transmitter (Main+Reserve)."
+      ::= { operationEntry 4 }
+
+    
+    opAntennaSelectUpperLower OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        lower(1),
+        upper(2),
+        full(3)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Select antenna half/halves for transmitter (Upper+Lower)."
+      ::= { operationEntry 5 }
+
+    
+    opAntennaMode OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        manual(1),
+        automatic(2),
+        bypass(3),
+        emergency(4)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Operation mode for antenna automatic."
+      ::= { operationEntry 10 }
+
+    
+    opAntennaModeManual OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Set antenna manual mode."
+      ::= { operationEntry 11 }
+
+    
+    opAntennaModeAutomatic OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Set antenna automatic mode."
+      ::= { operationEntry 12 }
+
+    
+    opAntennaModeEmergency OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Set antenna emergency mode."
+      ::= { operationEntry 13 }
+
+    
+    opAntennaReset OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Antenna changeover reset."
+      ::= { operationEntry 20 }
+
+    
+    opAntennaSelectedB OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        unknown(1),
+        reserve(2),
+        main(3),
+        lower(4),
+        upper(5),
+        full(6),
+        dummy(7)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Selected antenna for transmitter B."
+      ::= { operation 2 }
+
+    
+    txBService OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        dummy(1),
+        paramSet1(2),
+        paramSet2(3),
+        paramSet3(4),
+        paramSet4(5),
+        paramSet5(6),
+        paramSet6(7),
+        paramSet7(8),
+        paramSet8(9)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Service and power class for TxB (class1: Main/Full, class2: Reserve/Half)."
+      ::= { operation 25 }
+   
+    
+    cmdAutoTxBTestStart OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Start TxB test sequence manually."
+      ::= { operation 30 }
+
+
+    cmdAutoTxBTestStop OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Stop current TxB test sequence."
+      ::= { operation 31 }
+
+
+    cmdAutoTxBTestReset OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Reset automatic TxB test result."
+      ::= { operation 32 }
+
+
+    autoTxBTestResult OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        idle(1),
+        started(2),
+        switching(3),
+        inProgress(4),
+        success(5),
+        noSuccess(6)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The automatic TxB test state."
+      ::= { operation 33 }
+
+
+    emergencySwitch OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        p1(1),
+        p2(2),
+        p3(3),
+        p4(4),
+        offAuto(5),
+        offManual(6)
+        }
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Emergency mode selection for this program."
+      ::= { operation 34 }
+
+
+-- measurements
+
+    measurements OBJECT IDENTIFIER ::= { rsXx8000AntennaRedundancyObjs 3 }
+
+    measurementsTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF MeasurementsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table for measurements."
+      ::= { measurements 1 }
+
+    
+    measurementsEntry OBJECT-TYPE
+      SYNTAX MeasurementsEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the measured values of a specific program."
+      INDEX { measProgramIdx, measAntennaIdx }
+      ::= { measurementsTable 1 }
+
+    
+    MeasurementsEntry ::=
+      SEQUENCE { 
+        measProgramIdx
+          IndexAntennaProgram,
+        measAntennaIdx
+          INTEGER,
+        measProbeForward
+          Integer32,
+        measProbeReflected
+          Integer32
+       }
+
+    measProgramIdx OBJECT-TYPE
+      SYNTAX IndexAntennaProgram
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The program index."
+      ::= { measurementsEntry 1 }
+
+    measAntennaIdx OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        mainUpper(1),
+        reserveLower(2)
+        }
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The antenna index for Main/Reserve or Upper/Lower configuration respectively."
+      ::= { measurementsEntry 2 }
+   
+    
+    measProbeForward OBJECT-TYPE
+      SYNTAX Integer32
+      UNITS "Watt"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Measured forward power level."
+      ::= { measurementsEntry 3 }
+    
+    measProbeReflected OBJECT-TYPE
+      SYNTAX Integer32
+      UNITS "Watt"
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Measured reflected power level."
+      ::= { measurementsEntry 4 }
+
+    
+-- status
+
+    status OBJECT IDENTIFIER ::= { rsXx8000AntennaRedundancyObjs 4 }
+
+    statusTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF StatusEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Table for status information ."
+      ::= { status 1 }
+
+    
+    statusEntry OBJECT-TYPE
+      SYNTAX StatusEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An entry for the status values of a specific program."
+      INDEX { statusProgramIdx, statusSubIdx }
+      ::= { statusTable 1 }
+
+    
+    StatusEntry ::=
+      SEQUENCE { 
+        statusProgramIdx
+          IndexAntennaProgram,
+        statusSubIdx
+          IndexAntennaSub,
+        switchStatus
+          INTEGER,
+        switchPositionCurrent
+          INTEGER
+       }
+
+    statusProgramIdx OBJECT-TYPE
+      SYNTAX IndexAntennaProgram
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The program index."
+      ::= { statusEntry 1 }
+
+    statusSubIdx OBJECT-TYPE
+      SYNTAX IndexAntennaSub
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The subindex. See description of IndexAntennaSub."
+      ::= { statusEntry 3 }
+   
+    
+    switchStatus OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        ok(1),
+        warning(2),
+        fault(3),
+        notPresent(4)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "HF switch status."
+      ::= { statusEntry 6 }
+    
+    switchPositionCurrent OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        removed(1),
+        position1Operable(2),
+        position2Operable(3),
+        position1Bridged(4),
+        position2Bridged(5),
+        position1HardWired(6),
+        position2HardWired(7)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Current HF switch position."
+      ::= { statusEntry 7 }
+    
+-- logbook
+
+    logbook OBJECT IDENTIFIER ::= { rsXx8000AntennaRedundancyObjs 10 }
+
+    
+    logbookNumberOfEntries OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The number of entries in logbook."
+      ::= { logbook 1 }
+
+    
+    logbookClear OBJECT-TYPE
+      SYNTAX Trigger
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "Clear the logbook.
+        idle(1)    --> ready
+        clear(2)   --> do clear now
+        
+        A GET will always return idle(1). A SET idle(1) will return NO_ERROR without doing 
+        anything."
+      ::= { logbook 2 }
+
+    
+    logbookTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF LogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "Antenna redundancy logbook table."
+      ::= { logbook 3 }
+
+    
+    logbookEntry OBJECT-TYPE
+      SYNTAX LogbookEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is a entry in the logbook."
+      INDEX { logbookEntryIdx }
+      ::= { logbookTable 1 }
+
+    
+    LogbookEntry ::=
+      SEQUENCE { 
+        logbookEntryIdx
+          LogbookMaxEntryNumber,
+        logbookEntryNbr
+          LogbookMaxEntryNumber,
+        logbookType
+          EventClass,
+        logbookSlope
+          LogbookEntrySlope,
+        logbookMessage
+          INTEGER,
+        logbookDateTime
+          DateAndTime
+       }
+
+    logbookEntryIdx OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This is an increasing number from 1 to 128. It is used as an index column for 
+        SNMP."
+      ::= { logbookEntry 1 }
+
+    
+    logbookEntryNbr OBJECT-TYPE
+      SYNTAX LogbookMaxEntryNumber
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "This is the number of the logbook entry. It is an decreasing number from max 128 
+        down to 1."
+      ::= { logbookEntry 2 }
+
+    
+    logbookType OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Can either be Fault, Warning or State."
+      ::= { logbookEntry 3 }
+
+    
+    logbookSlope OBJECT-TYPE
+      SYNTAX LogbookEntrySlope
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Either set (event raises) or reset (event disappears)"
+      ::= { logbookEntry 4 }
+
+    
+    logbookMessage OBJECT-TYPE
+      SYNTAX INTEGER { antenna1SumFault(1),
+                       antenna1SumWarning(2),
+                       antenna1AutomaticReady(3),
+                       antenna1ModeManual(4),
+                       antenna1ModeAutomatic(5),
+                       antenna1ModeEmergency(6),
+                       antenna1ModeBypass(7),
+                       antenna1ServiceFull(8),
+                       antenna1ServiceUpper(9),
+                       antenna1ServiceLower(10),
+                       antenna1ServiceMain(11),
+                       antenna1ServiceReserve(12),
+                       
+                       antenna2SumFault(16),
+                       antenna2SumWarning(17),
+                       antenna2AutomaticReady(18),
+                       antenna2ModeManual(19),
+                       antenna2ModeAutomatic(20),
+                       antenna2ModeEmergency(21),
+                       antenna2ModeBypass(22),
+                       antenna2ServiceFull(23),
+                       antenna2ServiceUpper(24),
+                       antenna2ServiceLower(25),
+                       antenna2ServiceMain(26),
+                       antenna2ServiceReserve(27),
+                       
+                       antenna3SumFault(31),
+                       antenna3SumWarning(32),
+                       antenna3AutomaticReady(33),
+                       antenna3ModeManual(34),
+                       antenna3ModeAutomatic(35),
+                       antenna3ModeEmergency(36),
+                       antenna3ModeBypass(37),
+                       antenna3ServiceFull(38),
+                       antenna3ServiceUpper(39),
+                       antenna3ServiceLower(40),
+                       antenna3ServiceMain(41),
+                       antenna3ServiceReserve(42),
+                       
+                       antenna4SumFault(46),
+                       antenna4SumWarning(47),
+                       antenna4AutomaticReady(48),
+                       antenna4ModeManual(49),
+                       antenna4ModeAutomatic(50),
+                       antenna4ModeEmergency(51),
+                       antenna4ModeBypass(52),
+                       antenna4ServiceFull(53),
+                       antenna4ServiceUpper(54),
+                       antenna4ServiceLower(55),
+                       antenna4ServiceMain(56),
+                       antenna4ServiceReserve(57),
+                       
+                       autotestStarted(61),
+                       autotestOk(62),
+                       autotestFailed(63),
+                       
+                       antenna1DoorOpen(100),
+                       antenna1Changeover(101),
+                       antenna1WarningSwitch1(102),
+                       antenna1WarningSwitch2(103),
+                       antenna1WarningSwitch3(104),
+                       
+                       antenna2DoorOpen(107),
+                       antenna2Changeover(108),
+                       antenna2WarningSwitch1(109),
+                       antenna2WarningSwitch2(110),
+                       antenna2WarningSwitch3(111),
+                       
+                       antenna3DoorOpen(114),
+                       antenna3Changeover(115),
+                       antenna3WarningSwitch1(116),
+                       antenna3WarningSwitch2(117),
+                       antenna3WarningSwitch3(118),
+                       
+                       antenna4DoorOpen(121),
+                       antenna4Changeover(122),
+                       antenna4WarningSwitch1(123),
+                       antenna4WarningSwitch2(124),
+                       antenna4WarningSwitch3(125),
+                       
+                       antenna1AMCB(150),
+                       antenna1ExternalTrip1(151),
+                       antenna1ExternalTrip2(152),
+                       antenna1Main(153),
+                       antenna1Reserve(154),
+                       antenna1Upper(155),
+                       antenna1Lower(156),
+                       antenna1FaultSwitch1(157),
+                       antenna1FaultSwitch2(158),
+                       antenna1FaultSwitch3(159),
+                       
+                       antenna2AMCB(163),
+                       antenna2ExternalTrip1(164),
+                       antenna2ExternalTrip2(165),
+                       antenna2Main(166),
+                       antenna2Reserve(167),
+                       antenna2Upper(168),
+                       antenna2Lower(169),
+                       antenna2FaultSwitch1(170),
+                       antenna2FaultSwitch2(171),
+                       antenna2FaultSwitch3(172),
+                       
+                       antenna3AMCB(176),
+                       antenna3ExternalTrip1(177),
+                       antenna3ExternalTrip2(178),
+                       antenna3Main(179),
+                       antenna3Reserve(180),
+                       antenna3Upper(181),
+                       antenna3Lower(182),
+                       antenna3FaultSwitch1(183),
+                       antenna3FaultSwitch2(184),
+                       antenna3FaultSwitch3(185),
+                       
+                       antenna4AMCB(189),
+                       antenna4ExternalTrip1(190),
+                       antenna4ExternalTrip2(191),
+                       antenna4Main(192),
+                       antenna4Reserve(193),
+                       antenna4Upper(194),
+                       antenna4Lower(195),
+                       antenna4FaultSwitch1(196),
+                       antenna4FaultSwitch2(197),
+                       antenna4FaultSwitch3(198),
+                       
+                       autotestParameterset1(202),
+                       autotestParameterset2(203),
+                       autotestParameterset3(204),
+                       autotestParameterset4(205),
+                       autotestParameterset5(206),
+                       autotestParameterset6(207),
+                       autotestParameterset7(208),
+                       autotestParameterset8(209)
+                     }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "Message identifier."
+      ::= { logbookEntry 5 }
+
+    
+    logbookDateTime OBJECT-TYPE
+      SYNTAX DateAndTime
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The time of the logbook entry."
+      ::= { logbookEntry 6 }
+
+    
+-- **************************************************************************************
+-- **          event definitions
+-- **************************************************************************************
+    rsXx8000AntennaRedundancyEvents OBJECT IDENTIFIER ::= { rsXx8000AntennaRedundancy 3 }
+
+    
+    eventAntennaRedundancy OBJECT IDENTIFIER ::= { rsXx8000AntennaRedundancyEvents 1 }
+
+    
+    eventsAntennaRedundancyV2 OBJECT-IDENTITY
+      STATUS current
+      DESCRIPTION 
+        "Root node of notifications."
+      ::= { eventAntennaRedundancy 0 }
+
+    
+    summaryFault NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Summary fault of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 1 }
+
+    
+    summaryWarning NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Summary warning of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 2 }
+
+    
+    automaticReady NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Automatic ready of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 3 }
+
+    
+    modeManual NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Manual mode of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 4 }
+
+    
+    modeAutomatic NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Automatic mode of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 5 }
+
+    
+    modeEmergency NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Emergency mode of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 6 }
+
+    
+    modeBypass NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Bypass mode of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 7 }
+
+    
+    serviceFull NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Full service of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 8 }
+
+    
+    serviceUpper NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Upper service of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 9 }
+
+    
+    serviceLower NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Lower service of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 10 }
+
+    
+    serviceMain NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Main service of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 11 }
+
+    
+    serviceReserve NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Reserve service of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 12 }
+
+    
+    autotestStarted NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue }
+      STATUS current
+      DESCRIPTION 
+        "Automatic test of TxB started."
+      ::= { eventsAntennaRedundancyV2 61 }
+
+    
+    autotestOk NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue }
+      STATUS current
+      DESCRIPTION 
+        "Automatic test of TxB successful."
+      ::= { eventsAntennaRedundancyV2 62 }
+
+    
+    autotestFailed NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue }
+      STATUS current
+      DESCRIPTION 
+        "Automatic test of TxB failed."
+      ::= { eventsAntennaRedundancyV2 63 }
+
+    
+    doorOpen NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Door open warning of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 100 }
+
+    
+    changeover NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Changeover warning of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 101 }
+
+    
+    warningSwitch NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram, indexSwitch }
+      STATUS current
+      DESCRIPTION 
+        "HF switch warning of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 102 }
+
+    
+    amcb NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Antenna Monitoring and Control Board fault of program n."
+      ::= { eventsAntennaRedundancyV2 150 }
+
+    
+    externalTrip1 NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "External trip 1 fault of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 151 }
+
+    
+    externalTrip2 NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "External trip 2 fault of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 152 }
+
+    
+    faultMain NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Fault of main antenna of program n."
+      ::= { eventsAntennaRedundancyV2 153 }
+
+    
+    faultReserve NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Fault of reserve antenna of program n."
+      ::= { eventsAntennaRedundancyV2 154 }
+
+    
+    faultUpper NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Fault of upper antenna of program n."
+      ::= { eventsAntennaRedundancyV2 155 }
+
+    
+    faultLower NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram }
+      STATUS current
+      DESCRIPTION 
+        "Fault of lower antenna of program n."
+      ::= { eventsAntennaRedundancyV2 156 }
+
+    
+    faultSwitch NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram, indexSwitch }
+      STATUS current
+      DESCRIPTION 
+        "HF switch fault of antenna redundancy of program n."
+      ::= { eventsAntennaRedundancyV2 157 }
+
+    
+    faultAutotest1 NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue }
+      STATUS current
+      DESCRIPTION 
+        "Automatic test 1 of TxB failed."
+      ::= { eventsAntennaRedundancyV2 202 }
+
+    
+    faultAutotest2 NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue }
+      STATUS current
+      DESCRIPTION 
+        "Automatic test 2 of TxB failed."
+      ::= { eventsAntennaRedundancyV2 203 }
+
+    
+    faultAutotest3 NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue }
+      STATUS current
+      DESCRIPTION 
+        "Automatic test 3 of TxB failed."
+      ::= { eventsAntennaRedundancyV2 204 }
+
+    
+    faultAutotest4 NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue }
+      STATUS current
+      DESCRIPTION 
+        "Automatic test 4 of TxB failed."
+      ::= { eventsAntennaRedundancyV2 205 }
+
+    
+    faultAutotest5 NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue }
+      STATUS current
+      DESCRIPTION 
+        "Automatic test 5 of TxB failed."
+      ::= { eventsAntennaRedundancyV2 206 }
+
+    
+    faultAutotest6 NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue }
+      STATUS current
+      DESCRIPTION 
+        "Automatic test 6 of TxB failed."
+      ::= { eventsAntennaRedundancyV2 207 }
+
+    
+    faultAutotest7 NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue }
+      STATUS current
+      DESCRIPTION 
+        "Automatic test 7 of TxB failed."
+      ::= { eventsAntennaRedundancyV2 208 }
+
+    
+    faultAutotest8 NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue }
+      STATUS current
+      DESCRIPTION 
+        "Automatic test 8 of TxB failed."
+      ::= { eventsAntennaRedundancyV2 209 }
+
+    
+    switchCurrentRemoved NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram, indexSwitch }
+      STATUS current
+      DESCRIPTION 
+        "The switch is removed."
+      ::= { eventsAntennaRedundancyV2 300 }
+
+    
+    switchCurrentPosition1Operable NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram, indexSwitch }
+      STATUS current
+      DESCRIPTION 
+        "Current switch position is Position 1 Operable."
+      ::= { eventsAntennaRedundancyV2 301 }
+
+    
+    switchCurrentPosition2Operable NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram, indexSwitch }
+      STATUS current
+      DESCRIPTION 
+        "Current switch position is Position 2 Operable."
+      ::= { eventsAntennaRedundancyV2 302 }
+
+    
+    switchCurrentPosition1Bridged NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram, indexSwitch }
+      STATUS current
+      DESCRIPTION 
+        "Current switch position is Position 1 Bridged."
+      ::= { eventsAntennaRedundancyV2 303 }
+
+    
+    switchCurrentPosition2Bridged NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram, indexSwitch }
+      STATUS current
+      DESCRIPTION 
+        "Current switch position is Position 2 Bridged."
+      ::= { eventsAntennaRedundancyV2 304 }
+
+    
+    switchCommandedPosition1 NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram, indexSwitch }
+      STATUS current
+      DESCRIPTION 
+        "Commanded switch position is Position 1."
+      ::= { eventsAntennaRedundancyV2 306 }
+
+    
+    switchCommandedPosition2 NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram, indexSwitch }
+      STATUS current
+      DESCRIPTION 
+        "Commanded switch position is Position 2."
+      ::= { eventsAntennaRedundancyV2 307 }
+
+    
+    uLink NOTIFICATION-TYPE
+      OBJECTS { eventPriority, eventClass, eventValue, indexProgram, indexLink }
+      STATUS current
+      DESCRIPTION 
+        "The U-Link is Set (active) or Not set (inactive)."
+      ::= { eventsAntennaRedundancyV2 310 }
+
+    
+    eventsAntennaRedundancyTable OBJECT-TYPE
+      SYNTAX SEQUENCE OF EventsAntennaRedundancyEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "This table contains necessary information for handling alarms. 
+        For each alarm you have the following information: 
+        - name (get),
+        - mask to enable/disable sending out (set/get),
+        - priority (set/get) and 
+        - the current state (get only)."
+      ::= { eventAntennaRedundancy 1 }
+
+    
+    eventsAntennaRedundancyEntry OBJECT-TYPE
+      SYNTAX EventsAntennaRedundancyEntry
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "An event entry always consists of 4 values:
+        - name: an enumerated list of all possible notifications
+        - mask: the corresponding mask (enable/disable)
+        - priority: the corresponding priority value
+        - event: the event itself (active/inactive)"
+      INDEX { eventAntProgramIdx,
+              eventAntSubIdx,
+              eventAntNameIdx }
+      ::= { eventsAntennaRedundancyTable 1 }
+
+    
+    EventsAntennaRedundancyEntry ::=
+      SEQUENCE { 
+        eventAntProgramIdx
+          IndexAntennaProgram,
+        eventAntSubIdx
+          IndexAntennaSub,
+        eventAntNameIdx
+          EventMaxEntryNumber,
+        eventAntName
+          INTEGER,
+        eventAntMask
+          EventMask,
+        eventAntPriority
+          EventPriority,
+        eventAntEvent
+          EventState
+       }
+
+    eventAntProgramIdx OBJECT-TYPE
+      SYNTAX IndexAntennaProgram
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The program index."
+      ::= { eventsAntennaRedundancyEntry 1 }
+
+    
+    eventAntSubIdx OBJECT-TYPE
+      SYNTAX IndexAntennaSub
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The subindex. See description of IndexAntennaSub."
+      ::= { eventsAntennaRedundancyEntry 2 }
+
+    
+    eventAntNameIdx OBJECT-TYPE
+      SYNTAX EventMaxEntryNumber
+      MAX-ACCESS not-accessible
+      STATUS current
+      DESCRIPTION
+        "The event number as index.
+        This is a helper column and therefore not-accessible."
+      ::= { eventsAntennaRedundancyEntry 3 }
+
+    
+    eventAntName OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        summaryFault(1),
+        summaryWarning(2),
+        automaticReady(3),
+        modeManual(4),
+        modeAutomatic(5),
+        modeEmergency(6),
+        modeBypass(7),
+        serviceFull(8),
+        serviceUpper(9),
+        serviceLower(10),
+        serviceMain(11),
+        serviceReserve(12),
+        
+        autotestStarted(61),
+        autotestOk(62),
+        autotestFailed(63),
+        
+        doorOpen(100),
+        changeover(101),
+        warningSwitch(102),
+        
+        amcb(150),
+        externalTrip1(151),
+        externalTrip2(152),
+        faultMain(153),
+        faultReserve(154),
+        faultUpper(155),
+        faultLower(156),
+        faultSwitch(157),
+        
+        faultAutotest1(202),
+        faultAutotest2(203),
+        faultAutotest3(204),
+        faultAutotest4(205),
+        faultAutotest5(206),
+        faultAutotest6(207),
+        faultAutotest7(208),
+        faultAutotest8(209),
+        
+        switchCurrentRemoved(300),
+        switchCurrentPosition1Operable(301),
+        switchCurrentPosition2Operable(302),
+        switchCurrentPosition1Bridged(303),
+        switchCurrentPosition2Bridged(304),
+        
+        switchCommandedPosition1(306),
+        switchCommandedPosition2(307),
+        uLink(310)
+        }
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "The event number as integer and the value as readable text.
+        The enumeration correlates with the notifications under eventsAntennaRedundancyV2."
+      ::= { eventsAntennaRedundancyEntry 4 }
+
+    
+    eventAntMask OBJECT-TYPE
+      SYNTAX EventMask
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsAntennaRedundancyEntry 5 }
+
+    
+    eventAntPriority OBJECT-TYPE
+      SYNTAX EventPriority
+      MAX-ACCESS read-write
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsAntennaRedundancyEntry 6 }
+
+    
+    eventAntEvent OBJECT-TYPE
+      SYNTAX EventState
+      MAX-ACCESS read-only
+      STATUS current
+      DESCRIPTION
+        "See TextualConvention for details."
+      ::= { eventsAntennaRedundancyEntry 7 }
+
+    
+-- The following objects are used to store values for notification bindings.
+    eventMapObjectsAntenna OBJECT IDENTIFIER ::= { rsXx8000AntennaRedundancyEvents 2 }
+
+    
+    eventPriority OBJECT-TYPE
+      SYNTAX EventPriority
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "This OID holds the value for the priority 
+        when sending a notification."
+      ::= { eventMapObjectsAntenna 1 }
+
+    
+    eventClass OBJECT-TYPE
+      SYNTAX EventClass
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "This OID holds the value for the alarm class 
+        when sending a notification."
+      ::= { eventMapObjectsAntenna 2 }
+
+    
+    eventValue OBJECT-TYPE
+      SYNTAX EventState
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "This OID holds the value for the event itself 
+        when sending a notification."
+      ::= { eventMapObjectsAntenna 3 }
+
+    
+    indexProgram OBJECT-TYPE
+      SYNTAX IndexAntennaProgram
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "This OID holds the value for the program index 
+        when sending a notification."
+      ::= { eventMapObjectsAntenna 4 }
+
+    indexSwitch OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        switch1(1),
+        switch2(2),
+        switch3(3)
+        }
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "This OID holds the value for the Switch index 
+        when sending a notification."
+      ::= { eventMapObjectsAntenna 5 }
+
+    indexLink OBJECT-TYPE
+      SYNTAX INTEGER
+        {
+        uLink1(1),
+        uLink2(2),
+        uLink3(3),
+        uLink4(4),
+        uLink5(5),
+        uLink6(6)
+        }
+      MAX-ACCESS accessible-for-notify
+      STATUS current
+      DESCRIPTION
+        "This OID holds the value for the U-Link index 
+        when sending a notification."
+      ::= { eventMapObjectsAntenna 6 }
+
+
+-- ************************************************************************************
+-- **          conformance statements
+-- ************************************************************************************
+    rsXx8000AntennaRedundancyConf OBJECT IDENTIFIER ::= { rsXx8000AntennaRedundancy 4 }
+
+    
+    rsXx8000AntennaRedundancyGroups OBJECT IDENTIFIER ::= { rsXx8000AntennaRedundancyConf 1 }
+
+    
+    groupConfiguration OBJECT-GROUP
+      OBJECTS { antennaFailTime,
+                antennaTripAlarmTime,
+                antennaOutputLevelThreshold,
+                antennaFailLimit }
+      STATUS current
+      DESCRIPTION 
+        "Group for configuration objects."
+      ::= { rsXx8000AntennaRedundancyGroups 1 }
+
+    
+    groupConfigurationNp1 OBJECT-GROUP
+      OBJECTS { autoTxBTesting,
+                autoTxBTestTime,
+                autoTxBTestCycle,
+                autoTxBNextTest,
+                autoTxBTestDuration,
+                autoTxBInclusionTestIncluded }
+      STATUS current
+      DESCRIPTION 
+        "Group for configuration objects only in variant Nplus1."
+      ::= { rsXx8000AntennaRedundancyGroups 2 }
+
+    
+    groupOperation OBJECT-GROUP
+      OBJECTS { opAntennaSelected,
+                opAntennaMode,
+                opAntennaModeManual,
+                opAntennaModeAutomatic,
+                opAntennaReset }
+      STATUS current
+      DESCRIPTION 
+        "Group for operation objects."
+      ::= { rsXx8000AntennaRedundancyGroups 3 }
+
+    
+    groupOperationNp1 OBJECT-GROUP
+      OBJECTS { opAntennaSelectedB,
+                txBService,
+                cmdAutoTxBTestStart,
+                cmdAutoTxBTestStop,
+                cmdAutoTxBTestReset,
+                autoTxBTestResult,
+                emergencySwitch }
+      STATUS current
+      DESCRIPTION 
+        "Group for operation objects only in variant Nplus1."
+      ::= { rsXx8000AntennaRedundancyGroups 4 }
+
+    
+    groupMeasurements OBJECT-GROUP
+      OBJECTS { measProbeForward,
+                measProbeReflected }
+      STATUS current
+      DESCRIPTION 
+        "Group for measurements objects."
+      ::= { rsXx8000AntennaRedundancyGroups 5 }
+
+    
+    groupStatus OBJECT-GROUP
+      OBJECTS { switchStatus,
+                switchPositionCurrent }
+      STATUS current
+      DESCRIPTION 
+        "Group for status objects."
+      ::= { rsXx8000AntennaRedundancyGroups 6 }
+
+    
+    groupObjMainReserve OBJECT-GROUP
+      OBJECTS { opAntennaSelectMainReserve }
+      STATUS current
+      DESCRIPTION 
+        "Group of objects only for Main/Reserve configuration."
+      ::= { rsXx8000AntennaRedundancyGroups 7 }
+
+    
+    groupObjMainReserveNp1 OBJECT-GROUP
+      OBJECTS { opAntennaModeEmergency }
+      STATUS current
+      DESCRIPTION 
+        "Group of objects only for Main/Reserve configuration in variant Nplus1."
+      ::= { rsXx8000AntennaRedundancyGroups 8 }
+
+    
+    groupObjUpperLower OBJECT-GROUP
+      OBJECTS { opAntennaSelectUpperLower }
+      STATUS current
+      DESCRIPTION 
+        "Group of objects only for Upper/Lower configuration."
+      ::= { rsXx8000AntennaRedundancyGroups 9 }
+
+    
+    groupLogbook OBJECT-GROUP
+      OBJECTS { logbookNumberOfEntries, 
+                logbookClear,
+                logbookEntryNbr,
+                logbookType,
+                logbookSlope, 
+                logbookMessage,
+                logbookDateTime }
+      STATUS current
+      DESCRIPTION 
+        "Group for logbook."
+      ::= { rsXx8000AntennaRedundancyGroups 10 }
+
+    
+    groupEvents NOTIFICATION-GROUP
+      NOTIFICATIONS { summaryFault,
+                      summaryWarning,
+                      automaticReady,
+                      modeManual,
+                      modeAutomatic,
+                      doorOpen,
+                      changeover,
+                      warningSwitch,
+                      amcb,
+                      externalTrip1,
+                      externalTrip2,
+                      faultSwitch,
+                      switchCurrentRemoved,
+                      switchCurrentPosition1Operable,
+                      switchCurrentPosition2Operable,
+                      switchCurrentPosition1Bridged,
+                      switchCurrentPosition2Bridged,
+                      switchCommandedPosition1,
+                      switchCommandedPosition2,
+                      uLink
+                    }
+      STATUS current
+      DESCRIPTION 
+        "Group for events."
+      ::= { rsXx8000AntennaRedundancyGroups 100 }
+
+    
+    groupEventsNp1 NOTIFICATION-GROUP
+      NOTIFICATIONS { modeBypass,
+                      autotestStarted,
+                      autotestOk,
+                      autotestFailed,
+                      faultAutotest1,
+                      faultAutotest2,
+                      faultAutotest3,
+                      faultAutotest4,
+                      faultAutotest5,
+                      faultAutotest6,
+                      faultAutotest7,
+                      faultAutotest8
+                    }
+      STATUS current
+      DESCRIPTION 
+        "Group for events only in variant Nplus1."
+      ::= { rsXx8000AntennaRedundancyGroups 101 }
+
+    
+    groupEventsMainReserve NOTIFICATION-GROUP
+      NOTIFICATIONS { serviceMain,
+                      serviceReserve,
+                      faultMain,
+                      faultReserve }
+      STATUS current
+      DESCRIPTION 
+        "Group of events only for Main/Reserve configuration."
+      ::= { rsXx8000AntennaRedundancyGroups 102 }
+
+    
+    groupEventsMainReserveNp1 NOTIFICATION-GROUP
+      NOTIFICATIONS { modeEmergency }
+      STATUS current
+      DESCRIPTION 
+        "Group of events only for Main/Reserve configuration in variant Nplus1."
+      ::= { rsXx8000AntennaRedundancyGroups 103 }
+
+    
+    groupEventsUpperLower NOTIFICATION-GROUP
+      NOTIFICATIONS { serviceFull,
+                      serviceUpper,
+                      serviceLower,
+                      faultUpper,
+                      faultLower }
+      STATUS current
+      DESCRIPTION 
+        "Group of events only for Upper/Lower configuration."
+      ::= { rsXx8000AntennaRedundancyGroups 104 }
+
+    
+    groupEventHandling OBJECT-GROUP
+      OBJECTS { eventAntName,
+                eventAntMask,
+                eventAntPriority,
+                eventAntEvent,
+                eventPriority,
+                eventClass,
+                eventValue,
+                indexProgram,
+                indexSwitch,
+                indexLink }
+      STATUS current
+      DESCRIPTION 
+        "Group for objects of handling events."
+      ::= { rsXx8000AntennaRedundancyGroups 400 }
+
+    
+    rsXx8000AntennaRedundancyCompl OBJECT IDENTIFIER ::= { rsXx8000AntennaRedundancyConf 3 }
+
+    
+    rsXx8000nPlus1AntRedMainReserve MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "Variant Nplus1 with Main/Reserve antenna redundancy."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupConfiguration,
+                           groupConfigurationNp1,
+                           groupOperation,
+                           groupOperationNp1,
+                           groupMeasurements,
+                           groupStatus,
+                           groupObjMainReserve, 
+                           groupObjMainReserveNp1, 
+                           groupLogbook, 
+                           groupEvents,
+                           groupEventsNp1,
+                           groupEventsMainReserve, 
+                           groupEventsMainReserveNp1, 
+                           groupEventHandling }
+      ::= { rsXx8000AntennaRedundancyCompl 1 }
+
+    rsXx8000nPlus1AntRedUpperLower MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "Variant Nplus1 with Upper/Lower antenna redundancy."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupConfiguration,
+                           groupConfigurationNp1,
+                           groupOperation,
+                           groupOperationNp1,
+                           groupMeasurements,
+                           groupStatus,
+                           groupObjUpperLower, 
+                           groupLogbook, 
+                           groupEvents,
+                           groupEventsNp1,
+                           groupEventsUpperLower,
+                           groupEventHandling }
+      ::= { rsXx8000AntennaRedundancyCompl 2 }
+
+    rsXx8000nTxAntRed MODULE-COMPLIANCE
+      STATUS current
+      DESCRIPTION 
+        "Variant NTx with antenna redundancy."
+      MODULE -- this module
+        MANDATORY-GROUPS { groupConfiguration,
+                           groupOperation,
+                           groupMeasurements,
+                           groupStatus,
+                           groupObjMainReserve, 
+                           groupLogbook, 
+                           groupEvents,
+                           groupEventsMainReserve, 
+                           groupEventHandling }
+      ::= { rsXx8000AntennaRedundancyCompl 3 }
+
+    
+  END
