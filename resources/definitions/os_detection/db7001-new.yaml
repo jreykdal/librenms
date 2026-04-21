@@ -12,3 +12,6 @@ discovery:
     -
         sysDescr_regex:
             - '/Model: DB7001/'
+oids:
+    no_bulk:
+     -  mntrFanrpmValue.0
