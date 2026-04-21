@@ -1,94 +1,99 @@
 mib: DB7007-MIB:SNMPv2-MIB
 modules:
     os:
-      hardware: SNMPv2-MIB::sysDescr.0
-      serial: DB7007-MIB::sernum.0
-      version: DB7007-MIB::fwrev.0
+        hardware: SNMPv2-MIB::sysDescr.0
+        serial: DB7007-MIB::sernum.0
+        version: DB7007-MIB::fwrev.0
     sensors:
         temperature:
             data:
                 -
-                   oid: mntrTempcValue
-                   value: mntrTempcValue
-                   num_oid: '.1.3.6.1.4.1.35833.37.3.39.{{ $index }}'
-                   index: 'tempReading.{{ $index }}'
-                   descr: temp
-                   high_limit: 35
-                   low_limit: 0
-                   low_warn_limit: 10
-                   warn_limit: 30
-                   divisor: 256
+                    oid: statusTempcValue.0
+                    value: statusTempcValue
+                    num_oid: '.1.3.6.1.4.1.35833.18.3.26.0'
+                    index: 'statusTempcValue.0'
+                    descr: Temperature
+                    high_limit: 35
+                    low_limit: 0
+                    low_warn_limit: 10
+                    warn_limit: 30
+                    divisor: 256
 
         frequency:
             data:
                 -
-                   oid: mntrFreq
-                   num_oid: '.1.3.6.1.4.1.35833.37.3.1.{{ $index }}'
-                   index: 'mntrFreq.{{ $index }}'
-                   descr: Frequency
-                   high_limit: 93000000
-                   low_limit: 92000000
-                   low_warn_limit: 0
-                   warn_limit: 0
-                   multiplier: 1000
-          
-                -
-                   oid: mntrPilotValue
-                   num_oid: '.1.3.6.1.4.1.35833.37.3.14.{{ $index }}'
-                   index: 'mntrPilotValue.{{ $index }}'
-                   descr: Pilot
-                   high_limit: 8
-                   low_limit: 4
-                   low_warn_limit: 4.1
-                   warn_limit: 7.9
-                   divisor: 256
+                    oid: statusFreq.0
+                    value: statusFreq
+                    num_oid: '.1.3.6.1.4.1.35833.18.3.3.0'
+                    index: 'statusFreq.0'
+                    descr: Frequency
+                    high_limit: 108000
+                    low_limit: 87500
+                    low_warn_limit: 87500
+                    warn_limit: 108000
+                    multiplier: 1000
 
+                -
+                    oid: statusPilotValue.0
+                    value: statusPilotValue
+                    num_oid: '.1.3.6.1.4.1.35833.18.3.13.0'
+                    index: 'statusPilotValue.0'
+                    descr: Pilot
+                    high_limit: 8
+                    low_limit: 4
+                    low_warn_limit: 4.1
+                    warn_limit: 7.9
+                    divisor: 256
 
         tv_signal:
             data:
                 -
-                   oid: mntrRflvlValue
-                   num_oid: '.1.3.6.1.4.1.35833.37.3.2.{{ $index }}'
-                   index: 'mntrRflvlValue.{{ $index }}'
-                   descr: RF Level
-                   high_limit: 83
-                   low_limit: 34
-                   low_warn_limit: 39
-                   warn_limit: 79
-                   divisor: 256
+                    oid: statusRflvlValue.0
+                    value: statusRflvlValue
+                    num_oid: '.1.3.6.1.4.1.35833.18.3.4.0'
+                    index: 'statusRflvlValue.0'
+                    descr: RF Level
+                    high_limit: 83
+                    low_limit: 34
+                    low_warn_limit: 39
+                    warn_limit: 79
+                    divisor: 256
 
         fanspeed:
             data:
                 -
-                   oid: mntrFanrpmValue
-                   num_oid: '.1.3.6.1.4.1.35833.37.3.42.{{ $index }}'
-                   index: 'mntrFanrpmValue.{{ $index }}'
-                   descr: Fanspeed
-                   high_limit: 2500
-                   low_limit: 0
-                   low_warn_limit: 2000
-                   warn_limit: 2400
-                   divisor: 1
+                    oid: statusFanrpmValue.0
+                    value: statusFanrpmValue
+                    num_oid: '.1.3.6.1.4.1.35833.18.3.29.0'
+                    index: 'statusFanrpmValue.0'
+                    descr: Fanspeed
+                    high_limit: 5000
+                    low_limit: 0
+                    low_warn_limit: 800
+                    warn_limit: 4500
+                    divisor: 1
 
         state:
             data:
                 -
-                   oid: mntrRdsLock
-                   num_oid: '.1.3.6.1.4.1.35833.37.3.27.{{ $index }}'
-                   descr: RDS Lock
-                   index: 'mntrRdsLock.{{ $index }}'
-                   state_name: DB7007-MIB:mntrRdsLock
-                   states:
-                       - { value:  1, generic: 0, graph: 1, descr: OFF }
-                       - { value:  2, generic: 1, graph: 1, descr: ON }
+                    oid: statusRdsLock.0
+                    value: statusRdsLock
+                    num_oid: '.1.3.6.1.4.1.35833.18.3.32.0'
+                    descr: RDS Lock
+                    index: 'statusRdsLock.0'
+                    state_name: statusRdsLock
+                    states:
+                        - { value: 1, generic: 0, graph: 1, descr: OFF }
+                        - { value: 2, generic: 1, graph: 1, descr: ON }
 
                 -
-                   oid: mntrAudioStereo
-                   num_oid: '.1.3.6.1.4.1.35833.37.3.38.{{ $index }}'
-                   descr: Stereo/Mono
-                   index: 'mntrAudioStereo.{{ $index }}'
-                   state_name: DB7007-MIB:mntrAudioStereo
-                   states:
-                       - { value:  8, generic: 0, graph: 1, descr: MONO }
-                       - { value:  9, generic: 1, graph: 1, descr: STEREO }
- 
+                    oid: statusAudioStereo.0
+                    value: statusAudioStereo
+                    num_oid: '.1.3.6.1.4.1.35833.18.3.25.0'
+                    descr: Stereo/Mono
+                    index: 'statusAudioStereo.0'
+                    state_name: statusAudioStereo
+                    states:
+                        - { value: 8, generic: 0, graph: 1, descr: MONO }
+                        - { value: 9, generic: 1, graph: 1, descr: STEREO }
+                        - { value: 10, generic: 2, graph: 1, descr: SPEECH }

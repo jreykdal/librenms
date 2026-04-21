@@ -451,7 +451,7 @@ strmurl1 OBJECT-TYPE
   ::= { ipAudioClient 1 }
 
 strmdec1 OBJECT-TYPE
-  SYNTAX INTEGER {decAuto(1),decMP3Auto(2),decHEAACAuto(3),decPCM32kHz(4),decPCM44_1kHz(5),decPCM48kHz(6)}
+  SYNTAX INTEGER {decAuto(1),decMP3Auto(2),decHEAACAuto(3),decPCM32kHz(4),decPCM441kHz(5),decPCM48kHz(6)}
   MAX-ACCESS read-write
   STATUS current
   DESCRIPTION
@@ -501,7 +501,7 @@ rtprcvmcast OBJECT-TYPE
   ::= { rtpReceiver 2 }
 
 rtprcvdec OBJECT-TYPE
-  SYNTAX INTEGER {decMP3Auto(2),decHEAACAuto(3),decPCM32kHz(4),decPCM44_1kHz(5),decPCM48kHz(6)}
+  SYNTAX INTEGER {decMP3Auto(2),decHEAACAuto(3),decPCM32kHz(4),decPCM441kHz(5),decPCM48kHz(6)}
   MAX-ACCESS read-write
   STATUS current
   DESCRIPTION
