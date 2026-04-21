@@ -33,7 +33,7 @@ modules:
                     oid: ostRackOutletTemperature
                     value: ostRackOutletTemperature
                     descr: 'Outlet Temperature'
-                    num_oid: '.1.3.6.1.4.1.2566.127.1.2.167.14.1.3.3.1.4.1'
+                    num_oid: '.1.3.6.1.4.1.2566.127.1.2.167.14.1.3.3.1.4.1.1.1'
                     index: 'ostRackOutletTemperature.1.1.1'
 
         state:
