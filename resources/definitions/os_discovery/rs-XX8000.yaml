@@ -47,7 +47,7 @@ modules:
                     state_name: summaryFaultTx
                     states:
                         - { value: 0, generic: 3, graph: 0, descr: Undefined }
-                        - { value: 1, generic: 1, graph: 0, descr: TRUE }
+                        - { value: 1, generic: 2, graph: 0, descr: TRUE }
                         - { value: 2, generic: 0, graph: 0, descr: FALSE }
                 -
                     oid: summaryWarningTx
@@ -71,7 +71,7 @@ modules:
                     states:
                         - { value: 0, generic: 3, graph: 0, descr: Undefined }
                         - { value: 1, generic: 0, graph: 0, descr: TRUE }
-                        - { value: 2, generic: 1, graph: 0, descr: FALSE }
+                        - { value: 2, generic: 2, graph: 0, descr: FALSE }
 
                 -
                     oid: rfOnTx
@@ -82,5 +82,5 @@ modules:
                     state_name: rfOnTx
                     states:
                         - { value: 0, generic: 3, graph: 0, descr: Undefined }
-                        - { value: 1, generic: 1, graph: 0, descr: TRUE }
-                        - { value: 2, generic: 0, graph: 0, descr: FALSE }
+                        - { value: 1, generic: 0, graph: 0, descr: TRUE }
+                        - { value: 2, generic: 2, graph: 0, descr: FALSE }
