@@ -23,31 +23,31 @@ modules:
                 - DB7001-MIB::alarmFanMax.0
     frequency:
       data:
-        - oid: DB7001-MIB::mntrFreq.0
-          value: DB7001-MIB::mntrFreq
+        - oid: mntrFreq
+          value: mntrFreq
           num_oid: '.1.3.6.1.4.1.35833.37.3.1.{{ $index }}'
           index: 'mntrFreq.{{ $index }}'
           descr: 'Frequency'
           multiplier: 1000
-        - oid: DB7001-MIB::mntrPilotValueAvr.0
-          value: DB7001-MIB::mntrPilotValueAvr
+        - oid: mntrPilotValueAvr
+          value: mntrPilotValueAvr
           num_oid: '.1.3.6.1.4.1.35833.37.3.15.{{ $index }}'
           index: 'mntrPilotValueAvr.{{ $index }}'
           descr: 'Pilot Level avg.'
           divisor: 256
-          high_limit: DB7001-MIB::alarmPilotMax
-          low_limit: DB7001-MIB::alarmPilotMin
-        - oid: DB7001-MIB::mntrMpxtValueAvr.0
-          value: DB7001-MIB::mntrMpxtValueAvr
+          high_limit: alarmPilotMax
+          low_limit: alarmPilotMin
+        - oid: mntrMpxtValueAvr
+          value: mntrMpxtValueAvr
           num_oid: '.1.3.6.1.4.1.35833.37.3.9.{{ $index }}'
           index: 'mntrMpxtValueAvr.{{ $index }}'
           descr: 'MPX Level avg.'
           divisor: 256
-          high_limit: DB7001-MIB::alarmMpxMax
-          low_limit: DB7001-MIB::alarmMpxMin
+          high_limit: alarmMpxMax
+          low_limit: alarmMpxMin
     dbm:
       data:
-        - oid: DB7001-MIB::mntrRflvlValue.0
+        - oid: DB7001-MIB::mntrRflvlValue
           value: DB7001-MIB::mntrRflvlValue
           num_oid: '.1.3.6.1.4.1.35833.37.3.2.{{ $index }}'
           index: 'mntrTempcValue.{{ $index }}'
@@ -57,7 +57,7 @@ modules:
           low_limit: DB7001-MIB::alarmRfMin
     temperature:
       data:
-        - oid: DB7001-MIB::mntrTempcValue.0
+        - oid: DB7001-MIB::mntrTempcValue
           value: DB7001-MIB::mntrTempcValue
           num_oid: '.1.3.6.1.4.1.35833.37.3.39.{{ $index }}'
           index: 'mntrTempcValue.{{ $index }}'
@@ -65,7 +65,7 @@ modules:
           divisor: 256
     fanspeed:
       data:
-        - oid: DB7001-MIB::mntrFanrpmValue.0
+        - oid: DB7001-MIB::mntrFanrpmValue
           value: DB7001-MIB::mntrFanrpmValue
           num_oid: '.1.3.6.1.4.1.35833.37.3.42.{{ $index }}'
           index: 'mntrFanrpmValue.{{ $index }}'
@@ -74,7 +74,7 @@ modules:
           low_limit: DB7001-MIB::alarmFanMin
     ber:
       data:
-        - oid: DB7001-MIB::mntrRdsBer.0
+        - oid: DB7001-MIB::mntrRdsBer
           value: DB7001-MIB::mntrRdsBer
           num_oid: '.1.3.6.1.4.1.35833.37.3.35.{{ $index }}'
           index: 'mntrRdsBer.{{ $index }}'
@@ -82,14 +82,14 @@ modules:
           divisor: 32768
     count:
       data:
-        - oid: DB7001-MIB::mntrRdsErrorBits.0
+        - oid: DB7001-MIB::mntrRdsErrorBits
           value: DB7001-MIB::mntrRdsErrorBits
           num_oid: '.1.3.6.1.4.1.35833.37.3.37.{{ $index }}'
           index: 'mntrRdsErrorBits.{{ $index }}'
           descr: 'RDS Error Bits'
     percent:
       data:
-        - oid: DB7001-MIB::mntrMpathValue.0
+        - oid: DB7001-MIB::mntrMpathValue
           value: DB7001-MIB::mntrMpathValue
           num_oid: '.1.3.6.1.4.1.35833.37.3.5.{{ $index }}'
           index: 'mntrMpathValue.{{ $index }}'
