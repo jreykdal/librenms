@@ -4,7 +4,7 @@
 -- Copyright (c) WorldCastSystems
 -- All rights reserved.
 
-APT-MIB DEFINITIONS ::= BEGIN
+APT-AIOSERIES-MIB DEFINITIONS ::= BEGIN
 
 IMPORTS
 	OBJECT-GROUP, NOTIFICATION-GROUP
