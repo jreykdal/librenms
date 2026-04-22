@@ -70,8 +70,8 @@ modules:
                     state_name: localModeTx
                     states:
                         - { value: 0, generic: 3, graph: 0, descr: Undefined }
-                        - { value: 1, generic: 0, graph: 0, descr: TRUE }
-                        - { value: 2, generic: 2, graph: 0, descr: FALSE }
+                        - { value: 1, generic: 2, graph: 0, descr: TRUE }
+                        - { value: 2, generic: 0, graph: 0, descr: FALSE }
 
                 -
                     oid: rfOnTx
