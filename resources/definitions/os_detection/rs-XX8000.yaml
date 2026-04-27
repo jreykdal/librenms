@@ -10,3 +10,7 @@ discovery:
         sysDescr_regex:
             - '/^Linux netccu800/'
             - '/^SR8000 OSEDelta 4.6/'
+ids:
+    no_bulk:
+     -  excDeviceStatusCurrentTemperatur.1
+
