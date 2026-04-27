@@ -18,8 +18,8 @@ modules:
           index: 'txForwardPower.{{ $index }}'
           descr: 'Forward Power'
           divisor: 1
-          low_limit: 90
-          high_limit: 110
+          low_limit: 1000
+          high_limit: 2000
 
         - oid: txGnMsReflectedPower
           value: txGnMsReflectedPower

@@ -1,6 +1,6 @@
 os: db7001
 text: 'Deva FM Receiver DB7001'
-type: appliance
+type: network
 icon: deva
 group: deva
 mib_dir: deva

@@ -1,7 +1,7 @@
 mib: RS-COMMON-MIB:RS-XX8000-COMMON-MIB:RS-XX8000-FM-TX-MIB
 modules:
     os:
-        hardware: RS-XX800-COMMON-MIB::versionNumberHW.0
+        hardware: RS-XX8000-COMMON-MIB::versionNumberHW.0
         serial: RS-XX8000-COMMON-MIB::serialNumber.0
         version: RS-XX8000-COMMON-MIB::versionNumberSW.0
         sysDescr_regex: "/(?<hnetccu800>.*)/"

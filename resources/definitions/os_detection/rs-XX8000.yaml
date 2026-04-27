@@ -3,7 +3,7 @@ text: Rohde & Schwarz FM transmitter
 icon: rs
 over:
     - { graph: device_power, text: Output Power }
-type: appliance
+type: power
 mib_dir: rs
 discovery:
     -
@@ -13,4 +13,42 @@ discovery:
 ids:
     no_bulk:
      -  excDeviceStatusCurrentTemperatur.1
+discovery_modules:
+  os: true
+  sensors: true
+  ports: false
+  processors: false
+  mempools: false
+  storage: false
+  entity-physical: false
+  ipv6-addresses: false
+  route: false
+  stp: false
+  ospfv3: false
+  bgp-peers: false
+  vlans: false
+  ucd-diskio: false
+  hr-device: false
+  arp-table: false
+  discovery-protocols: false
+  fdb-table: false
+  ipv4-addresses: false
+  ipv6-nd: false
+  ports-stack: false
+  wireless: false
+poller_modules:
+  os: true
+  sensors: true
+  ports: false
+  processors: false
+  mempools: false
+  storage: false
+  bgp-peers: false
+  ospf: false
+  ospfv3: false
+  wireless: false
+  ucd-mib: false
+  hr-mib: false
+  netstats: false
+  ucd-diskio: false
 
