@@ -135,6 +135,7 @@ modules:
           index: 'fan0.{{ $index }}'
           descr: 'Fan Speed'
           divisor: 1
+          low_limit: 500
 
     pressure:
       data:
