@@ -78,8 +78,8 @@ modules:
                    index: 'mntrRdsLock.{{ $index }}'
                    state_name: DB7000-MIB:mntrRdsLock
                    states:
-                       - { value:  1, generic: 0, graph: 1, descr: OFF }
-                       - { value:  2, generic: 1, graph: 1, descr: ON }
+                       - { value:  1, generic: 2, graph: 1, descr: OFF }
+                       - { value:  2, generic: 0, graph: 1, descr: ON }
 
 
                 -
@@ -89,6 +89,6 @@ modules:
                    index: 'mntrAudioStereo.{{ $index }}'
                    state_name: DB7000-MIB:mntrAudioStereo
                    states:
-                       - { value:  7, generic: 0, graph: 1, descr: MONO }
-                       - { value:  8, generic: 1, graph: 1, descr: STEREO }
+                       - { value:  7, generic: 1, graph: 1, descr: MONO }
+                       - { value:  8, generic: 0, graph: 1, descr: STEREO }
 

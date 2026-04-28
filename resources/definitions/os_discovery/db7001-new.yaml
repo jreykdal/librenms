@@ -14,7 +14,7 @@ modules:
                    index: 'mntrTempcValue.0'
                    descr: temp
                    high_limit: 41
-                   low_limit: 05
+                   low_limit: 5
                    low_warn_limit: 10
                    warn_limit: 39
                    divisor: 256

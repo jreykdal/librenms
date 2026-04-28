@@ -83,8 +83,8 @@ modules:
                     index: 'statusRdsLock.0'
                     state_name: statusRdsLock
                     states:
-                        - { value: 1, generic: 0, graph: 1, descr: OFF }
-                        - { value: 2, generic: 1, graph: 1, descr: ON }
+                        - { value: 1, generic: 2, graph: 1, descr: OFF }
+                        - { value: 2, generic: 0, graph: 1, descr: ON }
 
                 -
                     oid: statusAudioStereo.0
@@ -94,6 +94,6 @@ modules:
                     index: 'statusAudioStereo.0'
                     state_name: statusAudioStereo
                     states:
-                        - { value: 8, generic: 0, graph: 1, descr: MONO }
-                        - { value: 9, generic: 1, graph: 1, descr: STEREO }
-                        - { value: 10, generic: 2, graph: 1, descr: SPEECH }
+                        - { value: 8, generic: 1, graph: 1, descr: MONO }
+                        - { value: 9, generic: 0, graph: 1, descr: STEREO }
+                        - { value: 10, generic: 1, graph: 1, descr: SPEECH }

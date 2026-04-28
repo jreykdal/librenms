@@ -14,4 +14,33 @@ discovery:
             - '/Model: DB7001/'
 oids:
     no_bulk:
-     -  mntrFanrpmValue.0
+    - mntrFanrpmValue.0
+    - mntrTempcValue.0
+    - mntrFreq.0
+    - mntrPilotValue.0
+    - mntrRflvlValue.0
+    - mntrRdsLock.0
+    - mntrAudioStereo.0
+
+discovery_modules:
+  os: true
+  sensors: true
+  ports: false
+  ports-stack: false
+  entity-physical: false
+  processors: false
+  mempools: false
+  storage: false
+  ospfv3: false
+  ipv4-addresses: false
+  ipv6-addresses: false
+  hr-device: false
+  discovery-protocols: false
+  bgp-peers: false
+  vlans: false
+  ucd-diskio: false
+  stp: false
+  arp-table: false
+  ipv6-nd: false
+  fdb-table: false
+  wireless: false
