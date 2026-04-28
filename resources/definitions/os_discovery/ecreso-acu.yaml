@@ -48,8 +48,8 @@ modules:
           state_name: ECRESO-FM-TRANS-MIB:acGnGlOperation
           states:
               - { value:  0, generic: 3, graph: 0, descr: Undefined }
-              - { value:  1, generic: 2, graph: 0, descr: Manual }
-              - { value:  2, generic: 1, graph: 0, descr: Auto }
+              - { value:  1, generic: 1, graph: 0, descr: Manual }
+              - { value:  2, generic: 0, graph: 0, descr: Auto }
 
         -
           oid: acGnGlCurrentMain
@@ -59,8 +59,8 @@ modules:
           state_name: ECRESO-FM-TRANS-MIB:acGnGlCurrentMain
           states:
               - { value:  0, generic: 3, graph: 0, descr: Undefined }
-              - { value:  1, generic: 1, graph: 0, descr: TX1 }
-              - { value:  2, generic: 2, graph: 0, descr: TX2 }
+              - { value:  1, generic: 0, graph: 0, descr: TX1 }
+              - { value:  2, generic: 1, graph: 0, descr: TX2 }
 
         -
           oid: acGnGlLocalMode
@@ -71,7 +71,7 @@ modules:
           states:
               - { value:  0, generic: 3, graph: 0, descr: Undefined }
               - { value:  1, generic: 2, graph: 0, descr: Local }
-              - { value:  2, generic: 1, graph: 0, descr: Remote }
+              - { value:  2, generic: 0, graph: 0, descr: Remote }
 
         -
           oid: acGnGlMainOpmode
@@ -81,6 +81,6 @@ modules:
           state_name: ECRESO-FM-TRANS-MIB:acGnGlMainOpmode
           states:
               - { value:  0, generic: 3, graph: 0, descr: Undefined }
-              - { value:  1, generic: 1, graph: 0, descr: ON }
+              - { value:  1, generic: 0, graph: 0, descr: ON }
               - { value:  2, generic: 2, graph: 0, descr: OFF }
 
