@@ -175,6 +175,16 @@ modules:
           index: 'EffSys.{{ $index }}'
           descr: 'System efficiency'
           divisor: 1    
+    
+    frequency:
+      data:
+        - oid: txGnRfFrequency
+          value: txGnRfFrequency
+          num_oid: '.1.3.6.1.4.1.6404.3.1.2.7.1.4.1.{{ $index }}'
+          descr: 'TX Frequency'
+          index: 'txGnRfFrequency.{{ $index }}'
+          divisor: 100             # if value comes in kHz and you want MHz
+
     state:
       data:
         - 

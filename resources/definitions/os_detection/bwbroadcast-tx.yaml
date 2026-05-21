@@ -1,0 +1,14 @@
+os: bwbroadcast-tx
+text: 'BW Broadcast TX FM Transmitter'
+type: network
+icon: bwbroadcast
+mib_dir: bwbroadcast
+over:
+  - { graph: device_bits, text: 'Device Traffic' }
+
+discovery:
+  -
+    snmpget:
+      - oid: 'BW-V3-TRANSMITTER-MIB::systemProductId.0'
+        op: '='
+        value: 'TR300'
